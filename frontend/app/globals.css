@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand Colors from Logo */
+  --primary-blue: #0047AB;      /* Deep blue from logo */
+  --secondary-blue: #1E90FF;    /* Bright blue from circuit patterns */
+  --gold: #DAA520;              /* Gold from logo accent */
+  --dark-navy: #001F3F;         /* Dark navy for backgrounds */
+
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary-blue: var(--primary-blue);
+  --color-secondary-blue: var(--secondary-blue);
+  --color-gold: var(--gold);
+  --color-dark-navy: var(--dark-navy);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Custom utility classes for brand colors */
+.bg-primary-blue {
+  background-color: var(--primary-blue);
+}
+
+.bg-secondary-blue {
+  background-color: var(--secondary-blue);
+}
+
+.bg-gold {
+  background-color: var(--gold);
+}
+
+.bg-dark-navy {
+  background-color: var(--dark-navy);
+}
+
+.text-primary-blue {
+  color: var(--primary-blue);
+}
+
+.text-secondary-blue {
+  color: var(--secondary-blue);
+}
+
+.text-gold {
+  color: var(--gold);
+}
+
+.border-gold {
+  border-color: var(--gold);
+}
+
+.border-primary-blue {
+  border-color: var(--primary-blue);
+}
+
+/* Gradient utilities matching logo */
+.bg-gradient-brand {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 50%, var(--gold) 100%);
+}
+
+.bg-gradient-shield {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--gold) 100%);
+}
+
+/* ===== Cybersecurity dark theme (dashboard + enterprise pages) ===== */
+:root {
+  --cyber-bg: #050B1A;          /* deep space navy */
+  --cyber-surface: #0A1428;     /* card surface */
+  --cyber-surface-2: #0F1E3D;   /* raised surface */
+  --cyber-border: #1B2C4F;      /* hairline border */
+  --cyber-text: #E6ECF5;        /* primary text */
+  --cyber-muted: #8FA3C4;       /* muted text */
+}
+
+.cyber-bg {
+  background-color: var(--cyber-bg);
+  background-image:
+    radial-gradient(circle at 15% 0%, rgba(0, 71, 171, 0.22), transparent 45%),
+    radial-gradient(circle at 85% 100%, rgba(218, 165, 32, 0.12), transparent 45%),
+    linear-gradient(rgba(27, 44, 79, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27, 44, 79, 0.18) 1px, transparent 1px);
+  background-size: auto, auto, 40px 40px, 40px 40px;
+  color: var(--cyber-text);
+}
+
+.cyber-card {
+  background-color: var(--cyber-surface);
+  border: 1px solid var(--cyber-border);
+  border-radius: 1rem;
+}
+
+.cyber-card-raised {
+  background: linear-gradient(160deg, var(--cyber-surface-2) 0%, var(--cyber-surface) 100%);
+  border: 1px solid var(--cyber-border);
+  border-radius: 1rem;
+}
+
+.cyber-glow-blue {
+  box-shadow: 0 0 0 1px rgba(0, 71, 171, 0.4), 0 8px 30px -8px rgba(0, 71, 171, 0.55);
+}
+
+.cyber-glow-gold {
+  box-shadow: 0 0 0 1px rgba(218, 165, 32, 0.4), 0 8px 30px -8px rgba(218, 165, 32, 0.5);
+}
+
+.text-cyber-muted { color: var(--cyber-muted); }
+.border-cyber { border-color: var(--cyber-border); }
+.bg-cyber-surface { background-color: var(--cyber-surface); }
+
+/* Toast notification animation */
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Fade in animation for modals */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}

@@ -1,0 +1,378 @@
+"""
+Security Scanning Service
+
+Performs actual security scans on domains/assets and detects vulnerabilities.
+"""
+import socket
+import ssl
+import requests
+from datetime import datetime, timezone
+from typing import List, Dict, Tuple
+from sqlalchemy.orm import Session
+from urllib.parse import urlparse
+
+from app.models.scan import Scan, Finding
+from app.models.asset import Asset
+
+
+class SecurityScanner:
+    """Performs security scans on assets."""
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    async def scan_asset(self, asset_id: str) -> Scan:
+        """
+        Perform a comprehensive security scan on an asset.
+
+        Args:
+            asset_id: Asset UUID to scan
+
+        Returns:
+            Scan object with results
+        """
+        # Get asset
+        asset = self.db.query(Asset).filter(Asset.id == asset_id).first()
+        if not asset:
+            raise ValueError(f"Asset {asset_id} not found")
+
+        # Create scan record
+        scan = Scan(
+            asset_id=asset_id,
+            status="running",
+            started_at=datetime.now(timezone.utc),
+            scan_type="full"
+        )
+        self.db.add(scan)
+        self.db.commit()
+        self.db.refresh(scan)
+
+        try:
+            # Extract domain from asset value
+            domain = self._extract_domain(asset.value)
+
+            # Run all security checks
+            findings = []
+            findings.extend(self._check_ssl_tls(domain, asset_id, scan.id))
+            findings.extend(self._check_security_headers(domain, asset_id, scan.id))
+            findings.extend(self._check_dns_security(domain, asset_id, scan.id))
+            findings.extend(self._check_common_vulns(domain, asset_id, scan.id))
+
+            # Save all findings
+            for finding in findings:
+                self.db.add(finding)
+
+            # Count findings by severity
+            scan.findings_count = len(findings)
+            scan.critical_count = sum(1 for f in findings if f.severity == "critical")
+            scan.high_count = sum(1 for f in findings if f.severity == "high")
+            scan.medium_count = sum(1 for f in findings if f.severity == "medium")
+            scan.low_count = sum(1 for f in findings if f.severity == "low")
+
+            # Calculate security score
+            scan.score = scan.calculate_score()
+
+            # Update scan status
+            scan.status = "completed"
+            scan.completed_at = datetime.now(timezone.utc)
+
+            # Update asset
+            asset.last_scanned_at = scan.completed_at  # Fixed: was last_scan_at
+            asset.security_score = scan.score
+            asset.findings_count = scan.findings_count
+
+            # Update next scheduled scan time
+            from datetime import timedelta
+            interval_map = {
+                '1h': timedelta(hours=1),
+                '6h': timedelta(hours=6),
+                '12h': timedelta(hours=12),
+                '24h': timedelta(hours=24),
+                'daily': timedelta(days=1),
+                'weekly': timedelta(weeks=1),
+                'monthly': timedelta(days=30)
+            }
+            interval = interval_map.get(asset.scan_interval, timedelta(days=1))
+            asset.next_scan_at = scan.completed_at + interval
+
+            self.db.commit()
+            self.db.refresh(scan)
+            self.db.refresh(asset)  # Refresh asset to get updated values
+
+            # Send email alert if critical or high severity issues found
+            if scan.critical_count > 0 or scan.high_count > 0:
+                try:
+                    # Get user email from company owner
+                    from app.models.user import User
+                    from app.models.company import Company
+
+                    company = self.db.query(Company).filter(Company.id == asset.company_id).first()
+                    if company:
+                        # Get company owner/admin
+                        user = self.db.query(User).filter(
+                            User.company_id == company.id,
+                            User.role == 'company_admin'
+                        ).first()
+
+                        if user and user.email:
+                            # Send alert email
+                            from app.services.email_service import email_service
+
+                            findings_data = [
+                                {
+                                    'severity': f.severity,
+                                    'category': f.category,
+                                    'title': f.title,
+                                    'description': f.description,
+                                    'recommendation': f.recommendation
+                                }
+                                for f in findings
+                            ]
+
+                            email_service.send_security_alert(
+                                to_email=user.email,
+                                asset_name=asset.name,
+                                asset_url=asset.value,
+                                security_score=scan.score,
+                                critical_count=scan.critical_count,
+                                high_count=scan.high_count,
+                                findings=findings_data
+                            )
+                            print(f"📧 Security alert sent to {user.email}")
+                except Exception as email_error:
+                    print(f"⚠️ Failed to send email alert: {email_error}")
+                    # Don't fail the scan if email fails
+
+            return scan
+
+        except Exception as e:
+            scan.status = "failed"
+            scan.completed_at = datetime.now(timezone.utc)
+            scan.scan_data = {"error": str(e)}
+            self.db.commit()
+            raise
+
+    def _extract_domain(self, value: str) -> str:
+        """Extract clean domain from asset value."""
+        if "://" in value:
+            parsed = urlparse(value)
+            return parsed.netloc or parsed.path
+        return value.split("/")[0]
+
+    def _check_ssl_tls(self, domain: str, asset_id: str, scan_id: str) -> List[Finding]:
+        """Check SSL/TLS configuration."""
+        findings = []
+
+        try:
+            context = ssl.create_default_context()
+            with socket.create_connection((domain, 443), timeout=10) as sock:
+                with context.wrap_socket(sock, server_hostname=domain) as ssock:
+                    cert = ssock.getpeercert()
+                    cipher = ssock.cipher()
+
+                    # Check certificate expiration
+                    not_after = datetime.strptime(cert['notAfter'], '%b %d %H:%M:%S %Y %Z')
+                    days_until_expiry = (not_after - datetime.now()).days
+
+                    if days_until_expiry < 30:
+                        findings.append(Finding(
+                            scan_id=scan_id,
+                            asset_id=asset_id,
+                            severity="high" if days_until_expiry < 7 else "medium",
+                            title="SSL Certificate Expiring Soon",
+                            description=f"SSL certificate expires in {days_until_expiry} days",
+                            recommendation="Renew SSL certificate before expiration",
+                            category="SSL/TLS"
+                        ))
+
+                    # Check weak ciphers
+                    cipher_name = cipher[0] if cipher else ""
+                    if any(weak in cipher_name.lower() for weak in ['rc4', 'des', 'md5']):
+                        findings.append(Finding(
+                            scan_id=scan_id,
+                            asset_id=asset_id,
+                            severity="high",
+                            title="Weak SSL Cipher Suite",
+                            description=f"Weak cipher detected: {cipher_name}",
+                            recommendation="Update SSL configuration to use strong ciphers",
+                            category="SSL/TLS"
+                        ))
+
+        except ssl.SSLError as e:
+            findings.append(Finding(
+                scan_id=scan_id,
+                asset_id=asset_id,
+                severity="critical",
+                title="SSL/TLS Configuration Error",
+                description=f"SSL/TLS error: {str(e)}",
+                recommendation="Fix SSL/TLS configuration",
+                category="SSL/TLS"
+            ))
+        except socket.timeout:
+            findings.append(Finding(
+                scan_id=scan_id,
+                asset_id=asset_id,
+                severity="medium",
+                title="Connection Timeout",
+                description="Could not establish SSL connection (timeout)",
+                recommendation="Check if domain is accessible",
+                category="Availability"
+            ))
+        except Exception as e:
+            # Domain might not support HTTPS or other issues
+            findings.append(Finding(
+                scan_id=scan_id,
+                asset_id=asset_id,
+                severity="low",
+                title="HTTPS Not Available",
+                description=f"Could not establish HTTPS connection: {str(e)}",
+                recommendation="Enable HTTPS for better security",
+                category="SSL/TLS"
+            ))
+
+        return findings
+
+    def _check_security_headers(self, domain: str, asset_id: str, scan_id: str) -> List[Finding]:
+        """Check for security headers."""
+        findings = []
+
+        try:
+            response = requests.get(f"https://{domain}", timeout=10, allow_redirects=True)
+            headers = response.headers
+
+            # Critical security headers
+            required_headers = {
+                'Strict-Transport-Security': ('high', 'HSTS Not Enabled', 'Add Strict-Transport-Security header'),
+                'X-Content-Type-Options': ('medium', 'X-Content-Type-Options Missing', 'Add X-Content-Type-Options: nosniff'),
+                'X-Frame-Options': ('medium', 'X-Frame-Options Missing', 'Add X-Frame-Options: DENY or SAMEORIGIN'),
+                'Content-Security-Policy': ('high', 'Content Security Policy Missing', 'Implement Content-Security-Policy'),
+                'X-XSS-Protection': ('low', 'X-XSS-Protection Missing', 'Add X-XSS-Protection: 1; mode=block')
+            }
+
+            for header, (severity, title, recommendation) in required_headers.items():
+                if header not in headers:
+                    findings.append(Finding(
+                        scan_id=scan_id,
+                        asset_id=asset_id,
+                        severity=severity,
+                        title=title,
+                        description=f"Security header '{header}' is not set",
+                        recommendation=recommendation,
+                        category="Security Headers"
+                    ))
+
+            # Check for insecure headers
+            if 'Server' in headers:
+                findings.append(Finding(
+                    scan_id=scan_id,
+                    asset_id=asset_id,
+                    severity="low",
+                    title="Server Information Disclosure",
+                    description=f"Server header reveals: {headers['Server']}",
+                    recommendation="Remove or obscure Server header",
+                    category="Information Disclosure"
+                ))
+
+        except requests.exceptions.SSLError:
+            pass  # Already handled in SSL check
+        except Exception as e:
+            # Domain might not be accessible
+            pass
+
+        return findings
+
+    def _check_dns_security(self, domain: str, asset_id: str, scan_id: str) -> List[Finding]:
+        """Check DNS security configuration."""
+        findings = []
+
+        try:
+            import dns.resolver
+
+            # Check for SPF record
+            try:
+                answers = dns.resolver.resolve(domain, 'TXT')
+                has_spf = any('spf' in str(rdata).lower() for rdata in answers)
+                if not has_spf:
+                    findings.append(Finding(
+                        scan_id=scan_id,
+                        asset_id=asset_id,
+                        severity="medium",
+                        title="SPF Record Missing",
+                        description="Domain lacks SPF record for email authentication",
+                        recommendation="Add SPF record to DNS",
+                        category="DNS Security"
+                    ))
+            except:
+                findings.append(Finding(
+                    scan_id=scan_id,
+                    asset_id=asset_id,
+                    severity="low",
+                    title="DNS TXT Records Not Found",
+                    description="Could not query DNS TXT records",
+                    recommendation="Verify DNS configuration",
+                    category="DNS Security"
+                ))
+
+            # Check for DNSSEC
+            try:
+                resolver = dns.resolver.Resolver()
+                resolver.use_edns(0, dns.flags.DO, 4096)
+                answers = resolver.resolve(domain, 'A')
+                if not answers.response.flags & dns.flags.AD:
+                    findings.append(Finding(
+                        scan_id=scan_id,
+                        asset_id=asset_id,
+                        severity="low",
+                        title="DNSSEC Not Enabled",
+                        description="Domain does not use DNSSEC",
+                        recommendation="Enable DNSSEC for DNS security",
+                        category="DNS Security"
+                    ))
+            except:
+                pass
+
+        except ImportError:
+            # dnspython not installed - skip DNS checks
+            pass
+        except Exception:
+            pass
+
+        return findings
+
+    def _check_common_vulns(self, domain: str, asset_id: str, scan_id: str) -> List[Finding]:
+        """Check for common vulnerabilities."""
+        findings = []
+
+        try:
+            # Check for default/common paths
+            common_paths = [
+                '/admin', '/.git', '/.env', '/config', '/backup',
+                '/phpinfo.php', '/test.php', '/.htaccess'
+            ]
+
+            for path in common_paths[:3]:  # Check first 3 to avoid too many requests
+                try:
+                    response = requests.get(f"https://{domain}{path}", timeout=5, allow_redirects=False)
+                    if response.status_code not in [404, 403, 401]:
+                        findings.append(Finding(
+                            scan_id=scan_id,
+                            asset_id=asset_id,
+                            severity="medium",
+                            title=f"Sensitive Path Exposed: {path}",
+                            description=f"Path '{path}' returns HTTP {response.status_code}",
+                            recommendation=f"Restrict access to {path}",
+                            category="Access Control"
+                        ))
+                except:
+                    pass
+
+        except Exception:
+            pass
+
+        return findings
+
+
+# Singleton service instance
+def get_scanner(db: Session) -> SecurityScanner:
+    """Get scanner instance."""
+    return SecurityScanner(db)

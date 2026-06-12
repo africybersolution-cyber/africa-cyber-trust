@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: acti_postgres
+    environment:
+      POSTGRES_DB: africa_cyber_trust
+      POSTGRES_USER: acti_user
+      POSTGRES_PASSWORD: acti_dev_password_change_in_production
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    networks:
+      - acti_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U acti_user -d africa_cyber_trust"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: acti_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - acti_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Celery worker for background scanning tasks
+  celery_worker:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: acti_celery_worker
+    command: celery -A app.celery_app worker --loglevel=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://acti_user:acti_dev_password_change_in_production@postgres:5432/africa_cyber_trust
+      REDIS_URL: redis://redis:6379/0
+      ENVIRONMENT: development
+    volumes:
+      - ../backend:/app
+    networks:
+      - acti_network
+    profiles:
+      - full  # Only start with --profile full
+
+  # Optional: Redis Commander for Redis GUI
+  redis_commander:
+    image: rediscommander/redis-commander:latest
+    container_name: acti_redis_commander
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - acti_network
+    profiles:
+      - tools  # Only start with --profile tools
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  acti_network:
+    driver: bridge

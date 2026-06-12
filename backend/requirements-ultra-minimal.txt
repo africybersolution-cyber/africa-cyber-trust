@@ -1,0 +1,10 @@
+# Ultra minimal - no compilation needed
+fastapi
+uvicorn[standard]
+python-multipart
+httpx
+requests
+python-dotenv
+pydantic-settings
+dnspython
+whois
