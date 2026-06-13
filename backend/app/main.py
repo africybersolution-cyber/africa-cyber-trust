@@ -41,6 +41,10 @@ async def startup_event():
     print("STARTING AFRICA CYBER TRUST INFRASTRUCTURE")
     print("=" * 60)
 
+    # Debug: Print CORS origins
+    print(f"[DEBUG] CORS Origins: {settings.cors_origins}")
+    print(f"[DEBUG] Raw ALLOWED_ORIGINS: {settings.ALLOWED_ORIGINS}")
+
     # Start background scheduler for automated tasks
     from app.services.scheduler_service import scheduler_service
     scheduler_service.schedule_jobs()
