@@ -50,6 +50,17 @@ class BusinessRegisterRequest(BaseModel):
     size: Optional[str] = None
 
 
+class ForgotPasswordRequest(BaseModel):
+    """Forgot password request."""
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Reset password request."""
+    token: str
+    new_password: str = Field(..., min_length=8)
+
+
 # Dependency to get current user
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
@@ -306,7 +317,7 @@ async def logout(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/forgot-password")
-async def forgot_password(email: str, db: Session = Depends(get_db)):
+async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
     """
     Request password reset email.
     Generates a reset token and sends email with reset link.
@@ -314,7 +325,7 @@ async def forgot_password(email: str, db: Session = Depends(get_db)):
     import secrets
     from datetime import datetime, timedelta
 
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.email == request.email).first()
 
     # Always return success even if email doesn't exist (security best practice)
     if not user:
@@ -330,9 +341,6 @@ async def forgot_password(email: str, db: Session = Depends(get_db)):
 
     # Send password reset email
     try:
-        # Add to email queue
-        from app.models.email_queue import EmailQueue  # Assuming you have this model
-
         reset_link = f"https://www.africybertrust.com/reset-password?token={reset_token}"
 
         email_html = f"""
@@ -356,25 +364,36 @@ async def forgot_password(email: str, db: Session = Depends(get_db)):
         </div>
         """
 
-        # Write to email queue (will be sent by email service)
-        email_record = EmailQueue(
-            to=user.email,
-            subject="Reset Your Password - Africa Cyber Trust",
-            html=email_html,
-            created_at=datetime.utcnow()
-        )
-        db.add(email_record)
+        # Write to email_queue table
+        from sqlalchemy import text
+        db.execute(text("""
+            INSERT INTO email_queue (to_email, subject, html, created_at, sent)
+            VALUES (:to_email, :subject, :html, :created_at, false)
+        """), {
+            "to_email": user.email,
+            "subject": "Reset Your Password - Africa Cyber Trust",
+            "html": email_html,
+            "created_at": datetime.utcnow()
+        })
         db.commit()
+
+        # Also print to console for development
+        print(f"\n{'='*60}")
+        print(f"PASSWORD RESET LINK FOR: {user.email}")
+        print(f"Link: {reset_link}")
+        print(f"{'='*60}\n")
 
     except Exception as e:
         print(f"Error sending password reset email: {e}")
+        # Print link to console as fallback
+        print(f"\nPassword reset link: https://www.africybertrust.com/reset-password?token={reset_token}\n")
         # Still return success to user
 
     return {"message": "If that email exists, a reset link has been sent"}
 
 
 @router.post("/reset-password")
-async def reset_password(token: str, new_password: str, db: Session = Depends(get_db)):
+async def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
     """
     Reset password using reset token from email.
     """
@@ -382,7 +401,7 @@ async def reset_password(token: str, new_password: str, db: Session = Depends(ge
     from app.services.auth_service import AuthService
 
     # Find user with this reset token
-    user = db.query(User).filter(User.reset_token == token).first()
+    user = db.query(User).filter(User.reset_token == request.token).first()
 
     if not user:
         raise HTTPException(
@@ -398,7 +417,7 @@ async def reset_password(token: str, new_password: str, db: Session = Depends(ge
         )
 
     # Update password
-    user.hashed_password = AuthService.get_password_hash(new_password)
+    user.hashed_password = AuthService.get_password_hash(request.new_password)
     user.reset_token = None
     user.reset_token_expires = None
     db.commit()
