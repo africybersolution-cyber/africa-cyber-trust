@@ -7,6 +7,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 const BLUE = '#0047AB';
 const GOLD = '#DAA520';
 
+export const dynamic = 'force-dynamic';
+
 export default function BusinessRegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();

@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 const BLUE = '#0047AB';
 const GOLD = '#DAA520';
 
