@@ -1,0 +1,389 @@
+
+> frontend@0.1.0 dev
+> next dev -p 3001
+
+▲ Next.js 16.2.7 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.137.1:3001
+- Environments: .env.local
+✓ Ready in 930ms
+
+⨯ ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  [90m830 |[0m               </div>
+  [90m831 |[0m             </div>
+[31m[1m>[0m [90m832 |[0m           </div>
+  [90m    |[0m            [31m[1m^^^^^[0m
+  [90m833 |[0m         )}
+  [90m834 |[0m
+  [90m835 |[0m         {[90m/* Verification Modal */[0m}
+
+Parsing ecmascript source code failed
+
+
+[browser] ./app/dashboard/assets/page.tsx:818:12
+Unterminated regexp literal
+  816 |               </div>
+  817 |             </div>
+> 818 |           </div>
+      |            ^^^^^
+  819 |         )}
+  820 |
+  821 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/assets/page.tsx [Client Component Browser]
+    ./app/dashboard/assets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/assets/page.tsx [Client Component SSR]
+    ./app/dashboard/assets/page.tsx [Server Component] 
+[browser] ./app/dashboard/assets/page.tsx:818:12
+Unterminated regexp literal
+  816 |               </div>
+  817 |             </div>
+> 818 |           </div>
+      |            ^^^^^
+  819 |         )}
+  820 |
+  821 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/assets/page.tsx [Client Component Browser]
+    ./app/dashboard/assets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/assets/page.tsx [Client Component SSR]
+    ./app/dashboard/assets/page.tsx [Server Component] 
+[browser] ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  830 |               </div>
+  831 |             </div>
+> 832 |           </div>
+      |            ^^^^^
+  833 |         )}
+  834 |
+  835 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/assets/page.tsx [Client Component Browser]
+    ./app/dashboard/assets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/assets/page.tsx [Client Component SSR]
+    ./app/dashboard/assets/page.tsx [Server Component] 
+[browser] ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  830 |               </div>
+  831 |             </div>
+> 832 |           </div>
+      |            ^^^^^
+  833 |         )}
+  834 |
+  835 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/assets/page.tsx [Client Component Browser]
+    ./app/dashboard/assets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/assets/page.tsx [Client Component SSR]
+    ./app/dashboard/assets/page.tsx [Server Component] 
+[browser] ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  830 |               </div>
+  831 |             </div>
+> 832 |           </div>
+      |            ^^^^^
+  833 |         )}
+  834 |
+  835 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/assets/page.tsx [Client Component Browser]
+    ./app/dashboard/assets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/assets/page.tsx [Client Component SSR]
+    ./app/dashboard/assets/page.tsx [Server Component] 
+[browser] ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  830 |               </div>
+  831 |             </div>
+> 832 |           </div>
+      |            ^^^^^
+  833 |         )}
+  834 |
+  835 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/assets/page.tsx [Client Component Browser]
+    ./app/dashboard/assets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/assets/page.tsx [Client Component SSR]
+    ./app/dashboard/assets/page.tsx [Server Component] 
+[browser] ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  830 |               </div>
+  831 |             </div>
+> 832 |           </div>
+      |            ^^^^^
+  833 |         )}
+  834 |
+  835 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/assets/page.tsx [Client Component Browser]
+    ./app/dashboard/assets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/assets/page.tsx [Client Component SSR]
+    ./app/dashboard/assets/page.tsx [Server Component] 
+[browser] ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  830 |               </div>
+  831 |             </div>
+> 832 |           </div>
+      |            ^^^^^
+  833 |         )}
+  834 |
+  835 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/assets/page.tsx [Client Component Browser]
+    ./app/dashboard/assets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/assets/page.tsx [Client Component SSR]
+    ./app/dashboard/assets/page.tsx [Server Component] 
+[browser] ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  830 |               </div>
+  831 |             </div>
+> 832 |           </div>
+      |            ^^^^^
+  833 |         )}
+  834 |
+  835 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/assets/page.tsx [Client Component Browser]
+    ./app/dashboard/assets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/assets/page.tsx [Client Component SSR]
+    ./app/dashboard/assets/page.tsx [Server Component] 
+[browser] ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  830 |               </div>
+  831 |             </div>
+> 832 |           </div>
+      |            ^^^^^
+  833 |         )}
+  834 |
+  835 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/assets/page.tsx [Client Component Browser]
+    ./app/dashboard/assets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/assets/page.tsx [Client Component SSR]
+    ./app/dashboard/assets/page.tsx [Server Component] 
+[browser] ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  830 |               </div>
+  831 |             </div>
+> 832 |           </div>
+      |            ^^^^^
+  833 |         )}
+  834 |
+  835 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/dashboard/assets/page.tsx [Client Component Browser]
+    ./app/dashboard/assets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/dashboard/assets/page.tsx [Client Component SSR]
+    ./app/dashboard/assets/page.tsx [Server Component] 
+ GET /dashboard/assets 500 in 2.3s (next.js: 1745ms, application-code: 513ms)
+[browser] Uncaught Error: ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  830 |               </div>
+  831 |             </div>
+> 832 |           </div>
+      |            ^^^^^
+  833 |         )}
+  834 |
+  835 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed
+
+
+    at <unknown> (Error: ./app/dashboard/assets/page.tsx:832:12)
+    at <unknown> (Error: (./app/dashboard/assets/page.tsx:832:12)
+[browser] ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  830 |               </div>
+  831 |             </div>
+> 832 |           </div>
+      |            ^^^^^
+  833 |         )}
+  834 |
+  835 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed 
+[browser] ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  830 |               </div>
+  831 |             </div>
+> 832 |           </div>
+      |            ^^^^^
+  833 |         )}
+  834 |
+  835 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed 
+⨯ ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  [90m830 |[0m               </div>
+  [90m831 |[0m             </div>
+[31m[1m>[0m [90m832 |[0m           </div>
+  [90m    |[0m            [31m[1m^^^^^[0m
+  [90m833 |[0m         )}
+  [90m834 |[0m
+  [90m835 |[0m         {[90m/* Verification Modal */[0m}
+
+Parsing ecmascript source code failed
+
+
+ GET /dashboard/assets 500 in 38ms (next.js: 14ms, application-code: 24ms)
+[browser] Uncaught Error: ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  830 |               </div>
+  831 |             </div>
+> 832 |           </div>
+      |            ^^^^^
+  833 |         )}
+  834 |
+  835 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed
+
+
+    at <unknown> (Error: ./app/dashboard/assets/page.tsx:832:12)
+    at <unknown> (Error: (./app/dashboard/assets/page.tsx:832:12)
+[browser] ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  830 |               </div>
+  831 |             </div>
+> 832 |           </div>
+      |            ^^^^^
+  833 |         )}
+  834 |
+  835 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed 
+[browser] ./app/dashboard/assets/page.tsx:832:12
+Unterminated regexp literal
+  830 |               </div>
+  831 |             </div>
+> 832 |           </div>
+      |            ^^^^^
+  833 |         )}
+  834 |
+  835 |         {/* Verification Modal */}
+
+Parsing ecmascript source code failed 
+🔧 Config loaded: {
+  apiUrl: 'http://localhost:8002',
+  env: 'development',
+  envVar: 'http://localhost:8002'
+}
+ GET /dashboard/assets 200 in 1865ms (next.js: 1210ms, application-code: 655ms)
+🔧 Config loaded: {
+  apiUrl: 'http://localhost:8002',
+  env: 'development',
+  envVar: 'http://localhost:8002'
+}
+ GET /dashboard/assets 200 in 124ms (next.js: 51ms, application-code: 73ms)
+ GET /dashboard/assets 200 in 65ms (next.js: 7ms, application-code: 58ms)
+ GET /dashboard 200 in 172ms (next.js: 97ms, application-code: 75ms)
+ GET /dashboard/assets 200 in 50ms (next.js: 10ms, application-code: 40ms)
+ GET /dashboard 200 in 113ms (next.js: 11ms, application-code: 102ms)
+ GET /dashboard 200 in 66ms (next.js: 8ms, application-code: 58ms)
+ GET /dashboard 200 in 58ms (next.js: 5ms, application-code: 52ms)
+ GET /dashboard 200 in 80ms (next.js: 4ms, application-code: 76ms)
+ GET /dashboard 200 in 68ms (next.js: 6ms, application-code: 62ms)
+ GET /dashboard 200 in 55ms (next.js: 3ms, application-code: 52ms)
+ GET /dashboard 200 in 81ms (next.js: 11ms, application-code: 70ms)
+ GET /dashboard 200 in 45ms (next.js: 4ms, application-code: 40ms)
+ GET /dashboard 200 in 64ms (next.js: 3ms, application-code: 61ms)
+ GET /dashboard/assets 200 in 34ms (next.js: 5ms, application-code: 28ms)
+ GET /dashboard/assets 200 in 87ms (next.js: 6ms, application-code: 81ms)
+ GET /dashboard/assets 200 in 65ms (next.js: 4ms, application-code: 61ms)
+ GET /dashboard 200 in 45ms (next.js: 6ms, application-code: 39ms)
+ GET /dashboard/assets 200 in 55ms (next.js: 6ms, application-code: 49ms)
+ GET /dashboard/assets 200 in 130ms (next.js: 14ms, application-code: 117ms)
+ GET /dashboard/assets 200 in 115ms (next.js: 9ms, application-code: 106ms)
+ GET /dashboard/assets 200 in 90ms (next.js: 7ms, application-code: 82ms)
+ GET /dashboard/assets 200 in 148ms (next.js: 19ms, application-code: 129ms)
+ GET /dashboard 200 in 60ms (next.js: 4ms, application-code: 56ms)
+ GET /dashboard/assets 200 in 125ms (next.js: 10ms, application-code: 115ms)
+ GET /dashboard 200 in 58ms (next.js: 7ms, application-code: 51ms)
+ GET /dashboard/reports 200 in 183ms (next.js: 118ms, application-code: 65ms)
+✓ Compiled in 1519ms
+ GET /dashboard/reports 200 in 269ms (next.js: 168ms, application-code: 102ms)
+ GET /dashboard/reports 200 in 52ms (next.js: 4ms, application-code: 47ms)
+✓ Compiled in 188ms
+ GET /dashboard/reports 200 in 789ms (next.js: 657ms, application-code: 132ms)
+ GET /login 200 in 168ms (next.js: 68ms, application-code: 101ms)
+ GET / 200 in 173ms (next.js: 144ms, application-code: 28ms)
+ GET /login 200 in 83ms (next.js: 6ms, application-code: 77ms)
+ GET /login 200 in 39ms (next.js: 5ms, application-code: 34ms)
+ GET /login 200 in 37ms (next.js: 7ms, application-code: 30ms)
+ GET / 200 in 156ms (next.js: 7ms, application-code: 149ms)
+ GET / 200 in 202ms (next.js: 98ms, application-code: 103ms)
+✓ Compiled in 520ms
+ GET / 200 in 51ms (next.js: 6ms, application-code: 45ms)
+✓ Compiled in 139ms
+ GET / 200 in 151ms (next.js: 79ms, application-code: 72ms)
+ GET / 200 in 38ms (next.js: 4ms, application-code: 34ms)
+✓ Compiled in 107ms
+ GET / 200 in 119ms (next.js: 83ms, application-code: 36ms)
+[?25h

@@ -1,0 +1,48 @@
+INFO:     Will watch for changes in these directories: ['C:\\Users\\Admin\\africa-cyber-trust\\backend']
+INFO:     Uvicorn running on http://127.0.0.1:8002 (Press CTRL+C to quit)
+INFO:     Started reloader process [17008] using StatReload
+INFO:     Started server process [29788]
+INFO:     Waiting for application startup.
+INFO:apscheduler.scheduler:Scheduler started
+INFO:app.services.scheduler_service:Background scheduler started
+INFO:apscheduler.scheduler:Added job "Cleanup expired verification tokens" to job store "default"
+INFO:app.services.scheduler_service:Scheduled job: Token cleanup (every 1 hour)
+INFO:apscheduler.scheduler:Added job "Run scheduled security scans" to job store "default"
+INFO:app.services.scheduler_service:Scheduled job: Security scans (every 15 minutes)
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'app\services\scan_service.py'. Reloading...
+ INFO:apscheduler.executors.default:Running job "Run scheduled security scans (trigger: interval[0:15:00], next run at: 2026-06-12 11:10:01 SAST)" (scheduled at 2026-06-12 11:10:01.245138+02:00)
+INFO:app.services.scheduler_service:Starting scheduled scan job...
+============================================================
+STARTING AFRICA CYBER TRUST INFRASTRUCTURE
+============================================================
+[OK] Background scheduler started
+[OK] Token cleanup job scheduled (every 1 hour)
+============================================================
+2026-06-12 11:10:03,568 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+INFO:sqlalchemy.engine.Engine:select pg_catalog.version()
+2026-06-12 11:10:03,569 INFO sqlalchemy.engine.Engine [raw sql] {}
+INFO:sqlalchemy.engine.Engine:[raw sql] {}
+2026-06-12 11:10:03,955 INFO sqlalchemy.engine.Engine select current_schema()
+INFO:sqlalchemy.engine.Engine:select current_schema()
+2026-06-12 11:10:03,955 INFO sqlalchemy.engine.Engine [raw sql] {}
+INFO:sqlalchemy.engine.Engine:[raw sql] {}
+2026-06-12 11:10:04,339 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+INFO:sqlalchemy.engine.Engine:show standard_conforming_strings
+2026-06-12 11:10:04,340 INFO sqlalchemy.engine.Engine [raw sql] {}
+INFO:sqlalchemy.engine.Engine:[raw sql] {}
+2026-06-12 11:10:04,732 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+2026-06-12 11:10:04,747 INFO sqlalchemy.engine.Engine SELECT assets.id AS assets_id, assets.company_id AS assets_company_id, assets.name AS assets_name, assets.type AS assets_type, assets.value AS assets_value, assets.description AS assets_description, assets.verification_status AS assets_verification_status, assets.verification_method AS assets_verification_method, assets.verification_token AS assets_verification_token, assets.verified_at AS assets_verified_at, assets.scan_enabled AS assets_scan_enabled, assets.scan_interval AS assets_scan_interval, assets.status AS assets_status, assets.score AS assets_score, assets.alerts_enabled AS assets_alerts_enabled, assets.last_scanned_at AS assets_last_scanned_at, assets.next_scan_at AS assets_next_scan_at, assets.security_score AS assets_security_score, assets.findings_count AS assets_findings_count, assets.app_file_path AS assets_app_file_path, assets.app_package_name AS assets_app_package_name, assets.app_version AS assets_app_version, assets.app_version_code AS assets_app_version_code, assets.app_size_mb AS assets_app_size_mb, assets.app_platform AS assets_app_platform, assets.created_at AS assets_created_at, assets.updated_at AS assets_updated_at 
+FROM assets 
+WHERE assets.scan_enabled = true AND assets.next_scan_at <= %(next_scan_at_1)s
+INFO:sqlalchemy.engine.Engine:SELECT assets.id AS assets_id, assets.company_id AS assets_company_id, assets.name AS assets_name, assets.type AS assets_type, assets.value AS assets_value, assets.description AS assets_description, assets.verification_status AS assets_verification_status, assets.verification_method AS assets_verification_method, assets.verification_token AS assets_verification_token, assets.verified_at AS assets_verified_at, assets.scan_enabled AS assets_scan_enabled, assets.scan_interval AS assets_scan_interval, assets.status AS assets_status, assets.score AS assets_score, assets.alerts_enabled AS assets_alerts_enabled, assets.last_scanned_at AS assets_last_scanned_at, assets.next_scan_at AS assets_next_scan_at, assets.security_score AS assets_security_score, assets.findings_count AS assets_findings_count, assets.app_file_path AS assets_app_file_path, assets.app_package_name AS assets_app_package_name, assets.app_version AS assets_app_version, assets.app_version_code AS assets_app_version_code, assets.app_size_mb AS assets_app_size_mb, assets.app_platform AS assets_app_platform, assets.created_at AS assets_created_at, assets.updated_at AS assets_updated_at 
+FROM assets 
+WHERE assets.scan_enabled = true AND assets.next_scan_at <= %(next_scan_at_1)s
+2026-06-12 11:10:04,748 INFO sqlalchemy.engine.Engine [generated in 0.00079s] {'next_scan_at_1': datetime.datetime(2026, 6, 12, 9, 10, 1, 297696, tzinfo=datetime.timezone.utc)}
+INFO:sqlalchemy.engine.Engine:[generated in 0.00079s] {'next_scan_at_1': datetime.datetime(2026, 6, 12, 9, 10, 1, 297696, tzinfo=datetime.timezone.utc)}
+INFO:app.services.scheduler_service:Found 0 assets to scan
+INFO:app.services.scheduler_service:Scheduled scan job completed: 0 assets scanned
+2026-06-12 11:10:05,139 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:sqlalchemy.engine.Engine:ROLLBACK
+INFO:apscheduler.executors.default:Job "Run scheduled security scans (trigger: interval[0:15:00], next run at: 2026-06-12 11:25:01 SAST)" executed successfully

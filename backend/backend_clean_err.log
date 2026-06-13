@@ -1,0 +1,47 @@
+INFO:     Will watch for changes in these directories: ['C:\\Users\\Admin\\africa-cyber-trust\\backend']
+INFO:     Uvicorn running on http://127.0.0.1:8002 (Press CTRL+C to quit)
+INFO:     Started reloader process [22244] using StatReload
+INFO:     Started server process [29372]
+INFO:     Waiting for application startup.
+INFO:apscheduler.scheduler:Scheduler started
+INFO:app.services.scheduler_service:Background scheduler started
+INFO:apscheduler.scheduler:Added job "Cleanup expired verification tokens" to job store "default"
+INFO:app.services.scheduler_service:Scheduled job: Token cleanup (every 1 hour)
+INFO:apscheduler.scheduler:Added job "Run scheduled security scans" to job store "default"
+INFO:app.services.scheduler_service:Scheduled job: Security scans (every 15 minutes)
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'app\services\scan_service.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:app.services.scheduler_service:Shutting down scheduler...
+INFO:apscheduler.scheduler:Scheduler has been shut down
+INFO:app.services.scheduler_service:Scheduler stopped
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29372]
+INFO:     Started server process [22096]
+INFO:     Waiting for application startup.
+INFO:apscheduler.scheduler:Scheduler started
+INFO:app.services.scheduler_service:Background scheduler started
+INFO:apscheduler.scheduler:Added job "Cleanup expired verification tokens" to job store "default"
+INFO:app.services.scheduler_service:Scheduled job: Token cleanup (every 1 hour)
+INFO:apscheduler.scheduler:Added job "Run scheduled security scans" to job store "default"
+INFO:app.services.scheduler_service:Scheduled job: Security scans (every 15 minutes)
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'app\services\scan_service.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:app.services.scheduler_service:Shutting down scheduler...
+INFO:apscheduler.scheduler:Scheduler has been shut down
+INFO:app.services.scheduler_service:Scheduler stopped
+INFO:     Application shutdown complete.
+INFO:     Finished server process [22096]
+INFO:     Started server process [13716]
+INFO:     Waiting for application startup.
+INFO:apscheduler.scheduler:Scheduler started
+INFO:app.services.scheduler_service:Background scheduler started
+INFO:apscheduler.scheduler:Added job "Cleanup expired verification tokens" to job store "default"
+INFO:app.services.scheduler_service:Scheduled job: Token cleanup (every 1 hour)
+INFO:apscheduler.scheduler:Added job "Run scheduled security scans" to job store "default"
+INFO:app.services.scheduler_service:Scheduled job: Security scans (every 15 minutes)
+INFO:     Application startup complete.
+WARNING:  StatReload detected changes in 'app\services\scan_service.py'. Reloading...
