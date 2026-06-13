@@ -10,6 +10,7 @@ from app.db.database import get_db
 from app.services.auth_service import AuthService
 from app.services.trial_service import TrialService
 from app.services.access_control_service import AccessControlService
+from app.services.email_service import EmailService
 from app.models.user import User
 from app.models.company import Company
 
@@ -323,8 +324,7 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
     Generates a reset token and sends email with reset link.
     """
     import secrets
-    from datetime import datetime, timedelta
-    from app.services.email_service import EmailService
+    from datetime import timedelta
 
     user = db.query(User).filter(User.email == request.email).first()
 
