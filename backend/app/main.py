@@ -45,6 +45,17 @@ async def startup_event():
     print(f"[DEBUG] CORS Origins: {settings.cors_origins}")
     print(f"[DEBUG] Raw ALLOWED_ORIGINS: {settings.ALLOWED_ORIGINS}")
 
+    # Initialize database tables
+    from app.db.database import Base, get_engine
+    # Import all models to register them with Base.metadata
+    from app.models import user, company, asset, scan, subscription, public_check, alert, verification
+
+    engine = get_engine()
+    if engine:
+        print("[DB] Creating database tables if they don't exist...")
+        Base.metadata.create_all(bind=engine)
+        print("[OK] Database tables ready")
+
     # Start background scheduler for automated tasks
     from app.services.scheduler_service import scheduler_service
     scheduler_service.schedule_jobs()
