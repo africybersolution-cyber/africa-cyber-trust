@@ -43,6 +43,10 @@ class User(Base):
     trial_ends_at = Column(DateTime(timezone=True), nullable=True)
     trial_status = Column(String(20), default='active')  # 'active', 'expired', 'converted'
 
+    # Password reset fields
+    reset_token = Column(String(255), nullable=True)
+    reset_token_expires = Column(DateTime(timezone=True), nullable=True)
+
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 

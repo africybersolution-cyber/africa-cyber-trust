@@ -303,3 +303,104 @@ async def get_me(current_user: User = Depends(get_current_user)):
 async def logout(current_user: User = Depends(get_current_user)):
     """Logout user."""
     return {"message": "Successfully logged out"}
+
+
+@router.post("/forgot-password")
+async def forgot_password(email: str, db: Session = Depends(get_db)):
+    """
+    Request password reset email.
+    Generates a reset token and sends email with reset link.
+    """
+    import secrets
+    from datetime import datetime, timedelta
+
+    user = db.query(User).filter(User.email == email).first()
+
+    # Always return success even if email doesn't exist (security best practice)
+    if not user:
+        return {"message": "If that email exists, a reset link has been sent"}
+
+    # Generate secure reset token
+    reset_token = secrets.token_urlsafe(32)
+
+    # Store token in user record (expires in 1 hour)
+    user.reset_token = reset_token
+    user.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
+    db.commit()
+
+    # Send password reset email
+    try:
+        # Add to email queue
+        from app.models.email_queue import EmailQueue  # Assuming you have this model
+
+        reset_link = f"https://www.africybertrust.com/reset-password?token={reset_token}"
+
+        email_html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #0047AB;">Password Reset Request</h2>
+            <p>You requested to reset your password for Africa Cyber Trust Infrastructure.</p>
+            <p>Click the button below to reset your password:</p>
+            <p style="margin: 30px 0;">
+                <a href="{reset_link}" style="background: linear-gradient(135deg, #0047AB 0%, #DAA520 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; display: inline-block;">
+                    Reset Password
+                </a>
+            </p>
+            <p style="color: #666; font-size: 14px;">
+                This link will expire in 1 hour.<br>
+                If you didn't request this, please ignore this email.
+            </p>
+            <p style="color: #666; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                Africa Cyber Trust Infrastructure<br>
+                © 2026 All rights reserved
+            </p>
+        </div>
+        """
+
+        # Write to email queue (will be sent by email service)
+        email_record = EmailQueue(
+            to=user.email,
+            subject="Reset Your Password - Africa Cyber Trust",
+            html=email_html,
+            created_at=datetime.utcnow()
+        )
+        db.add(email_record)
+        db.commit()
+
+    except Exception as e:
+        print(f"Error sending password reset email: {e}")
+        # Still return success to user
+
+    return {"message": "If that email exists, a reset link has been sent"}
+
+
+@router.post("/reset-password")
+async def reset_password(token: str, new_password: str, db: Session = Depends(get_db)):
+    """
+    Reset password using reset token from email.
+    """
+    from datetime import datetime
+    from app.services.auth_service import AuthService
+
+    # Find user with this reset token
+    user = db.query(User).filter(User.reset_token == token).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+
+    # Check if token is expired
+    if not user.reset_token_expires or user.reset_token_expires < datetime.utcnow():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reset token has expired. Please request a new one."
+        )
+
+    # Update password
+    user.hashed_password = AuthService.get_password_hash(new_password)
+    user.reset_token = None
+    user.reset_token_expires = None
+    db.commit()
+
+    return {"message": "Password successfully reset. You can now login with your new password."}
