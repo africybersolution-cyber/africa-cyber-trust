@@ -324,7 +324,7 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
     Generates a reset token and sends email with reset link.
     """
     import secrets
-    from datetime import timedelta
+    from datetime import datetime as dt, timedelta
 
     user = db.query(User).filter(User.email == request.email).first()
 
@@ -337,7 +337,7 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
 
     # Store token in user record (expires in 1 hour)
     user.reset_token = reset_token
-    user.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
+    user.reset_token_expires = dt.utcnow() + timedelta(hours=1)
     db.commit()
 
     # Send password reset email via EmailService
