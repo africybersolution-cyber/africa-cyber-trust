@@ -130,7 +130,7 @@ Return JSON with:
 
     async def verify_photo_file(self, file_content: bytes, filename: str) -> Dict[str, Any]:
         """
-        Verify uploaded photo file using OpenAI Vision.
+        Multi-pass verification using OpenAI Vision (3 specialized passes).
         """
         if not self.openai_key:
             return self._mock_photo_result(filename)
@@ -139,89 +139,20 @@ Return JSON with:
             # Convert to base64
             base64_image = base64.b64encode(file_content).decode('utf-8')
 
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(
-                    "https://api.openai.com/v1/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {self.openai_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": "gpt-4o",
-                        "messages": [
-                            {
-                                "role": "system",
-                                "content": """You are an EXPERT AI image forensics analyst. Look for AI generation tells:
+            # Run 3 specialized detection passes in parallel
+            import asyncio
+            results = await asyncio.gather(
+                self._pass_1_general_analysis(base64_image),
+                self._pass_2_ai_artifact_detection(base64_image),
+                self._pass_3_statistical_analysis(base64_image),
+                return_exceptions=True
+            )
 
-CHECK CAREFULLY:
-- Hands: Extra/missing fingers, unnatural bending
-- Text: Blurry, nonsensical, impossible fonts
-- Eyes: Different sizes, weird reflections, lifeless
-- Skin: Too smooth/waxy (AI signature)
-- Hair: Melting, too perfect, unnatural flow
-- Shadows: Inconsistent lighting direction
-- Background: Objects merging, impossible geometry
-- Details: Blur into noise when examined closely
-- Patterns: Unnatural repetition or symmetry
-
-BE STRICT with AI detection. Modern AI (Midjourney, DALL-E, Stable Diffusion) creates very realistic images but always has subtle tells.
-
-Return JSON:
-{
-  "authenticity_score": 0-100,
-  "is_authentic": boolean,
-  "confidence": 0-100,
-  "detailed_analysis": "SPECIFIC findings",
-  "red_flags": ["exact issues found"],
-  "ai_generation_likelihood": "none|low|medium|high|very_high",
-  "recommendation": "action for user"
-}"""
-                            },
-                            {
-                                "role": "user",
-                                "content": [
-                                    {
-                                        "type": "text",
-                                        "text": "Analyze this image for authenticity and deepfake indicators."
-                                    },
-                                    {
-                                        "type": "image_url",
-                                        "image_url": {
-                                            "url": f"data:image/jpeg;base64,{base64_image}"
-                                        }
-                                    }
-                                ]
-                            }
-                        ],
-                        "max_tokens": 1000,
-                        "response_format": {"type": "json_object"}
-                    }
-                )
-
-                if response.status_code == 200:
-                    result = response.json()
-                    content = result["choices"][0]["message"]["content"]
-
-                    import json
-                    analysis = json.loads(content)
-
-                    return {
-                        "success": True,
-                        "authentic": analysis.get("is_authentic", True),
-                        "score": analysis.get("authenticity_score", 85),
-                        "confidence": analysis.get("confidence", 80),
-                        "analysis": analysis.get("detailed_analysis", "Image analyzed."),
-                        "red_flags": analysis.get("red_flags", []),
-                        "ai_likelihood": analysis.get("ai_generation_likelihood", "unknown"),
-                        "recommendation": analysis.get("recommendation", "Image appears authentic."),
-                        "ai_model": "gpt-4o-vision-enhanced",
-                        "filename": filename,
-                    }
-                else:
-                    return self._mock_photo_result(filename)
+            # Combine results from all passes
+            return self._combine_multi_pass_results(results, filename)
 
         except Exception as e:
-            print(f"OpenAI API error: {str(e)}")
+            print(f"Multi-pass analysis error: {str(e)}")
             return self._mock_photo_result(filename)
 
     async def verify_video_url(self, video_url: str) -> Dict[str, Any]:
@@ -263,6 +194,181 @@ Return JSON:
         # - Microsoft Video Authenticator API
 
         return self._mock_video_result(filename)
+
+    async def _pass_1_general_analysis(self, base64_image: str) -> Dict[str, Any]:
+        """Pass 1: General authenticity check."""
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {self.openai_key}", "Content-Type": "application/json"},
+                json={
+                    "model": "gpt-4o",
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": """You are a general image authenticity expert. Focus on overall impression.
+
+Check:
+- Does this look like a real photograph?
+- Overall lighting consistency
+- Natural vs artificial appearance
+- General realism
+
+Return JSON: {"score": 0-100, "findings": "what you see", "suspicious": boolean}"""
+                        },
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": "Does this look like a real photograph or AI-generated?"},
+                                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+                            ]
+                        }
+                    ],
+                    "max_tokens": 500,
+                    "response_format": {"type": "json_object"}
+                }
+            )
+            if response.status_code == 200:
+                import json
+                return json.loads(response.json()["choices"][0]["message"]["content"])
+            return {"score": 50, "findings": "Analysis failed", "suspicious": True}
+
+    async def _pass_2_ai_artifact_detection(self, base64_image: str) -> Dict[str, Any]:
+        """Pass 2: Specific AI artifact hunting."""
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {self.openai_key}", "Content-Type": "application/json"},
+                json={
+                    "model": "gpt-4o",
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": """You are an AI ARTIFACT HUNTER. Look ONLY for these specific tells:
+
+CRITICAL CHECKS (common in AI-generated images):
+1. HANDS: Count fingers. Are there 5 per hand? Any extra/missing? Unnatural bending?
+2. TEXT: Any text/watermarks? Is it readable or gibberish/blurry?
+3. EYES: Same size? Natural reflections? Or dead/glassy stare?
+4. SKIN: Natural texture or too smooth/waxy/plastic?
+5. HAIR: Individual strands or melted/merged/too perfect?
+6. BACKGROUND: Do objects make geometric sense? Or merging/impossible?
+
+AI images (Midjourney, DALL-E, Stable Diffusion) ALWAYS mess up at least one of these.
+
+Return JSON: {"artifact_score": 0-100 (0=many artifacts, 100=none found), "artifacts_found": ["specific issues"], "ai_likely": boolean}"""
+                        },
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": "Hunt for AI generation artifacts. Check hands, text, eyes, skin, hair, background."},
+                                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+                            ]
+                        }
+                    ],
+                    "max_tokens": 500,
+                    "response_format": {"type": "json_object"}
+                }
+            )
+            if response.status_code == 200:
+                import json
+                return json.loads(response.json()["choices"][0]["message"]["content"])
+            return {"artifact_score": 50, "artifacts_found": [], "ai_likely": True}
+
+    async def _pass_3_statistical_analysis(self, base64_image: str) -> Dict[str, Any]:
+        """Pass 3: Pattern and statistical analysis."""
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {self.openai_key}", "Content-Type": "application/json"},
+                json={
+                    "model": "gpt-4o",
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": """You are a PATTERN ANALYST. Look for unnatural patterns.
+
+Check for:
+- Repetitive patterns (tiling, symmetry that's too perfect)
+- Noise consistency (same noise level everywhere?)
+- Detail degradation (fine details that blur into mush when you look closely)
+- "Too perfect" syndrome (everything looks ideal/staged)
+- Impossible geometry or perspectives
+
+AI generators often create patterns that look good at first glance but break down under scrutiny.
+
+Return JSON: {"pattern_score": 0-100 (0=very suspicious patterns, 100=natural), "pattern_issues": ["specific problems"], "too_perfect": boolean}"""
+                        },
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": "Analyze patterns, noise, detail consistency. Look for 'too perfect' syndrome."},
+                                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+                            ]
+                        }
+                    ],
+                    "max_tokens": 500,
+                    "response_format": {"type": "json_object"}
+                }
+            )
+            if response.status_code == 200:
+                import json
+                return json.loads(response.json()["choices"][0]["message"]["content"])
+            return {"pattern_score": 50, "pattern_issues": [], "too_perfect": False}
+
+    def _combine_multi_pass_results(self, results: list, filename: str) -> Dict[str, Any]:
+        """Combine results from 3 passes into final verdict."""
+        import json
+
+        # Extract scores from each pass
+        pass1, pass2, pass3 = results[0], results[1], results[2]
+
+        # Weighted scoring: Pass 2 (AI artifacts) gets highest weight
+        general_score = pass1.get("score", 50)
+        artifact_score = pass2.get("artifact_score", 50)
+        pattern_score = pass3.get("pattern_score", 50)
+
+        # Weighted average: artifact detection is most important
+        final_score = int((general_score * 0.2) + (artifact_score * 0.5) + (pattern_score * 0.3))
+
+        # Collect all red flags
+        all_red_flags = []
+        all_red_flags.extend(pass2.get("artifacts_found", []))
+        all_red_flags.extend(pass3.get("pattern_issues", []))
+
+        # Determine if AI-generated
+        is_ai_generated = (
+            artifact_score < 60 or  # Clear AI artifacts found
+            pass2.get("ai_likely", False) or
+            (pass3.get("too_perfect", False) and artifact_score < 70)
+        )
+
+        # Build detailed analysis
+        analysis_parts = [
+            f"PASS 1 (General): {pass1.get('findings', 'No issues')}",
+            f"PASS 2 (AI Artifacts): {', '.join(pass2.get('artifacts_found', ['None detected']))}",
+            f"PASS 3 (Patterns): {', '.join(pass3.get('pattern_issues', ['Normal patterns']))}"
+        ]
+
+        ai_likelihood = "very_high" if final_score < 40 else "high" if final_score < 60 else "medium" if final_score < 75 else "low" if final_score < 90 else "none"
+
+        return {
+            "success": True,
+            "authentic": not is_ai_generated,
+            "score": final_score,
+            "confidence": 85,  # Higher confidence from multi-pass
+            "analysis": " | ".join(analysis_parts),
+            "red_flags": all_red_flags[:5],  # Top 5 issues
+            "ai_likelihood": ai_likelihood,
+            "recommendation": f"AI-Generated: {ai_likelihood.upper()} likelihood. Score: {final_score}/100" if is_ai_generated else "Appears authentic. No significant AI artifacts detected.",
+            "ai_model": "gpt-4o-multi-pass (3 specialized analyses)",
+            "filename": filename,
+            "pass_scores": {
+                "general": general_score,
+                "artifacts": artifact_score,
+                "patterns": pattern_score
+            }
+        }
 
     def _mock_photo_result(self, identifier: str) -> Dict[str, Any]:
         """Mock result when API keys not configured."""
