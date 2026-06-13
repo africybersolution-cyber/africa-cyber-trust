@@ -1,9 +1,9 @@
 /**
  * Real API Client for Africa Cyber Trust Infrastructure
- * Connects to Python FastAPI backend on port 8001
+ * Connects to Python FastAPI backend
  */
 
-const API_BASE_URL = 'http://localhost:8002';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002';
 
 export class APIClient {
   /**
