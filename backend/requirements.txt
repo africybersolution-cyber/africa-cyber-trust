@@ -55,8 +55,7 @@ weasyprint==60.2
 # Rate limiting
 slowapi==0.1.9
 
-# CORS
-python-cors==1.0.0
+# CORS (built into FastAPI, no extra package needed)
 
 # Logging and monitoring
 python-json-logger==2.0.7
