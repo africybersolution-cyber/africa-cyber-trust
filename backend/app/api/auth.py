@@ -344,9 +344,9 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
     try:
         reset_link = f"https://www.africybertrust.com/reset-password?token={reset_token}"
 
-        # Send email to africybersolution@gmail.com (notification email)
+        # Send email to the customer who requested password reset
         EmailService.send_password_reset_email(
-            to_email="africybersolution@gmail.com",
+            to_email=user.email,  # Send to the customer's email
             reset_link=reset_link
         )
 
@@ -354,7 +354,7 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
         print(f"\n{'='*60}")
         print(f"PASSWORD RESET LINK FOR: {user.email}")
         print(f"Link: {reset_link}")
-        print(f"Email sent to: africybersolution@gmail.com")
+        print(f"Email sent to: {user.email} (FROM: africybersolution@gmail.com)")
         print(f"{'='*60}\n")
 
     except Exception as e:
