@@ -1,12 +1,12 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 
 const BLUE = '#0047AB';
 const GOLD = '#DAA520';
 
-export default function EmailSentPage() {
+function EmailSentContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email') || '';
   const domain = searchParams.get('domain') || '';
@@ -245,5 +245,13 @@ export default function EmailSentPage() {
         </div>
       </footer>
     </main>
+  );
+}
+
+export default function EmailSentPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center"><div className="text-white text-xl">Loading...</div></div>}>
+      <EmailSentContent />
+    </Suspense>
   );
 }
