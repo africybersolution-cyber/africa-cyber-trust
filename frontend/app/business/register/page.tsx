@@ -1,15 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { config } from '@/lib/config';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 const BLUE = '#0047AB';
 const GOLD = '#DAA520';
 
-export const dynamic = 'force-dynamic';
-
-export default function BusinessRegisterPage() {
+function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -378,5 +376,13 @@ export default function BusinessRegisterPage() {
         </div>
       </footer>
     </main>
+  );
+}
+
+export default function BusinessRegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center"><div className="text-white text-xl">Loading...</div></div>}>
+      <RegisterContent />
+    </Suspense>
   );
 }
