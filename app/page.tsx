@@ -232,19 +232,19 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Quick Check Section */}
-          <div className="max-w-4xl mx-auto" id="check">
-            <div className="bg-slate-800/60 backdrop-blur-xl rounded-3xl shadow-2xl p-10 md:p-14 border border-blue-900/30">
-              {/* Header */}
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #0047AB 0%, #DAA520 100%)' }}>
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* Quick Check Section - MOBILE OPTIMIZED */}
+          <div className="max-w-4xl mx-auto px-4" id="check">
+            <div className="bg-slate-800/60 backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-10 lg:p-14 border border-blue-900/30">
+              {/* Header - RESPONSIVE */}
+              <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
+                <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0" style={{ background: 'linear-gradient(135deg, #0047AB 0%, #DAA520 100%)' }}>
+                  <svg className="w-6 h-6 md:w-8 md:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-4xl font-bold text-white mb-1">Scam Detector</h2>
-                  <p className="text-gray-400">Is this website legitimate or a scam?</p>
+                  <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-1">Scam Detector</h2>
+                  <p className="text-sm md:text-base text-gray-400">Is this website legitimate or a scam?</p>
                 </div>
               </div>
 
@@ -260,17 +260,17 @@ export default function Home() {
               </div>
 
               <div className="space-y-6">
-                {/* URL Input */}
+                {/* URL Input - MOBILE FRIENDLY */}
                 <div>
                   <label className="block text-sm font-bold mb-3 text-gray-300">Website URL or Company Name</label>
-                  <div className="relative">
+                  <div className="flex flex-col md:flex-row gap-3">
                     <input
                       type="text"
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleCheckWebsite()}
                       placeholder="https://example.com or company name..."
-                      className="w-full px-6 py-5 text-lg border-2 rounded-xl focus:outline-none transition-all shadow-lg bg-slate-900/50 text-white placeholder-gray-500"
+                      className="flex-1 px-4 md:px-6 py-4 md:py-5 text-base md:text-lg border-2 rounded-xl focus:outline-none transition-all shadow-lg bg-slate-900/50 text-white placeholder-gray-500"
                       style={{
                         borderColor: error ? '#DC2626' : 'rgba(0, 71, 171, 0.3)',
                         boxShadow: '0 0 30px rgba(0, 71, 171, 0.1)'
@@ -289,7 +289,7 @@ export default function Home() {
                     <button
                       onClick={handleCheckWebsite}
                       disabled={loading}
-                      className="absolute right-2 top-2 px-6 py-3 rounded-lg font-bold text-white shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+                      className="w-full md:w-auto px-6 py-4 md:py-3 rounded-xl font-bold text-white shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
                       style={{ background: 'linear-gradient(135deg, #0047AB 0%, #1E90FF 100%)' }}
                     >
                       Check Now
@@ -304,14 +304,14 @@ export default function Home() {
                   <div className="flex-1 border-t border-slate-700"></div>
                 </div>
 
-                {/* File Upload */}
+                {/* File Upload - TOUCH FRIENDLY */}
                 <div>
-                  <label className="flex flex-col items-center justify-center w-full px-6 py-10 border-2 border-dashed rounded-2xl cursor-pointer hover:border-blue-500 transition-all bg-slate-900/30 hover:bg-slate-900/50 border-slate-700">
-                    <svg className="w-14 h-14 mb-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <label className="flex flex-col items-center justify-center w-full px-4 md:px-6 py-8 md:py-10 border-2 border-dashed rounded-2xl cursor-pointer hover:border-blue-500 transition-all bg-slate-900/30 hover:bg-slate-900/50 border-slate-700 active:bg-slate-900/70">
+                    <svg className="w-12 h-12 md:w-14 md:h-14 mb-3 md:mb-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
-                    <p className="text-lg font-bold text-gray-300 mb-1">Drop file or click to upload</p>
-                    <p className="text-sm text-gray-500">PNG, JPG, MP4, WebM (max 10MB photos, 100MB videos)</p>
+                    <p className="text-base md:text-lg font-bold text-gray-300 mb-1 text-center">Drop file or click to upload</p>
+                    <p className="text-xs md:text-sm text-gray-500 text-center px-2">PNG, JPG, MP4, WebM (max 10MB photos, 100MB videos)</p>
                     <input
                       type="file"
                       accept="image/*,video/*"
