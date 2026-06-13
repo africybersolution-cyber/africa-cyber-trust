@@ -9,6 +9,7 @@ export default function Home() {
   const [loading, setLoading] = useState<boolean>(false);
   const [inputValue, setInputValue] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -107,6 +108,7 @@ export default function Home() {
                 <div className="text-xs text-gray-400 tracking-widest">INFRASTRUCTURE</div>
               </div>
             </div>
+            {/* Desktop Menu */}
             <div className="hidden md:flex gap-6 items-center">
               <a href="/" className="text-gray-300 hover:text-blue-400 transition font-medium">Home</a>
               <a href="/about" className="text-gray-300 hover:text-blue-400 transition font-medium">About</a>
@@ -122,7 +124,40 @@ export default function Home() {
                 Get Started
               </a>
             </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-gray-300 hover:text-blue-400 transition"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
+
+          {/* Mobile Menu Dropdown */}
+          {mobileMenuOpen && (
+            <div className="md:hidden mt-4 pb-4 space-y-3">
+              <a href="/" className="block text-gray-300 hover:text-blue-400 transition font-medium py-2">Home</a>
+              <a href="/about" className="block text-gray-300 hover:text-blue-400 transition font-medium py-2">About</a>
+              <a href="/pricing" className="block text-gray-300 hover:text-blue-400 transition font-medium py-2">Pricing</a>
+              <a href="/business" className="block text-gray-300 hover:text-blue-400 transition font-medium py-2">For Business</a>
+              <a href="/contact" className="block text-gray-300 hover:text-blue-400 transition font-medium py-2">Contact</a>
+              <a href="/login" className="block text-gray-300 hover:text-blue-400 transition font-medium py-2">Login</a>
+              <a
+                href="/signup"
+                className="block text-center px-6 py-3 rounded-xl font-semibold text-white shadow-lg mt-2"
+                style={{ background: 'linear-gradient(135deg, #0047AB 0%, #1E90FF 100%)' }}
+              >
+                Get Started
+              </a>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -147,8 +182,8 @@ export default function Home() {
               <span className="text-sm font-bold text-blue-300 tracking-wide">AI-POWERED SECURITY FOR AFRICA</span>
             </div>
 
-            {/* Main headline */}
-            <h1 className="text-7xl font-extrabold mb-6 leading-tight tracking-tight">
+            {/* Main headline - MOBILE RESPONSIVE */}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight tracking-tight">
               <span className="block mb-2" style={{ color: '#0047AB', textShadow: '0 0 40px rgba(0, 71, 171, 0.3)' }}>
                 AFRICA CYBER
               </span>
@@ -157,39 +192,39 @@ export default function Home() {
               </span>
             </h1>
 
-            <p className="text-2xl text-gray-300 mb-4 font-light">Scam Detection & Authenticity Verification</p>
-            <p className="text-gray-400 text-lg max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl md:text-2xl text-gray-300 mb-4 font-light px-4">Scam Detection & Authenticity Verification</p>
+            <p className="text-base md:text-lg text-gray-400 max-w-3xl mx-auto px-4">
               Protect yourself from online scams, phishing, deepfakes, and fraud. Check if websites are legitimate, detect AI-generated content, and stay safe across Africa.
             </p>
 
-            {/* Trust indicators */}
-            <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto mt-12">
-              <div className="text-center">
-                <div className="text-4xl font-bold mb-1" style={{ color: '#0047AB' }}>24/7</div>
+            {/* Trust indicators - STACK ON MOBILE */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-2xl mx-auto mt-12">
+              <div className="text-center p-4 sm:p-0">
+                <div className="text-3xl sm:text-4xl font-bold mb-1" style={{ color: '#0047AB' }}>24/7</div>
                 <div className="text-sm text-gray-400">Protection</div>
               </div>
-              <div className="text-center border-x border-blue-900/50">
-                <div className="text-4xl font-bold mb-1" style={{ color: '#DAA520' }}>AI-Powered</div>
+              <div className="text-center p-4 sm:p-0 border-y sm:border-y-0 sm:border-x border-blue-900/50">
+                <div className="text-3xl sm:text-4xl font-bold mb-1" style={{ color: '#DAA520' }}>AI-Powered</div>
                 <div className="text-sm text-gray-400">Detection</div>
               </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold mb-1" style={{ color: '#0047AB' }}>Instant</div>
+              <div className="text-center p-4 sm:p-0">
+                <div className="text-3xl sm:text-4xl font-bold mb-1" style={{ color: '#0047AB' }}>Instant</div>
                 <div className="text-sm text-gray-400">Results</div>
               </div>
             </div>
 
-            {/* CTA buttons */}
-            <div className="flex flex-wrap gap-4 justify-center mt-12">
+            {/* CTA buttons - MOBILE RESPONSIVE */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-12 px-4">
               <a
                 href="#check"
-                className="px-10 py-4 rounded-xl font-bold text-white shadow-2xl shadow-blue-500/40 hover:shadow-blue-500/60 transition-all transform hover:scale-105 text-lg"
+                className="w-full sm:w-auto px-8 sm:px-10 py-4 rounded-xl font-bold text-white shadow-2xl shadow-blue-500/40 hover:shadow-blue-500/60 transition-all transform hover:scale-105 text-base sm:text-lg text-center"
                 style={{ background: 'linear-gradient(135deg, #0047AB 0%, #1E90FF 100%)' }}
               >
                 Start Free Check →
               </a>
               <a
                 href="/business"
-                className="px-10 py-4 rounded-xl font-bold border-2 hover:bg-blue-950/50 transition-all text-lg backdrop-blur-sm"
+                className="w-full sm:w-auto px-8 sm:px-10 py-4 rounded-xl font-bold border-2 hover:bg-blue-950/50 transition-all text-base sm:text-lg backdrop-blur-sm text-center"
                 style={{ borderColor: '#DAA520', color: '#DAA520' }}
               >
                 Business Solutions
