@@ -38,21 +38,50 @@ class AIVerificationService:
                         "messages": [
                             {
                                 "role": "system",
-                                "content": """You are an expert AI image forensics analyst. Analyze images for:
-1. AI generation artifacts (GANs, diffusion models)
-2. Deepfake indicators (face swaps, synthetic faces)
-3. Photo manipulation (cloning, warping, filters)
-4. Metadata inconsistencies
-5. Lighting and shadow anomalies
-6. Unnatural textures or patterns
+                                "content": """You are an EXPERT AI image forensics analyst specializing in detecting AI-generated and manipulated content.
 
-Provide:
-- authenticity_score (0-100, where 100 = definitely real)
-- is_authentic (true/false)
-- confidence (0-100)
-- detailed_analysis (what you found)
-- red_flags (list of suspicious indicators)
-- recommendation (what user should do)"""
+CRITICAL ANALYSIS POINTS:
+
+1. AI GENERATION ARTIFACTS (Midjourney, DALL-E, Stable Diffusion):
+   - Weird hands (extra/missing fingers, unnatural positions)
+   - Text rendering (blurry, nonsensical characters)
+   - Watermarks/signatures (gibberish text, impossible fonts)
+   - Repeating patterns (unnatural symmetry, tiling)
+   - Background consistency (objects merging, impossible perspectives)
+   - Skin texture (too smooth, plastic-looking, waxy)
+   - Hair (individual strands too perfect or melting together)
+   - Eyes (different sizes, unnatural reflections, dead stare)
+   - Teeth (too white, perfectly aligned unnaturally)
+   - Lighting (inconsistent shadows, multiple light sources that don't match)
+   - Details (fine details that blur into noise when zoomed)
+
+2. DEEPFAKE INDICATORS:
+   - Face-body mismatch (different lighting on face vs body)
+   - Unnatural blinking or no blinking
+   - Mouth movements not matching speech
+   - Edge artifacts around face/hair
+   - Skin tone inconsistencies
+   - Unnatural facial expressions
+
+3. PHOTO MANIPULATION:
+   - Clone stamp artifacts (repeating patterns)
+   - Warping distortions (unnatural curves)
+   - Color/lighting mismatches
+   - Sharp edges where they shouldn't be
+   - Noise inconsistencies across image
+
+BE STRICT. AI-generated images often look "too perfect" or have subtle tells.
+
+Return JSON with:
+{
+  "authenticity_score": 0-100 (0=definitely AI, 100=definitely real),
+  "is_authentic": boolean,
+  "confidence": 0-100 (how sure you are),
+  "detailed_analysis": "Specific findings - mention EXACTLY what you see",
+  "red_flags": ["specific issue 1", "specific issue 2"],
+  "ai_generation_likelihood": "none|low|medium|high|very_high",
+  "recommendation": "what user should do"
+}"""
                             },
                             {
                                 "role": "user",
@@ -88,8 +117,9 @@ Provide:
                         "confidence": analysis.get("confidence", 80),
                         "analysis": analysis.get("detailed_analysis", "Image appears authentic."),
                         "red_flags": analysis.get("red_flags", []),
+                        "ai_likelihood": analysis.get("ai_generation_likelihood", "unknown"),
                         "recommendation": analysis.get("recommendation", "Image appears safe to trust."),
-                        "ai_model": "gpt-4o-vision",
+                        "ai_model": "gpt-4o-vision-enhanced",
                     }
                 else:
                     return self._mock_photo_result(image_url)
@@ -121,9 +151,31 @@ Provide:
                         "messages": [
                             {
                                 "role": "system",
-                                "content": """Analyze this image for AI generation, deepfakes, and manipulation.
-Provide JSON response with: authenticity_score (0-100), is_authentic (bool), confidence (0-100),
-detailed_analysis (string), red_flags (array), recommendation (string)."""
+                                "content": """You are an EXPERT AI image forensics analyst. Look for AI generation tells:
+
+CHECK CAREFULLY:
+- Hands: Extra/missing fingers, unnatural bending
+- Text: Blurry, nonsensical, impossible fonts
+- Eyes: Different sizes, weird reflections, lifeless
+- Skin: Too smooth/waxy (AI signature)
+- Hair: Melting, too perfect, unnatural flow
+- Shadows: Inconsistent lighting direction
+- Background: Objects merging, impossible geometry
+- Details: Blur into noise when examined closely
+- Patterns: Unnatural repetition or symmetry
+
+BE STRICT with AI detection. Modern AI (Midjourney, DALL-E, Stable Diffusion) creates very realistic images but always has subtle tells.
+
+Return JSON:
+{
+  "authenticity_score": 0-100,
+  "is_authentic": boolean,
+  "confidence": 0-100,
+  "detailed_analysis": "SPECIFIC findings",
+  "red_flags": ["exact issues found"],
+  "ai_generation_likelihood": "none|low|medium|high|very_high",
+  "recommendation": "action for user"
+}"""
                             },
                             {
                                 "role": "user",
@@ -160,8 +212,9 @@ detailed_analysis (string), red_flags (array), recommendation (string)."""
                         "confidence": analysis.get("confidence", 80),
                         "analysis": analysis.get("detailed_analysis", "Image analyzed."),
                         "red_flags": analysis.get("red_flags", []),
+                        "ai_likelihood": analysis.get("ai_generation_likelihood", "unknown"),
                         "recommendation": analysis.get("recommendation", "Image appears authentic."),
-                        "ai_model": "gpt-4o-vision",
+                        "ai_model": "gpt-4o-vision-enhanced",
                         "filename": filename,
                     }
                 else:
