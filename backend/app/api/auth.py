@@ -324,6 +324,7 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
     """
     import secrets
     from datetime import datetime, timedelta
+    from app.services.email_service import EmailService
 
     user = db.query(User).filter(User.email == request.email).first()
 
@@ -339,48 +340,21 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
     user.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
     db.commit()
 
-    # Send password reset email
+    # Send password reset email via EmailService
     try:
         reset_link = f"https://www.africybertrust.com/reset-password?token={reset_token}"
 
-        email_html = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #0047AB;">Password Reset Request</h2>
-            <p>You requested to reset your password for Africa Cyber Trust Infrastructure.</p>
-            <p>Click the button below to reset your password:</p>
-            <p style="margin: 30px 0;">
-                <a href="{reset_link}" style="background: linear-gradient(135deg, #0047AB 0%, #DAA520 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; display: inline-block;">
-                    Reset Password
-                </a>
-            </p>
-            <p style="color: #666; font-size: 14px;">
-                This link will expire in 1 hour.<br>
-                If you didn't request this, please ignore this email.
-            </p>
-            <p style="color: #666; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-                Africa Cyber Trust Infrastructure<br>
-                © 2026 All rights reserved
-            </p>
-        </div>
-        """
-
-        # Write to email_queue table
-        from sqlalchemy import text
-        db.execute(text("""
-            INSERT INTO email_queue (to_email, subject, html, created_at, sent)
-            VALUES (:to_email, :subject, :html, :created_at, false)
-        """), {
-            "to_email": user.email,
-            "subject": "Reset Your Password - Africa Cyber Trust",
-            "html": email_html,
-            "created_at": datetime.utcnow()
-        })
-        db.commit()
+        # Send email to africybersolution@gmail.com (notification email)
+        EmailService.send_password_reset_email(
+            to_email="africybersolution@gmail.com",
+            reset_link=reset_link
+        )
 
         # Also print to console for development
         print(f"\n{'='*60}")
         print(f"PASSWORD RESET LINK FOR: {user.email}")
         print(f"Link: {reset_link}")
+        print(f"Email sent to: africybersolution@gmail.com")
         print(f"{'='*60}\n")
 
     except Exception as e:

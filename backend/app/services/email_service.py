@@ -242,6 +242,106 @@ http://localhost:3001/dashboard/assets
             print(f"❌ Failed to send security alert: {str(e)}")
             return False
 
+    @staticmethod
+    def send_password_reset_email(
+        to_email: str,
+        reset_link: str
+    ) -> bool:
+        """Send password reset email."""
+        try:
+            # Create message
+            message = MIMEMultipart("alternative")
+            message["Subject"] = "Reset Your Password - Africa Cyber Trust"
+            message["From"] = f"Africa Cyber Trust <{EmailService.SENDER_EMAIL}>"
+            message["To"] = to_email
+
+            # Email HTML content
+            html = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background: linear-gradient(135deg, #0047AB 0%, #DAA520 100%);
+                              color: white; padding: 30px; text-align: center; border-radius: 10px; }}
+                    .content {{ background: #f9f9f9; padding: 30px; margin: 20px 0; border-radius: 10px; }}
+                    .button {{ display: inline-block; background: linear-gradient(135deg, #0047AB 0%, #DAA520 100%);
+                              color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px;
+                              font-weight: bold; margin: 20px 0; }}
+                    .footer {{ text-align: center; color: #666; font-size: 12px; margin-top: 20px; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🔐 Password Reset Request</h1>
+                    </div>
+
+                    <div class="content">
+                        <h2>Reset Your Password</h2>
+                        <p>Hello,</p>
+                        <p>You requested to reset your password for Africa Cyber Trust Infrastructure.</p>
+                        <p>Click the button below to reset your password:</p>
+
+                        <center>
+                            <a href="{reset_link}" class="button">
+                                Reset Password
+                            </a>
+                        </center>
+
+                        <p><strong>This link will expire in 1 hour.</strong></p>
+
+                        <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                            If you didn't request this, please ignore this email.
+                            Your password will remain unchanged.
+                        </p>
+                    </div>
+
+                    <div class="footer">
+                        <p>© 2026 Africa Cyber Trust Infrastructure</p>
+                        <p>Building trusted digital infrastructure for Africa</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+
+            # Plain text fallback
+            text = f"""
+            Password Reset Request - Africa Cyber Trust Infrastructure
+
+            You requested to reset your password.
+
+            Click this link to reset your password:
+            {reset_link}
+
+            This link will expire in 1 hour.
+
+            If you didn't request this, ignore this email.
+
+            © 2026 Africa Cyber Trust Infrastructure
+            """
+
+            # Attach both HTML and plain text versions
+            part1 = MIMEText(text, "plain")
+            part2 = MIMEText(html, "html")
+            message.attach(part1)
+            message.attach(part2)
+
+            # Send via SMTP
+            with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT) as server:
+                server.starttls()
+                server.login(EmailService.SENDER_EMAIL, EmailService.SENDER_PASSWORD)
+                server.send_message(message)
+
+            print(f"✅ Password reset email sent to {to_email}")
+            return True
+
+        except Exception as e:
+            print(f"❌ Failed to send password reset email: {str(e)}")
+            return False
+
 
 # Create singleton instance
 email_service = EmailService()
