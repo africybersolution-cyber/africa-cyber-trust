@@ -20,8 +20,8 @@ class TrialService:
         """Start trial for new user based on selected plan."""
         trial_days = TrialService.TRIAL_DAYS.get(plan_name, 14)
 
-        user.trial_started_at = datetime.utcnow()
-        user.trial_ends_at = datetime.utcnow() + timedelta(days=trial_days)
+        user.trial_started_at = datetime.now(timezone.utc)
+        user.trial_ends_at = datetime.now(timezone.utc) + timedelta(days=trial_days)
         user.trial_status = 'active'
         user.account_type = plan_name  # Set account type
         db.commit()
@@ -39,7 +39,7 @@ class TrialService:
             return False
 
         # Check if trial has expired
-        if user.trial_ends_at < datetime.utcnow():
+        if user.trial_ends_at < datetime.now(timezone.utc):
             user.trial_status = 'expired'
             db.commit()
             print(f"[TRIAL] Expired for user {user.email}")
@@ -53,7 +53,7 @@ class TrialService:
         if not user.trial_ends_at:
             return 0
 
-        delta = user.trial_ends_at - datetime.utcnow()
+        delta = user.trial_ends_at - datetime.now(timezone.utc)
         return max(0, delta.days)
 
     @staticmethod
@@ -62,7 +62,7 @@ class TrialService:
         subscription = db.query(Subscription).filter(
             Subscription.user_id == user_id,
             Subscription.status == 'active',
-            Subscription.expires_at > datetime.utcnow()
+            Subscription.expires_at > datetime.now(timezone.utc)
         ).first()
 
         return subscription is not None
