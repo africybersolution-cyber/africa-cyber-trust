@@ -218,11 +218,25 @@ class AuthService:
         """Get current user from JWT token."""
         payload = AuthService.verify_token(token)
         if not payload:
+            print("[GET_CURRENT_USER] Token verification failed!")
             return None
 
         email = payload.get("sub")
         if not email:
+            print("[GET_CURRENT_USER] No email in token payload!")
             return None
 
+        print(f"[GET_CURRENT_USER] Token payload: {payload}")
+
         user = db.query(User).filter(User.email == email).first()
+
+        if user:
+            print(f"[GET_CURRENT_USER] Loaded user from DB:")
+            print(f"  Email: {user.email}")
+            print(f"  Company ID: {user.company_id}")
+            print(f"  Company ID type: {type(user.company_id)}")
+            print(f"  Has company: {user.company_id is not None}")
+        else:
+            print(f"[GET_CURRENT_USER] User not found in DB for email: {email}")
+
         return user
