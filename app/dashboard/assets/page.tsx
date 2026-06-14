@@ -546,11 +546,14 @@ export default function AssetsPage() {
                       // Check if asset is verified before scanning
                       const isVerified = String(asset.verification_status).toUpperCase() === 'VERIFIED';
                       if (!isVerified) {
+                        // Auto-open verification modal
+                        setVerifyingAsset(asset);
+                        setShowVerifyModal(true);
                         setToast({
-                          message: '⚠️ Please verify domain ownership before scanning. Click "Verify" to start.',
-                          type: 'error'
+                          message: '⚠️ Please verify domain ownership first',
+                          type: 'info'
                         });
-                        setTimeout(() => setToast(null), 5000);
+                        setTimeout(() => setToast(null), 3000);
                         return;
                       }
 
@@ -602,6 +605,21 @@ export default function AssetsPage() {
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
+
+                      // Check if asset is verified before showing report
+                      const isVerified = String(asset.verification_status).toUpperCase() === 'VERIFIED';
+                      if (!isVerified) {
+                        // Auto-open verification modal
+                        setVerifyingAsset(asset);
+                        setShowVerifyModal(true);
+                        setToast({
+                          message: '⚠️ Please verify domain ownership first',
+                          type: 'info'
+                        });
+                        setTimeout(() => setToast(null), 3000);
+                        return;
+                      }
+
                       setSelectedAsset(asset);
 
                       // Fetch scan results and findings
