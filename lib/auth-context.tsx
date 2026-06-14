@@ -7,6 +7,7 @@ interface User {
   email: string;
   name: string;
   role: string;
+  account_type?: string;  // 'starter', 'professional', 'enterprise'
 }
 
 interface Company {
