@@ -104,7 +104,21 @@ class AuthService:
             updated_at=datetime.utcnow()
         )
 
-        if company_id:
+        # Auto-create personal company for all users
+        if not company_id:
+            from app.models.company import Company
+            personal_company = Company(
+                name=f"{name}'s Account",
+                country="Unknown",
+                plan_id="free",
+                is_active=True,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+            db.add(personal_company)
+            db.flush()  # Get the company ID
+            user.company_id = personal_company.id
+        else:
             user.company_id = company_id
 
         db.add(user)

@@ -93,6 +93,77 @@ async def fix_existing_users(db: Session = Depends(get_db)):
         )
 
 
+@router.post("/admin/create-companies")
+@router.get("/admin/create-companies")
+async def create_companies_for_users(db: Session = Depends(get_db)):
+    """
+    Create personal companies for users without company_id.
+
+    **No authentication required for initial setup**
+    """
+
+    try:
+        from app.models.user import User
+        from app.models.company import Company
+        from sqlalchemy import text
+
+        # Find users without company
+        result = db.execute(text("""
+            SELECT id, name, email FROM users WHERE company_id IS NULL
+        """))
+
+        users_without_company = result.fetchall()
+
+        if len(users_without_company) == 0:
+            return {
+                "success": True,
+                "message": "All users already have companies!",
+                "created_count": 0
+            }
+
+        created_companies = []
+
+        for user_row in users_without_company:
+            user_id, user_name, user_email = user_row
+
+            # Create personal company
+            company = Company(
+                name=f"{user_name}'s Account",
+                country="Unknown",
+                plan_id="free",
+                is_active=True
+            )
+            db.add(company)
+            db.flush()
+
+            # Update user with company_id
+            db.execute(text("""
+                UPDATE users SET company_id = :company_id WHERE id = :user_id
+            """), {"company_id": company.id, "user_id": user_id})
+
+            created_companies.append({
+                "user_email": user_email,
+                "company_name": company.name,
+                "company_id": str(company.id)
+            })
+
+        db.commit()
+
+        return {
+            "success": True,
+            "message": f"Created {len(created_companies)} companies!",
+            "created_count": len(created_companies),
+            "companies": created_companies
+        }
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create companies: {str(e)}"
+        )
+
+
 @router.get("/admin/check-users")
 async def check_users_status(db: Session = Depends(get_db)):
     """
