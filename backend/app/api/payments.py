@@ -10,6 +10,7 @@ from app.services.subscription_service import SubscriptionService
 from app.services.pricing_service import PricingService
 from app.services.trial_service import TrialService
 from app.services.crypto_payment_service import crypto_payment_service
+from app.services.email_service import EmailService
 from app.core.config import settings
 from pydantic import BaseModel
 from datetime import datetime, timedelta
@@ -159,6 +160,32 @@ async def check_payment_status(
             current_user.trial_status = 'converted'
 
             db.commit()
+
+            # Send payment receipt email
+            try:
+                # Get the active subscription to get expiry date
+                subscription = db.query(SubscriptionModel).filter(
+                    SubscriptionModel.user_id == current_user.id,
+                    SubscriptionModel.status == "active"
+                ).first()
+
+                plan_name = subscription.plan_name if subscription else (current_user.account_type or 'starter')
+                subscription_expires = subscription.expires_at.strftime("%B %d, %Y") if subscription else "N/A"
+
+                EmailService.send_payment_receipt(
+                    to_email=current_user.email,
+                    payment_id=str(payment.id),
+                    plan_name=plan_name,
+                    amount=str(int(payment.amount)),
+                    currency=payment.currency,
+                    payment_method=f"Mobile Money ({payment.provider})",
+                    payment_date=payment.paid_at.strftime("%B %d, %Y at %I:%M %p"),
+                    subscription_expires=subscription_expires
+                )
+                print(f"[PAYMENT] Receipt email sent to {current_user.email}")
+            except Exception as email_error:
+                print(f"[PAYMENT] Failed to send receipt email: {email_error}")
+                # Don't fail the payment if email fails
 
     return {
         "payment_id": str(payment.id),
@@ -346,6 +373,31 @@ async def verify_crypto_payment(
     current_user.trial_status = 'converted'
 
     db.commit()
+
+    # Send payment receipt email
+    try:
+        # Get the active subscription to get expiry date
+        subscription = db.query(SubscriptionModel).filter(
+            SubscriptionModel.user_id == current_user.id,
+            SubscriptionModel.status == "active"
+        ).first()
+
+        subscription_expires = subscription.expires_at.strftime("%B %d, %Y") if subscription else "N/A"
+
+        EmailService.send_payment_receipt(
+            to_email=current_user.email,
+            payment_id=str(payment.id),
+            plan_name=plan_name,
+            amount=str(int(payment.amount)),
+            currency=payment.currency,
+            payment_method=f"Crypto ({token_symbol})",
+            payment_date=payment.paid_at.strftime("%B %d, %Y at %I:%M %p"),
+            subscription_expires=subscription_expires
+        )
+        print(f"[PAYMENT] Receipt email sent to {current_user.email}")
+    except Exception as email_error:
+        print(f"[PAYMENT] Failed to send receipt email: {email_error}")
+        # Don't fail the payment if email fails
 
     return {
         "verified": True,
