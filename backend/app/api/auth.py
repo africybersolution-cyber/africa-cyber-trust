@@ -118,9 +118,16 @@ async def signup(
         # Start trial (14 days for all paid tiers)
         TrialService.start_trial(user, db, plan_name=request.account_type)
 
-        access_token = AuthService.create_access_token(
-            data={"sub": user.email, "user_id": str(user.id), "role": user.role}
-        )
+        # Include company_id in JWT token
+        token_data = {
+            "sub": user.email,
+            "user_id": str(user.id),
+            "role": user.role,
+            "company_id": str(user.company_id) if user.company_id else None,
+            "account_type": user.account_type
+        }
+
+        access_token = AuthService.create_access_token(data=token_data)
 
         return {
             "access_token": access_token,
@@ -268,9 +275,19 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token = AuthService.create_access_token(
-        data={"sub": user.email, "user_id": str(user.id), "role": user.role}
-    )
+    # Include company_id in JWT token payload
+    token_data = {
+        "sub": user.email,
+        "user_id": str(user.id),
+        "role": user.role,
+        "company_id": str(user.company_id) if user.company_id else None,
+        "account_type": user.account_type
+    }
+
+    print(f"[LOGIN] Creating token for {user.email}")
+    print(f"[LOGIN] Token data: {token_data}")
+
+    access_token = AuthService.create_access_token(data=token_data)
 
     response_data = {
         "access_token": access_token,
@@ -298,17 +315,37 @@ async def login(
 
 
 @router.get("/me")
-async def get_me(current_user: User = Depends(get_current_user)):
+async def get_me(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """Get current user profile."""
-    return {
+    response = {
         "id": str(current_user.id),
         "email": current_user.email,
         "name": current_user.name,
         "role": current_user.role,
         "is_active": current_user.is_active,
         "email_verified": current_user.email_verified,
-        "created_at": current_user.created_at
+        "created_at": current_user.created_at,
+        "account_type": current_user.account_type,
+        "company_id": str(current_user.company_id) if current_user.company_id else None
     }
+
+    # Add company data if user has a company
+    if current_user.company_id:
+        company = db.query(Company).filter(Company.id == current_user.company_id).first()
+        if company:
+            response["company"] = {
+                "id": str(company.id),
+                "name": company.name,
+                "country": company.country,
+                "plan": company.plan_id
+            }
+
+    print(f"[GET /me] User: {current_user.email}, Company ID: {current_user.company_id}")
+
+    return response
 
 
 @router.post("/logout")

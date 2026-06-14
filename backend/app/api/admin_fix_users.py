@@ -223,3 +223,65 @@ async def check_users_status(db: Session = Depends(get_db)):
             status_code=500,
             detail=f"Failed to check users: {str(e)}"
         )
+
+
+@router.get("/admin/debug-user/{email}")
+async def debug_user(email: str, db: Session = Depends(get_db)):
+    """
+    Debug endpoint - show EVERYTHING about a user.
+
+    **No authentication required for debugging**
+    """
+
+    try:
+        from app.models.user import User
+        from app.models.company import Company
+
+        user = db.query(User).filter(User.email == email).first()
+
+        if not user:
+            raise HTTPException(status_code=404, detail=f"User {email} not found")
+
+        # Get company if exists
+        company_data = None
+        if user.company_id:
+            company = db.query(Company).filter(Company.id == user.company_id).first()
+            if company:
+                company_data = {
+                    "id": str(company.id),
+                    "name": company.name,
+                    "country": company.country,
+                    "plan_id": company.plan_id,
+                    "is_active": company.is_active
+                }
+
+        return {
+            "success": True,
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "name": user.name,
+                "role": user.role,
+                "account_type": user.account_type,
+                "company_id": str(user.company_id) if user.company_id else None,
+                "trial_status": user.trial_status,
+                "trial_started_at": str(user.trial_started_at) if user.trial_started_at else None,
+                "trial_ends_at": str(user.trial_ends_at) if user.trial_ends_at else None,
+                "is_active": user.is_active,
+                "email_verified": user.email_verified,
+                "created_at": str(user.created_at) if user.created_at else None
+            },
+            "company": company_data,
+            "debug_notes": {
+                "has_company": user.company_id is not None,
+                "company_id_type": type(user.company_id).__name__,
+                "can_add_assets": user.company_id is not None
+            }
+        }
+
+    except Exception as e:
+        import traceback
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to debug user: {str(e)}\n{traceback.format_exc()}"
+        )
