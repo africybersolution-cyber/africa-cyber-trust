@@ -342,6 +342,178 @@ http://localhost:3001/dashboard/assets
             print(f"❌ Failed to send password reset email: {str(e)}")
             return False
 
+    @staticmethod
+    def send_payment_receipt(
+        to_email: str,
+        payment_id: str,
+        plan_name: str,
+        amount: str,
+        currency: str,
+        payment_method: str,
+        payment_date: str,
+        subscription_expires: str
+    ) -> bool:
+        """Send payment receipt email after successful payment."""
+        try:
+            # Create message
+            message = MIMEMultipart("alternative")
+            message["Subject"] = "Payment Receipt - Africa Cyber Trust"
+            message["From"] = f"Africa Cyber Trust <{EmailService.SENDER_EMAIL}>"
+            message["To"] = to_email
+
+            # Format plan name nicely
+            plan_display = {
+                'starter': 'Starter',
+                'professional': 'Professional',
+                'enterprise': 'Enterprise',
+                'personal': 'Personal'  # Legacy plan
+            }.get(plan_name, plan_name.title())
+
+            # Email HTML content
+            html = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background: linear-gradient(135deg, #0047AB 0%, #DAA520 100%);
+                              color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+                    .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+                    .receipt-box {{ background: white; padding: 20px; border-radius: 8px; margin: 20px 0;
+                                    border: 2px solid #0047AB; }}
+                    .row {{ display: flex; justify-content: space-between; padding: 12px 0;
+                            border-bottom: 1px solid #eee; }}
+                    .label {{ font-weight: bold; color: #666; }}
+                    .value {{ color: #0047AB; font-weight: bold; }}
+                    .total {{ font-size: 24px; color: #0047AB; font-weight: bold; }}
+                    .button {{ display: inline-block; background: linear-gradient(135deg, #0047AB 0%, #DAA520 100%);
+                              color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px;
+                              font-weight: bold; margin: 20px 0; }}
+                    .footer {{ text-align: center; color: #666; font-size: 12px; margin-top: 20px; }}
+                    .success-box {{ background: #EFF6FF; padding: 15px; border-radius: 8px; margin-top: 20px;
+                                    border-left: 4px solid #0047AB; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🎉 Payment Successful!</h1>
+                        <p>Thank you for your subscription</p>
+                    </div>
+
+                    <div class="content">
+                        <h2 style="color: #0047AB;">Receipt #{payment_id[:8].upper()}</h2>
+
+                        <div class="receipt-box">
+                            <div class="row">
+                                <span class="label">Plan:</span>
+                                <span class="value">{plan_display}</span>
+                            </div>
+                            <div class="row">
+                                <span class="label">Amount Paid:</span>
+                                <span class="value">{amount} {currency}</span>
+                            </div>
+                            <div class="row">
+                                <span class="label">Payment Method:</span>
+                                <span class="value">{payment_method}</span>
+                            </div>
+                            <div class="row">
+                                <span class="label">Payment Date:</span>
+                                <span class="value">{payment_date}</span>
+                            </div>
+                            <div class="row">
+                                <span class="label">Subscription Valid Until:</span>
+                                <span class="value">{subscription_expires}</span>
+                            </div>
+                            <div class="row" style="border-bottom: none; margin-top: 20px;">
+                                <span class="label">Receipt ID:</span>
+                                <span style="font-family: monospace; font-size: 11px; color: #888;">{payment_id}</span>
+                            </div>
+                        </div>
+
+                        <div class="success-box">
+                            <p style="margin: 0; color: #1E40AF;">
+                                <strong>✓ Your subscription is now active!</strong><br/>
+                                You now have full access to all {plan_display} features.
+                            </p>
+                        </div>
+
+                        <div style="text-align: center; margin-top: 30px;">
+                            <a href="https://www.africybertrust.com/dashboard" class="button">
+                                Go to Dashboard →
+                            </a>
+                        </div>
+
+                        <div style="background: #F9FAFB; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                            <p style="margin: 0; color: #666; font-size: 13px;">
+                                <strong>Need help?</strong> Contact us at support@africybertrust.com
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="footer">
+                        <p>Africa Cyber Trust Infrastructure</p>
+                        <p>© 2026 All rights reserved</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+
+            # Plain text fallback
+            text = f"""
+            Payment Receipt - Africa Cyber Trust Infrastructure
+
+            🎉 PAYMENT SUCCESSFUL!
+
+            Thank you for your subscription to {plan_display} plan.
+
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            RECEIPT #{payment_id[:8].upper()}
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+            Plan: {plan_display}
+            Amount Paid: {amount} {currency}
+            Payment Method: {payment_method}
+            Payment Date: {payment_date}
+            Subscription Valid Until: {subscription_expires}
+
+            Receipt ID: {payment_id}
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+            ✓ Your subscription is now active!
+            You have full access to all {plan_display} features.
+
+            Visit your dashboard: https://www.africybertrust.com/dashboard
+
+            Need help? Contact us at support@africybertrust.com
+
+            © 2026 Africa Cyber Trust Infrastructure
+            """
+
+            # Attach both HTML and plain text versions
+            part1 = MIMEText(text, "plain")
+            part2 = MIMEText(html, "html")
+            message.attach(part1)
+            message.attach(part2)
+
+            # Send via SMTP
+            with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT) as server:
+                server.starttls()
+                server.login(EmailService.SENDER_EMAIL, EmailService.SENDER_PASSWORD)
+                server.send_message(message)
+
+            print(f"✅ Payment receipt sent to {to_email}")
+            return True
+
+        except Exception as e:
+            print(f"❌ Failed to send payment receipt: {str(e)}")
+            print(f"    Error details: {type(e).__name__}")
+            import traceback
+            print(f"    Traceback: {traceback.format_exc()}")
+            return False
+
 
 # Create singleton instance
 email_service = EmailService()
