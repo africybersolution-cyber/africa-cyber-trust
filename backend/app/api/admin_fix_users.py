@@ -182,7 +182,8 @@ async def check_users_status(db: Session = Depends(get_db)):
                 account_type,
                 trial_status,
                 trial_started_at,
-                trial_ends_at AT TIME ZONE 'UTC' as trial_ends
+                trial_ends_at AT TIME ZONE 'UTC' as trial_ends,
+                company_id
             FROM users
             ORDER BY created_at DESC
         """))
@@ -199,7 +200,8 @@ async def check_users_status(db: Session = Depends(get_db)):
                 "account_type": row[3],
                 "trial_status": row[4],
                 "trial_started_at": str(row[5]) if row[5] else None,
-                "trial_ends_at": str(row[6]) if row[6] else None
+                "trial_ends_at": str(row[6]) if row[6] else None,
+                "company_id": str(row[7]) if row[7] else None
             }
             users.append(user_data)
 
