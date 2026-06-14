@@ -102,7 +102,7 @@ export default function AssetsPage() {
 
   const loadAssets = async () => {
     try {
-      const res = await fetch(`${config.apiUrl}/api/assets/`, {
+      const res = await fetch(`${config.apiUrl}/api/assets`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) setAssets(await res.json());
@@ -314,7 +314,7 @@ export default function AssetsPage() {
     console.log('Form data:', formData);
 
     try {
-      const res = await fetch(`${config.apiUrl}/api/assets/`, {
+      const res = await fetch(`${config.apiUrl}/api/assets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

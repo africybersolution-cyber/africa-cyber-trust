@@ -11,6 +11,11 @@ app = FastAPI(
     description="AI-Powered Cybersecurity Trust, Background Check, and Monitoring Platform",
     docs_url="/docs",
     redoc_url="/redoc",
+    # Do NOT 307-redirect a trailing-slash mismatch. A cross-origin redirect
+    # strips the CORS headers and the browser aborts with "Failed to fetch".
+    # With this off + the strip_trailing_slash middleware below, "/api/assets/"
+    # is served by the "/api/assets" route directly, no redirect.
+    redirect_slashes=False,
 )
 
 # CORS middleware

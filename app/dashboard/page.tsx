@@ -55,7 +55,7 @@ export default function DashboardPage() {
           return;
         }
 
-        const assetsRes = await fetch(`${config.apiUrl}/api/assets/`, {
+        const assetsRes = await fetch(`${config.apiUrl}/api/assets`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

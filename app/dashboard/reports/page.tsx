@@ -25,7 +25,7 @@ export default function ReportsPage() {
       if (!token) return;
 
       try {
-        const res = await fetch(`${config.apiUrl}/api/assets/`, {
+        const res = await fetch(`${config.apiUrl}/api/assets`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 

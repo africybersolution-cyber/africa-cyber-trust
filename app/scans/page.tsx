@@ -62,7 +62,7 @@ export default function ScansPage() {
 
     const fetchAllScans = async () => {
       try {
-        const assetsRes = await fetch(`${config.apiUrl}/api/assets/`, {
+        const assetsRes = await fetch(`${config.apiUrl}/api/assets`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
