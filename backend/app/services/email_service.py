@@ -335,11 +335,11 @@ http://localhost:3001/dashboard/assets
                 server.login(EmailService.SENDER_EMAIL, EmailService.SENDER_PASSWORD)
                 server.send_message(message)
 
-            print(f"✅ Password reset email sent to {to_email}")
+            print(f"[EMAIL] Password reset email sent to {to_email}")
             return True
 
         except Exception as e:
-            print(f"❌ Failed to send password reset email: {str(e)}")
+            print(f"[EMAIL] Failed to send password reset email: {str(e)}")
             return False
 
     @staticmethod
@@ -504,14 +504,14 @@ http://localhost:3001/dashboard/assets
                 server.login(EmailService.SENDER_EMAIL, EmailService.SENDER_PASSWORD)
                 server.send_message(message)
 
-            print(f"✅ Payment receipt sent to {to_email}")
+            print(f"[EMAIL] Payment receipt sent to {to_email}")
             return True
 
         except Exception as e:
-            print(f"❌ Failed to send payment receipt: {str(e)}")
-            print(f"    Error details: {type(e).__name__}")
+            print(f"[EMAIL] Failed to send payment receipt: {str(e)}")
+            print(f"        Error details: {type(e).__name__}")
             import traceback
-            print(f"    Traceback: {traceback.format_exc()}")
+            print(f"        Traceback: {traceback.format_exc()}")
             return False
 
 
