@@ -29,6 +29,8 @@ export default function AssetsPage() {
   const [scanningAssetId, setScanningAssetId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
   const { token, company, loading: authLoading } = useAuth();
+  const [subscription, setSubscription] = useState<any>(null);
+  const [assetLimit, setAssetLimit] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     asset_type: 'domain',
@@ -54,8 +56,49 @@ export default function AssetsPage() {
   };
 
   useEffect(() => {
-    if (token) loadAssets();
+    if (token) {
+      loadAssets();
+      loadSubscription();
+    }
   }, [token]);
+
+  const loadSubscription = async () => {
+    try {
+      const res = await fetch(`${config.apiUrl}/api/payments/subscription`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSubscription(data);
+
+        // Determine asset limit based on plan
+        if (data.plan === 'starter') {
+          setAssetLimit(5);
+        } else if (data.plan === 'professional' || data.plan === 'enterprise') {
+          setAssetLimit(null); // Unlimited
+        } else {
+          setAssetLimit(0); // FREE tier
+        }
+      }
+    } catch (err) {
+      console.error('Error loading subscription:', err);
+    }
+  };
+
+  const handleAddAssetClick = () => {
+    // Check asset limit
+    if (assetLimit !== null && assets.length >= assetLimit) {
+      setToast({
+        message: `⚠️ Asset limit reached (${assetLimit} max on ${subscription?.plan?.toUpperCase()} plan). Upgrade to Professional for unlimited assets.`,
+        type: 'error'
+      });
+      setTimeout(() => {
+        window.location.href = '/dashboard/billing';
+      }, 2000);
+      return;
+    }
+    setShowAddModal(true);
+  };
 
   const loadAssets = async () => {
     try {
@@ -362,7 +405,7 @@ export default function AssetsPage() {
           </div>
           <div className="flex gap-3">
             <button
-              onClick={() => setShowAddModal(true)}
+              onClick={handleAddAssetClick}
               className="px-6 py-3 rounded-xl font-semibold text-white shadow-lg"
               style={{ background: 'linear-gradient(135deg, #0047AB 0%, #1E90FF 100%)' }}
             >
@@ -377,6 +420,40 @@ export default function AssetsPage() {
             </button>
           </div>
         </div>
+
+        {/* Asset Limit Warning Banner */}
+        {assetLimit !== null && assets.length >= assetLimit - 1 && (
+          <div className={`mb-6 rounded-xl p-4 border-2 ${
+            assets.length >= assetLimit
+              ? 'bg-red-500/10 border-red-500/50'
+              : 'bg-yellow-500/10 border-yellow-500/50'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className={`font-bold mb-1 ${
+                  assets.length >= assetLimit ? 'text-red-400' : 'text-yellow-400'
+                }`}>
+                  {assets.length >= assetLimit
+                    ? '⚠️ Asset Limit Reached'
+                    : '⚠️ Approaching Asset Limit'}
+                </h3>
+                <p className="text-sm text-cyber-muted">
+                  You have {assets.length} of {assetLimit} assets on the {subscription?.plan?.toUpperCase()} plan.
+                  {assets.length >= assetLimit
+                    ? ' Upgrade to Professional for unlimited assets.'
+                    : ' Upgrade soon for unlimited assets.'}
+                </p>
+              </div>
+              <a
+                href="/dashboard/billing"
+                className="px-6 py-3 rounded-xl font-semibold text-white shadow-lg whitespace-nowrap"
+                style={{ background: 'linear-gradient(135deg, #DAA520 0%, #B8860B 100%)' }}
+              >
+                Upgrade to Professional
+              </a>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-20">
@@ -614,13 +691,22 @@ export default function AssetsPage() {
                     <option value="api_endpoint">🔌 API Endpoint</option>
                     <option value="ip_address">🖥️ IP Address</option>
                     <option value="ip_range">🌐 IP Range (CIDR)</option>
+                    <option value="cloud_storage">☁️ Cloud Storage (S3, Azure, GCP)</option>
+                    <option value="email_domain">📧 Email Domain (SPF/DMARC)</option>
+                    <option value="source_code_repo">🔐 Source Code Repo (GitHub/GitLab)</option>
+                    <option value="ssl_certificate">🔒 SSL Certificate</option>
                   </select>
                   <p className="text-xs text-cyber-muted mt-1">For mobile apps, use the &quot;📱 Add Mobile App&quot; button</p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-2 text-cyber-muted">
                     {formData.asset_type === 'ip_address' ? 'IP Address' :
-                     formData.asset_type === 'ip_range' ? 'IP Range (CIDR)' : 'URL / Value'}
+                     formData.asset_type === 'ip_range' ? 'IP Range (CIDR)' :
+                     formData.asset_type === 'cloud_storage' ? 'Bucket URL' :
+                     formData.asset_type === 'email_domain' ? 'Domain Name' :
+                     formData.asset_type === 'source_code_repo' ? 'Repository URL' :
+                     formData.asset_type === 'ssl_certificate' ? 'Domain Name' :
+                     'URL / Value'}
                   </label>
                   <input
                     type="text"
@@ -632,6 +718,10 @@ export default function AssetsPage() {
                       formData.asset_type === 'api_endpoint' ? 'https://api.example.com/v1' :
                       formData.asset_type === 'ip_address' ? '203.0.113.45' :
                       formData.asset_type === 'ip_range' ? '203.0.113.0/24' :
+                      formData.asset_type === 'cloud_storage' ? 's3://my-bucket or https://my-bucket.s3.amazonaws.com' :
+                      formData.asset_type === 'email_domain' ? 'example.com' :
+                      formData.asset_type === 'source_code_repo' ? 'https://github.com/user/repo' :
+                      formData.asset_type === 'ssl_certificate' ? 'example.com' :
                       'https://example.com'
                     }
                   />

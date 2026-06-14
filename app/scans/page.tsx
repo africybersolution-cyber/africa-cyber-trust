@@ -9,6 +9,15 @@ import DashboardLayout from '@/components/DashboardLayout';
 const BLUE = '#0047AB';
 const GOLD = '#DAA520';
 
+interface AIRiskAnalysis {
+  overall_risk_score: number;
+  risk_level: string;
+  executive_summary: string;
+  top_3_priorities: any[];
+  quick_wins: any[];
+  remediation_phases: number;
+}
+
 interface ScanData {
   id: string;
   asset_id: string;
@@ -23,6 +32,9 @@ interface ScanData {
   high_count: number;
   medium_count: number;
   low_count: number;
+  scan_data?: {
+    ai_risk_analysis?: AIRiskAnalysis;
+  };
 }
 
 interface Finding {
@@ -147,6 +159,16 @@ export default function ScansPage() {
     }
   };
 
+  const getRiskLevelColor = (riskLevel: string) => {
+    switch (riskLevel?.toUpperCase()) {
+      case 'CRITICAL': return '#DC2626';
+      case 'HIGH': return '#F97316';
+      case 'MEDIUM': return '#EAB308';
+      case 'LOW': return '#10B981';
+      default: return '#6B7280';
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout title="Scans & Findings" subtitle="View security scan results">
@@ -254,8 +276,84 @@ export default function ScansPage() {
             ) : findings.length === 0 ? (
               <div className="text-center py-12 text-cyber-muted">No findings for this scan</div>
             ) : (
-              <div className="space-y-4">
-                {findings.map((finding) => (
+              <div className="space-y-6">
+                {/* AI RISK SCORING - KILLER FEATURE */}
+                {selectedScan.scan_data?.ai_risk_analysis && (
+                  <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-6 border-2" style={{ borderColor: getRiskLevelColor(selectedScan.scan_data.ai_risk_analysis.risk_level) + '80' }}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-sm font-semibold text-cyber-muted mb-1">🤖 AI RISK ANALYSIS</h3>
+                        <div className="flex items-baseline gap-3">
+                          <span className="text-4xl font-bold" style={{ color: getRiskLevelColor(selectedScan.scan_data.ai_risk_analysis.risk_level) }}>
+                            {selectedScan.scan_data.ai_risk_analysis.overall_risk_score}/100
+                          </span>
+                          <span
+                            className="px-3 py-1 rounded-lg text-sm font-bold"
+                            style={{
+                              background: getRiskLevelColor(selectedScan.scan_data.ai_risk_analysis.risk_level) + '20',
+                              color: getRiskLevelColor(selectedScan.scan_data.ai_risk_analysis.risk_level)
+                            }}
+                          >
+                            {selectedScan.scan_data.ai_risk_analysis.risk_level} RISK
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-white">{selectedScan.scan_data.ai_risk_analysis.remediation_phases}</div>
+                        <div className="text-xs text-cyber-muted">Remediation Phases</div>
+                      </div>
+                    </div>
+
+                    {/* Executive Summary */}
+                    <div className="bg-slate-800/50 rounded-lg p-4 mb-4">
+                      <div className="text-xs font-semibold text-blue-400 mb-2">📊 EXECUTIVE SUMMARY</div>
+                      <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
+                        {selectedScan.scan_data.ai_risk_analysis.executive_summary}
+                      </p>
+                    </div>
+
+                    {/* Top 3 Priorities */}
+                    {selectedScan.scan_data.ai_risk_analysis.top_3_priorities && selectedScan.scan_data.ai_risk_analysis.top_3_priorities.length > 0 && (
+                      <div className="mb-4">
+                        <div className="text-xs font-semibold text-red-400 mb-2">🎯 TOP 3 PRIORITIES</div>
+                        <div className="space-y-2">
+                          {selectedScan.scan_data.ai_risk_analysis.top_3_priorities.map((item: any, idx: number) => (
+                            <div key={idx} className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 flex items-start gap-3">
+                              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
+                                {idx + 1}
+                              </span>
+                              <div className="flex-1">
+                                <div className="text-sm font-semibold text-white">{item.title}</div>
+                                <div className="text-xs text-red-400 mt-1">{item.priority} • Risk Score: {item.risk_score?.toFixed(1)}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Quick Wins */}
+                    {selectedScan.scan_data.ai_risk_analysis.quick_wins && selectedScan.scan_data.ai_risk_analysis.quick_wins.length > 0 && (
+                      <div>
+                        <div className="text-xs font-semibold text-green-400 mb-2">⚡ QUICK WINS (Easy Fixes, High Impact)</div>
+                        <div className="space-y-2">
+                          {selectedScan.scan_data.ai_risk_analysis.quick_wins.map((item: any, idx: number) => (
+                            <div key={idx} className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                              <div className="text-sm font-semibold text-white mb-1">{item.title}</div>
+                              <div className="text-xs text-green-400">{item.estimated_time} • {item.impact}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* All Findings */}
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-3">All Findings ({findings.length})</h3>
+                  <div className="space-y-4">
+                    {findings.map((finding) => (
                   <div
                     key={finding.id}
                     className="bg-slate-900/50 rounded-xl p-6 border"
@@ -282,6 +380,8 @@ export default function ScansPage() {
                     </div>
                   </div>
                 ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>

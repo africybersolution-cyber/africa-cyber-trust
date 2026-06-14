@@ -38,7 +38,7 @@ export default function BillingPage() {
         if (res.ok) {
           const data = await res.json();
           setSubscription(data);
-          setCurrentPlan(data.plan || 'personal');
+          setCurrentPlan(data.plan || 'starter');
         }
       } catch (error) {
         console.error('Error loading subscription:', error);
@@ -52,14 +52,16 @@ export default function BillingPage() {
 
   const plans = [
     {
-      id: 'personal',
-      name: 'Personal',
-      price: '$5',
+      id: 'starter',
+      name: 'Starter',
+      price: '$19',
       period: '/month',
       features: [
-        'Unlimited scam detection scans',
-        'Unlimited AI photo verification',
-        'Scan history dashboard',
+        'Dashboard access',
+        'Vulnerability scanning',
+        'Up to 5 assets',
+        'Email notifications',
+        'Scan history',
         'Email support',
         'Pay with Mobile Money or Crypto'
       ],
@@ -68,54 +70,49 @@ export default function BillingPage() {
     {
       id: 'professional',
       name: 'Professional',
-      price: '$49',
+      price: '$69',
       period: '/month',
       features: [
-        'Everything in Personal',
-        'Full business dashboard',
-        'Deep vulnerability scanning',
-        'Email + SMS alerts',
-        '5 team members',
+        'Everything in Starter',
+        'Unlimited assets',
+        'Advanced vulnerability scanning',
+        'AI risk scoring & prioritization',
+        'Up to 10 team members',
         'Priority support',
-        'Advanced reports'
+        'Advanced reports & compliance'
       ],
       recommended: true
     },
     {
       id: 'enterprise',
       name: 'Enterprise',
-      price: 'Custom',
-      period: '',
+      price: '$199',
+      period: '/month',
       features: [
         'Everything in Professional',
         'Unlimited team members',
-        '24/7 dedicated analyst',
-        'Custom integrations',
-        'API access',
+        '24/7 dedicated security analyst',
+        'Custom integrations & API access',
         'SSO integration',
         'Custom SLA',
-        'Dedicated account manager'
+        'Dedicated account manager',
+        'White-label options'
       ],
       recommended: false
     }
   ];
 
   const invoices = [
-    { id: 1, date: 'Jun 1, 2026', amount: '$49.00', status: 'Paid', plan: 'Professional' },
-    { id: 2, date: 'May 1, 2026', amount: '$49.00', status: 'Paid', plan: 'Professional' },
-    { id: 3, date: 'Apr 1, 2026', amount: '$49.00', status: 'Paid', plan: 'Professional' },
+    { id: 1, date: 'Jun 1, 2026', amount: '$69.00', status: 'Paid', plan: 'Professional' },
+    { id: 2, date: 'May 1, 2026', amount: '$69.00', status: 'Paid', plan: 'Professional' },
+    { id: 3, date: 'Apr 1, 2026', amount: '$69.00', status: 'Paid', plan: 'Professional' },
   ];
 
   const handleChangePlan = (planId: string) => {
     const plan = plans.find(p => p.id === planId);
     if (!plan) return;
 
-    if (planId === 'enterprise') {
-      alert('Contact sales@africacybertrust.com for Enterprise pricing');
-      return;
-    }
-
-    // Open payment modal for Personal or Professional
+    // Open payment modal for all plans (Starter, Professional, Enterprise)
     setSelectedPlan({
       name: plan.name,
       price: plan.price.replace('$', '')
@@ -132,7 +129,7 @@ export default function BillingPage() {
       .then(res => res.json())
       .then(data => {
         setSubscription(data);
-        setCurrentPlan(data.plan || 'personal');
+        setCurrentPlan(data.plan || 'starter');
       });
     }
   };
@@ -171,16 +168,16 @@ export default function BillingPage() {
               <h2 className="text-xl font-bold text-white mb-1">Current Plan</h2>
               <p className="text-cyber-muted text-sm">
                 You're currently on the{' '}
-                <span className="capitalize">{subscription?.plan || 'Personal'}</span> plan
+                <span className="capitalize">{subscription?.plan || 'Starter'}</span> plan
                 {subscription?.trial_active && ' (Trial)'}
               </p>
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-white">
-                {subscription?.plan === 'personal' ? '$5' : subscription?.plan === 'professional' ? '$49' : 'Custom'}
+                {subscription?.plan === 'starter' ? '$19' : subscription?.plan === 'professional' ? '$69' : '$199'}
               </div>
               <div className="text-sm text-cyber-muted">
-                {subscription?.plan !== 'enterprise' ? 'per month' : 'pricing'}
+                per month
               </div>
             </div>
           </div>
