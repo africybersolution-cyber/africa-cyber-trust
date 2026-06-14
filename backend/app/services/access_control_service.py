@@ -127,6 +127,78 @@ class AccessControlService:
         return limits.get(access_level, 1)
 
     @staticmethod
+    def get_asset_limit(user: Optional[User], db: Session) -> int:
+        """
+        Get maximum number of assets allowed.
+
+        Free: 0 (cannot add assets)
+        Starter: 5
+        Professional/Enterprise: Unlimited (999)
+        """
+        if not user:
+            return 0
+
+        access_level = AccessControlService.get_user_access_level(user, db)
+
+        limits = {
+            AccessLevel.FREE: 0,
+            AccessLevel.STARTER: 5,
+            AccessLevel.PROFESSIONAL: 999,
+            AccessLevel.ENTERPRISE: 999
+        }
+
+        return limits.get(access_level, 0)
+
+    @staticmethod
+    def can_add_asset(user: Optional[User], db: Session) -> Dict[str, Any]:
+        """
+        Check if user can add another asset.
+
+        Returns dict with:
+        - can_add: bool
+        - current_count: int
+        - limit: int
+        - message: str (if cannot add)
+        """
+        if not user or not user.company_id:
+            return {
+                "can_add": False,
+                "current_count": 0,
+                "limit": 0,
+                "message": "Only business accounts can add assets."
+            }
+
+        # Get user's asset limit
+        limit = AccessControlService.get_asset_limit(user, db)
+
+        # Count current assets
+        from app.models.asset import Asset
+        current_count = db.query(Asset).filter(
+            Asset.company_id == user.company_id
+        ).count()
+
+        # Check if can add more
+        can_add = current_count < limit
+        access_level = AccessControlService.get_user_access_level(user, db)
+
+        # Build message if cannot add
+        message = None
+        if not can_add:
+            if access_level == AccessLevel.FREE:
+                message = "Free tier cannot add assets. Upgrade to Starter or higher."
+            elif access_level == AccessLevel.STARTER:
+                message = f"Starter plan limited to {limit} assets. Upgrade to Professional for unlimited assets."
+            else:
+                message = f"Asset limit reached ({limit})."
+
+        return {
+            "can_add": can_add,
+            "current_count": current_count,
+            "limit": limit,
+            "message": message
+        }
+
+    @staticmethod
     def get_user_permissions(user: Optional[User], db: Session) -> Dict[str, Any]:
         """
         Get comprehensive permission info for user.
@@ -145,6 +217,7 @@ class AccessControlService:
             "can_access_reports": access_level in [AccessLevel.STARTER, AccessLevel.PROFESSIONAL, AccessLevel.ENTERPRISE],
             "can_access_alerts": access_level in [AccessLevel.PROFESSIONAL, AccessLevel.ENTERPRISE],
             "team_member_limit": AccessControlService.get_team_member_limit(user, db),
+            "asset_limit": AccessControlService.get_asset_limit(user, db),
             "is_trial": TrialService.check_trial_active(user, db) if user else False,
             "trial_days_remaining": TrialService.days_remaining(user) if user else 0
         }

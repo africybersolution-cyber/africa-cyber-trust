@@ -9,6 +9,7 @@ from app.db.database import get_db
 from app.api.auth import get_current_user
 from app.models.user import User
 from app.models.asset import Asset, AssetType
+from app.services.access_control_service import AccessControlService
 
 router = APIRouter()
 
@@ -50,6 +51,18 @@ async def create_asset(
             status_code=400,
             detail="Only business accounts can add assets. Please create a company first."
         )
+
+    # Check asset limit based on subscription tier
+    asset_check = AccessControlService.can_add_asset(current_user, db)
+    if not asset_check["can_add"]:
+        print(f"[ERROR] Asset limit reached for {current_user.email}")
+        print(f"  Current: {asset_check['current_count']}/{asset_check['limit']}")
+        raise HTTPException(
+            status_code=403,
+            detail=asset_check["message"]
+        )
+
+    print(f"[ASSET LIMIT] OK - {asset_check['current_count']}/{asset_check['limit']} assets used")
 
     try:
         # Create asset
