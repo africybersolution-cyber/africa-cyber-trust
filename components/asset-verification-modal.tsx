@@ -26,7 +26,8 @@ export function AssetVerificationModal({ assetId, domain, onClose, onVerified }:
 
   const loadVerificationInstructions = async () => {
     try {
-      const response = await fetch(`/api/assets/${assetId}/verify/start`, {
+      const { config } = await import('@/lib/config');
+      const response = await fetch(`${config.apiUrl}/api/assets/${assetId}/verify/start`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -35,11 +36,15 @@ export function AssetVerificationModal({ assetId, domain, onClose, onVerified }:
 
       if (response.ok) {
         const data = await response.json();
+        console.log('[VERIFICATION] Instructions loaded:', data.instructions);
         setInstructions(data.instructions);
       } else {
+        const errorData = await response.json();
+        console.error('[VERIFICATION] Failed to load:', errorData);
         setError('Failed to load verification instructions');
       }
     } catch (err) {
+      console.error('[VERIFICATION] Error:', err);
       setError('Failed to load verification instructions');
     } finally {
       setLoading(false);
@@ -51,7 +56,8 @@ export function AssetVerificationModal({ assetId, domain, onClose, onVerified }:
     setError('');
 
     try {
-      const response = await fetch(`/api/assets/${assetId}/verify/check`, {
+      const { config } = await import('@/lib/config');
+      const response = await fetch(`${config.apiUrl}/api/assets/${assetId}/verify/check`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -63,7 +69,7 @@ export function AssetVerificationModal({ assetId, domain, onClose, onVerified }:
         if (data.verified) {
           // Auto-trigger security scan after verification
           try {
-            await fetch(`/api/scans/assets/${assetId}/scan`, {
+            await fetch(`${config.apiUrl}/api/scans/assets/${assetId}/scan`, {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${token}`
@@ -92,7 +98,8 @@ export function AssetVerificationModal({ assetId, domain, onClose, onVerified }:
     setSuccessMessage('');
 
     try {
-      const response = await fetch(`/api/assets/${assetId}/verify/email/send`, {
+      const { config } = await import('@/lib/config');
+      const response = await fetch(`${config.apiUrl}/api/assets/${assetId}/verify/email/send`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -102,11 +109,14 @@ export function AssetVerificationModal({ assetId, domain, onClose, onVerified }:
       if (response.ok) {
         const data = await response.json();
         setEmailSent(true);
-        setSuccessMessage(`Verification email sent to ${data.email}. Check your inbox and click the link to verify!`);
+        setSuccessMessage(`✅ Verification email sent to ${data.email}. Check your inbox and click the link to verify!`);
       } else {
-        setError('Failed to send verification email');
+        const errorData = await response.json();
+        console.error('[EMAIL] Send failed:', errorData);
+        setError('Failed to send verification email. Please try again.');
       }
     } catch (err) {
+      console.error('[EMAIL] Error:', err);
       setError('Failed to send email. Please try again.');
     } finally {
       setSendingEmail(false);
