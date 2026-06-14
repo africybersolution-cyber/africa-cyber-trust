@@ -11,6 +11,7 @@ router = APIRouter()
 
 
 @router.post("/admin/fix-users")
+@router.get("/admin/fix-users")
 async def fix_existing_users(db: Session = Depends(get_db)):
     """
     Fix all existing users without trial - Give them STARTER trial.
