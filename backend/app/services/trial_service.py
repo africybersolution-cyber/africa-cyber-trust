@@ -6,19 +6,19 @@ from app.models.subscription import Subscription
 
 
 class TrialService:
-    """Manage free trials for users (7 days Personal, 14 days Professional)."""
+    """Manage free trials for users (14 days for all paid tiers)."""
 
     # Trial periods per plan
     TRIAL_DAYS = {
-        'personal': 7,
+        'starter': 14,
         'professional': 14,
-        'enterprise': 14  # Can be negotiated
+        'enterprise': 14
     }
 
     @staticmethod
-    def start_trial(user: User, db: Session, plan_name: str = 'personal'):
+    def start_trial(user: User, db: Session, plan_name: str = 'starter'):
         """Start trial for new user based on selected plan."""
-        trial_days = TrialService.TRIAL_DAYS.get(plan_name, 7)
+        trial_days = TrialService.TRIAL_DAYS.get(plan_name, 14)
 
         user.trial_started_at = datetime.utcnow()
         user.trial_ends_at = datetime.utcnow() + timedelta(days=trial_days)
@@ -83,4 +83,4 @@ class TrialService:
     @staticmethod
     def get_trial_days(plan_name: str) -> int:
         """Get trial period for a plan."""
-        return TrialService.TRIAL_DAYS.get(plan_name, 7)
+        return TrialService.TRIAL_DAYS.get(plan_name, 14)

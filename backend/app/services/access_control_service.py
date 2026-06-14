@@ -9,10 +9,10 @@ from typing import Optional, Dict, Any
 
 class AccessLevel:
     """Access level constants."""
-    FREE = "free"              # No account, IP-based limit
-    PERSONAL = "personal"       # $5/month - unlimited home scans
-    PROFESSIONAL = "professional"  # $49/month - full dashboard
-    ENTERPRISE = "enterprise"   # Custom - everything
+    FREE = "free"                  # No account, IP-based limit
+    STARTER = "starter"             # $19/month - dashboard + vuln scanning, 5 assets
+    PROFESSIONAL = "professional"   # $69/month - full features, unlimited assets, 10 team members
+    ENTERPRISE = "enterprise"       # $199/month - everything, unlimited team
 
 
 class AccessControlService:
@@ -43,7 +43,7 @@ class AccessControlService:
         # Check if trial is active
         if TrialService.check_trial_active(user, db):
             # Trial active - give access to their selected plan
-            return user.account_type or AccessLevel.PERSONAL
+            return user.account_type or AccessLevel.STARTER
 
         # No subscription, expired trial = free tier (but logged in)
         return AccessLevel.FREE
@@ -54,7 +54,7 @@ class AccessControlService:
         Check if user can access home page scanning features.
 
         Free users: Limited to 1/day (checked elsewhere)
-        Personal+: Unlimited
+        Paid users (Starter+): Unlimited
         """
         access_level = AccessControlService.get_user_access_level(user, db)
         # Everyone can access home scans (free users have daily limit)
@@ -63,25 +63,25 @@ class AccessControlService:
     @staticmethod
     def can_access_dashboard(user: Optional[User], db: Session) -> bool:
         """
-        Check if user can access full business dashboard.
+        Check if user can access business dashboard.
 
-        Only Professional and Enterprise users can access dashboard.
-        Personal users are blocked.
+        Starter: Limited dashboard (5 assets max)
+        Professional/Enterprise: Full dashboard (unlimited assets)
         """
         if not user:
             return False
 
         access_level = AccessControlService.get_user_access_level(user, db)
 
-        # Only professional and enterprise get dashboard
-        return access_level in [AccessLevel.PROFESSIONAL, AccessLevel.ENTERPRISE]
+        # Starter, Professional, and Enterprise all get dashboard access
+        return access_level in [AccessLevel.STARTER, AccessLevel.PROFESSIONAL, AccessLevel.ENTERPRISE]
 
     @staticmethod
     def can_access_vulnerability_scanning(user: Optional[User], db: Session) -> bool:
         """
         Check if user can access vulnerability scanning.
 
-        Only Professional and Enterprise.
+        All paid tiers (Starter, Professional, Enterprise).
         """
         return AccessControlService.can_access_dashboard(user, db)
 
@@ -108,8 +108,8 @@ class AccessControlService:
         """
         Get maximum number of team members allowed.
 
-        Personal: 1 (just the user)
-        Professional: 5
+        Free/Starter: 1 (just the user, no additional members)
+        Professional: 10
         Enterprise: Unlimited (999)
         """
         if not user:
@@ -119,8 +119,8 @@ class AccessControlService:
 
         limits = {
             AccessLevel.FREE: 1,
-            AccessLevel.PERSONAL: 1,
-            AccessLevel.PROFESSIONAL: 5,
+            AccessLevel.STARTER: 1,
+            AccessLevel.PROFESSIONAL: 10,
             AccessLevel.ENTERPRISE: 999
         }
 
@@ -138,11 +138,11 @@ class AccessControlService:
         return {
             "access_level": access_level,
             "can_access_home_scans": True,  # Everyone
-            "can_access_dashboard": access_level in [AccessLevel.PROFESSIONAL, AccessLevel.ENTERPRISE],
-            "can_access_vulnerability_scanning": access_level in [AccessLevel.PROFESSIONAL, AccessLevel.ENTERPRISE],
+            "can_access_dashboard": access_level in [AccessLevel.STARTER, AccessLevel.PROFESSIONAL, AccessLevel.ENTERPRISE],
+            "can_access_vulnerability_scanning": access_level in [AccessLevel.STARTER, AccessLevel.PROFESSIONAL, AccessLevel.ENTERPRISE],
             "can_access_continuous_monitoring": access_level in [AccessLevel.PROFESSIONAL, AccessLevel.ENTERPRISE],
             "can_create_team_members": access_level in [AccessLevel.PROFESSIONAL, AccessLevel.ENTERPRISE],
-            "can_access_reports": access_level in [AccessLevel.PROFESSIONAL, AccessLevel.ENTERPRISE],
+            "can_access_reports": access_level in [AccessLevel.STARTER, AccessLevel.PROFESSIONAL, AccessLevel.ENTERPRISE],
             "can_access_alerts": access_level in [AccessLevel.PROFESSIONAL, AccessLevel.ENTERPRISE],
             "team_member_limit": AccessControlService.get_team_member_limit(user, db),
             "is_trial": TrialService.check_trial_active(user, db) if user else False,
@@ -161,15 +161,15 @@ class AccessControlService:
 
             access_level = AccessControlService.get_user_access_level(user, db)
 
-            if access_level == AccessLevel.PERSONAL:
+            if access_level == AccessLevel.STARTER:
                 raise HTTPException(
                     status_code=403,
-                    detail="This feature requires Professional plan. Upgrade to access full dashboard."
+                    detail="This feature requires Professional plan. Upgrade to access unlimited assets and team features."
                 )
             elif access_level == AccessLevel.FREE:
                 raise HTTPException(
                     status_code=403,
-                    detail="Please upgrade to Professional plan to access the dashboard."
+                    detail="Please upgrade to Starter plan or higher to access the dashboard."
                 )
             else:
                 raise HTTPException(

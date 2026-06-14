@@ -10,8 +10,9 @@ class PricingService:
 
     # USD base prices
     USD_PRICES = {
-        "personal": 5,
-        "professional": 49
+        "starter": 19,
+        "professional": 69,
+        "enterprise": 199
     }
 
     # Country configuration
@@ -211,18 +212,21 @@ class PricingService:
             raise ValueError(f"Exchange rate for {currency} not available")
 
         # Calculate prices in local currency
-        personal_price = int(PricingService.USD_PRICES["personal"] * exchange_rate)
+        starter_price = int(PricingService.USD_PRICES["starter"] * exchange_rate)
         professional_price = int(PricingService.USD_PRICES["professional"] * exchange_rate)
+        enterprise_price = int(PricingService.USD_PRICES["enterprise"] * exchange_rate)
 
         # Round to nice numbers
-        personal_price = PricingService._round_price(personal_price, currency)
+        starter_price = PricingService._round_price(starter_price, currency)
         professional_price = PricingService._round_price(professional_price, currency)
+        enterprise_price = PricingService._round_price(enterprise_price, currency)
 
         return {
             "country": country_data["name"],
             "currency": currency,
-            "personal": str(personal_price),
+            "starter": str(starter_price),
             "professional": str(professional_price),
+            "enterprise": str(enterprise_price),
             "operators": list(country_data["operators"].keys()),
             "exchange_rate": exchange_rate,
             "last_updated": PricingService._cache_timestamp.isoformat() if PricingService._cache_timestamp else None

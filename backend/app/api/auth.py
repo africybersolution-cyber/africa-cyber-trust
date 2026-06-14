@@ -26,7 +26,7 @@ class UserSignupRequest(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8)
     name: str = Field(..., min_length=2)
-    account_type: str = Field(default='personal')  # 'personal', 'professional', or 'enterprise'
+    account_type: str = Field(default='starter')  # 'starter', 'professional', or 'enterprise'
 
     class Config:
         json_schema_extra = {
@@ -34,7 +34,7 @@ class UserSignupRequest(BaseModel):
                 "email": "user@example.com",
                 "password": "SecurePass123!",
                 "name": "John Doe",
-                "account_type": "personal"
+                "account_type": "starter"
             }
         }
 
@@ -96,7 +96,7 @@ async def signup(
 ):
     """Sign up a new user with trial period."""
     # Validate account type
-    valid_plans = ['personal', 'professional', 'enterprise']
+    valid_plans = ['starter', 'professional', 'enterprise']
     if request.account_type not in valid_plans:
         raise HTTPException(
             status_code=400,
@@ -115,7 +115,7 @@ async def signup(
         user.account_type = request.account_type
         db.commit()
 
-        # Start trial (7 days for personal, 14 days for professional)
+        # Start trial (14 days for all paid tiers)
         TrialService.start_trial(user, db, plan_name=request.account_type)
 
         access_token = AuthService.create_access_token(
@@ -165,17 +165,17 @@ async def get_trial_status(
 async def get_trial_info():
     """Get trial period information for all plans (public endpoint)."""
     return {
-        "personal": {
-            "trial_days": TrialService.get_trial_days('personal'),
-            "description": "7-day free trial - No credit card required"
+        "starter": {
+            "trial_days": TrialService.get_trial_days('starter'),
+            "description": "14-day free trial - Dashboard + vulnerability scanning, 5 assets max"
         },
         "professional": {
             "trial_days": TrialService.get_trial_days('professional'),
-            "description": "14-day free trial - Full access to all features"
+            "description": "14-day free trial - Unlimited assets, 10 team members, full features"
         },
         "enterprise": {
             "trial_days": TrialService.get_trial_days('enterprise'),
-            "description": "Custom trial period - Contact sales"
+            "description": "14-day free trial - Everything unlimited, priority support"
         }
     }
 
