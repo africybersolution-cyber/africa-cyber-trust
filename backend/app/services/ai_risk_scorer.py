@@ -347,22 +347,22 @@ class AIRiskScorer:
         # Overall assessment
         if risk_level == 'CRITICAL':
             summary_parts.append(
-                f"🚨 CRITICAL SECURITY RISK (Score: {overall_score}/100). "
+                f"[CRITICAL] CRITICAL SECURITY RISK (Score: {overall_score}/100). "
                 "Immediate action required to prevent potential data breach."
             )
         elif risk_level == 'HIGH':
             summary_parts.append(
-                f"⚠️ HIGH SECURITY RISK (Score: {overall_score}/100). "
+                f"[HIGH] HIGH SECURITY RISK (Score: {overall_score}/100). "
                 "Urgent remediation recommended within 24-48 hours."
             )
         elif risk_level == 'MEDIUM':
             summary_parts.append(
-                f"🟡 MEDIUM SECURITY RISK (Score: {overall_score}/100). "
+                f"[MEDIUM] MEDIUM SECURITY RISK (Score: {overall_score}/100). "
                 "Address vulnerabilities within 1-2 weeks."
             )
         else:
             summary_parts.append(
-                f"✅ LOW SECURITY RISK (Score: {overall_score}/100). "
+                f"[LOW] LOW SECURITY RISK (Score: {overall_score}/100). "
                 "Good security posture. Monitor and maintain."
             )
 
