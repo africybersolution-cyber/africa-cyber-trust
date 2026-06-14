@@ -20,6 +20,7 @@ from app.services.ssl_certificate_scanner import SSLCertificateScanner
 from app.services.web_vuln_scanner import WebVulnScanner
 from app.services.port_scanner import PortScanner
 from app.services.tech_stack_detector import TechStackDetector
+from app.services.ai_risk_scorer import AIRiskScorer
 
 
 class RecommendationGenerator:
@@ -365,7 +366,41 @@ class SecurityScanner:
             scan.medium_count = sum(1 for f in findings if f.severity == "medium")
             scan.low_count = sum(1 for f in findings if f.severity == "low")
 
-            # Calculate security score
+            # AI RISK SCORING - Smart vulnerability prioritization
+            risk_analysis = AIRiskScorer.calculate_scan_risk_score(scan, findings)
+
+            # Store AI risk data in scan_data field (JSON)
+            scan.scan_data = scan.scan_data or {}
+            scan.scan_data['ai_risk_analysis'] = {
+                'overall_risk_score': risk_analysis['overall_score'],
+                'risk_level': risk_analysis['risk_level'],
+                'executive_summary': risk_analysis['executive_summary'],
+                'total_findings': risk_analysis['total_findings'],
+                'critical_count': risk_analysis['critical_count'],
+                'high_count': risk_analysis['high_count'],
+                'risk_breakdown': risk_analysis['risk_breakdown'],
+                'top_3_priorities': [
+                    {
+                        'title': item['finding'].title,
+                        'severity': item['finding'].severity,
+                        'category': item['finding'].category,
+                        'risk_score': item['risk_score'],
+                        'priority': item['priority']
+                    }
+                    for item in risk_analysis['priority_findings'][:3]
+                ],
+                'quick_wins': [
+                    {
+                        'title': item['finding'].title,
+                        'estimated_time': item['estimated_time'],
+                        'impact': item['impact']
+                    }
+                    for item in risk_analysis['quick_wins']
+                ],
+                'remediation_phases': len(risk_analysis['remediation_order'])
+            }
+
+            # Calculate security score (legacy score, but now enhanced with AI)
             scan.score = scan.calculate_score()
 
             # Update scan status
