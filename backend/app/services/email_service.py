@@ -191,7 +191,7 @@ class EmailService:
                         <h2 style="color: #111827; margin: 30px 0 15px 0; font-size: 18px;">Security Issues Detected</h2>
                         {findings_html}
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="http://localhost:3001/dashboard/assets" style="background: linear-gradient(135deg, #0047AB 0%, #1E90FF 100%); color: #FFFFFF; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Full Report →</a>
+                            <a href="https://www.africybertrust.com/dashboard/assets" style="background: linear-gradient(135deg, #0047AB 0%, #1E90FF 100%); color: #FFFFFF; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Full Report →</a>
                         </div>
                         <div style="background-color: #EFF6FF; padding: 15px; border-radius: 8px; margin-top: 25px;">
                             <p style="margin: 0; color: #1E40AF; font-size: 13px;">
@@ -219,7 +219,7 @@ Security Score: {security_score}/100
 Issues: {critical_count} Critical, {high_count} High
 
 Security issues have been detected on your asset. Please review the full report at:
-http://localhost:3001/dashboard/assets
+https://www.africybertrust.com/dashboard/assets
 
 © {datetime.now().year} Africa Cyber Trust
             """

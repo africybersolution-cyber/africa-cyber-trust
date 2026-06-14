@@ -437,8 +437,8 @@ async def send_verification_email(
     else:
         token = asset.verification_token
 
-    # Generate verification link
-    verification_link = f"http://localhost:3001/verify?asset={asset_id}&token={token}"
+    # Generate verification link (use production URL)
+    verification_link = f"https://www.africybertrust.com/verify-asset?asset={asset_id}&token={token}"
 
     # Determine email address - extract clean domain from URL
     domain = asset.value
