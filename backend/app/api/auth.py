@@ -323,47 +323,71 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
     Request password reset email.
     Generates a reset token and sends email with reset link.
     """
-    import secrets
-    from datetime import datetime as dt, timedelta
+    try:
+        import secrets
+        from datetime import datetime as dt, timedelta
+        import traceback
 
-    user = db.query(User).filter(User.email == request.email).first()
+        print(f"\n[FORGOT-PASSWORD] Starting for email: {request.email}")
 
-    # Always return success even if email doesn't exist (security best practice)
-    if not user:
+        user = db.query(User).filter(User.email == request.email).first()
+
+        # Always return success even if email doesn't exist (security best practice)
+        if not user:
+            print(f"[FORGOT-PASSWORD] User not found: {request.email}")
+            return {"message": "If that email exists, a reset link has been sent"}
+
+        print(f"[FORGOT-PASSWORD] User found: {user.email}")
+
+        # Generate secure reset token
+        reset_token = secrets.token_urlsafe(32)
+        print(f"[FORGOT-PASSWORD] Token generated")
+
+        # Store token in user record (expires in 1 hour)
+        user.reset_token = reset_token
+        user.reset_token_expires = dt.utcnow() + timedelta(hours=1)
+        print(f"[FORGOT-PASSWORD] About to commit to database...")
+        db.commit()
+        print(f"[FORGOT-PASSWORD] Database commit successful!")
+
+        # Send password reset email via EmailService
+        try:
+            reset_link = f"https://www.africybertrust.com/reset-password?token={reset_token}"
+            print(f"[FORGOT-PASSWORD] About to send email to: {user.email}")
+
+            # Send email to the customer who requested password reset
+            EmailService.send_password_reset_email(
+                to_email=user.email,  # Send to the customer's email
+                reset_link=reset_link
+            )
+
+            # Also print to console for development
+            print(f"\n{'='*60}")
+            print(f"PASSWORD RESET LINK FOR: {user.email}")
+            print(f"Link: {reset_link}")
+            print(f"Email sent to: {user.email} (FROM: africybersolution@gmail.com)")
+            print(f"{'='*60}\n")
+
+        except Exception as e:
+            print(f"[FORGOT-PASSWORD] ❌ Error sending email: {e}")
+            print(f"[FORGOT-PASSWORD] Traceback: {traceback.format_exc()}")
+            # Print link to console as fallback
+            print(f"\nPassword reset link: https://www.africybertrust.com/reset-password?token={reset_token}\n")
+            # Still return success to user
+
+        print(f"[FORGOT-PASSWORD] ✅ Complete!")
         return {"message": "If that email exists, a reset link has been sent"}
 
-    # Generate secure reset token
-    reset_token = secrets.token_urlsafe(32)
-
-    # Store token in user record (expires in 1 hour)
-    user.reset_token = reset_token
-    user.reset_token_expires = dt.utcnow() + timedelta(hours=1)
-    db.commit()
-
-    # Send password reset email via EmailService
-    try:
-        reset_link = f"https://www.africybertrust.com/reset-password?token={reset_token}"
-
-        # Send email to the customer who requested password reset
-        EmailService.send_password_reset_email(
-            to_email=user.email,  # Send to the customer's email
-            reset_link=reset_link
-        )
-
-        # Also print to console for development
-        print(f"\n{'='*60}")
-        print(f"PASSWORD RESET LINK FOR: {user.email}")
-        print(f"Link: {reset_link}")
-        print(f"Email sent to: {user.email} (FROM: africybersolution@gmail.com)")
-        print(f"{'='*60}\n")
-
     except Exception as e:
-        print(f"Error sending password reset email: {e}")
-        # Print link to console as fallback
-        print(f"\nPassword reset link: https://www.africybertrust.com/reset-password?token={reset_token}\n")
-        # Still return success to user
-
-    return {"message": "If that email exists, a reset link has been sent"}
+        import traceback
+        print(f"\n{'='*60}")
+        print(f"[FORGOT-PASSWORD] 🔥 CRITICAL ERROR!")
+        print(f"Error: {e}")
+        print(f"Type: {type(e)}")
+        print(f"Traceback:\n{traceback.format_exc()}")
+        print(f"{'='*60}\n")
+        # Still return success to user (security practice)
+        return {"message": "If that email exists, a reset link has been sent"}
 
 
 @router.post("/reset-password")
