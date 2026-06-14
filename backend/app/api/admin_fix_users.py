@@ -26,9 +26,10 @@ async def fix_existing_users(db: Session = Depends(get_db)):
     """
 
     try:
-        # Count users needing update
+        # Count users needing update (both NULL trial AND old "personal" type)
         count_result = db.execute(text("""
-            SELECT COUNT(*) FROM users WHERE trial_started_at IS NULL
+            SELECT COUNT(*) FROM users
+            WHERE trial_started_at IS NULL OR account_type = 'personal'
         """))
         count = count_result.fetchone()[0]
 
@@ -40,16 +41,16 @@ async def fix_existing_users(db: Session = Depends(get_db)):
                 "users": []
             }
 
-        # Update users
+        # Update users (both NULL trial AND old "personal" type)
         db.execute(text("""
             UPDATE users
             SET
                 account_type = 'starter',
-                trial_started_at = NOW(),
-                trial_ends_at = NOW() + INTERVAL '14 days',
-                trial_status = 'active',
+                trial_started_at = COALESCE(trial_started_at, NOW()),
+                trial_ends_at = COALESCE(trial_ends_at, NOW() + INTERVAL '14 days'),
+                trial_status = COALESCE(trial_status, 'active'),
                 updated_at = NOW()
-            WHERE trial_started_at IS NULL
+            WHERE trial_started_at IS NULL OR account_type = 'personal'
         """))
 
         db.commit()
