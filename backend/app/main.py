@@ -2,7 +2,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import public_check, auth, company, assets, scans, ai_verify, payments, company_verification, admin, email_verification, alerts, team
+from app.api import public_check, auth, company, assets, scans, ai_verify, payments, company_verification, admin, email_verification, alerts, team, admin_fix_users
 
 # Create FastAPI application
 app = FastAPI(
@@ -134,6 +134,7 @@ app.include_router(payments.router, prefix="/api/payments", tags=["Payments & Su
 app.include_router(company_verification.router, prefix="/api/company", tags=["Company Verification"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+app.include_router(admin_fix_users.router, prefix="/api", tags=["Admin Setup"])  # One-time user fix
 app.include_router(assets.router, prefix="/api/assets", tags=["Assets"])  # Asset management
 app.include_router(scans.router, prefix="/api/scans", tags=["Scans"])
 app.include_router(email_verification.router, prefix="/api/email-verification", tags=["Email Verification"])
