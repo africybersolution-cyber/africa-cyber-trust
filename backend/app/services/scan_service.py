@@ -17,6 +17,9 @@ from app.services.cloud_storage_scanner import CloudStorageScanner
 from app.services.email_domain_scanner import EmailDomainScanner
 from app.services.source_code_repo_scanner import SourceCodeRepoScanner
 from app.services.ssl_certificate_scanner import SSLCertificateScanner
+from app.services.web_vuln_scanner import WebVulnScanner
+from app.services.port_scanner import PortScanner
+from app.services.tech_stack_detector import TechStackDetector
 
 
 class RecommendationGenerator:
@@ -322,10 +325,24 @@ class SecurityScanner:
             else:
                 # Domain-based assets (domain, subdomain, api_endpoint, ip_address, ip_range)
                 domain = self._extract_domain(asset.value)
+
+                # Original security checks
                 findings.extend(self._check_ssl_tls(domain, asset_id, scan.id))
                 findings.extend(self._check_security_headers(domain, asset_id, scan.id))
                 findings.extend(self._check_dns_security(domain, asset_id, scan.id))
                 findings.extend(self._check_common_vulns(domain, asset_id, scan.id))
+
+                # NEW: Advanced OWASP Top 10 Web Vulnerability Scanner
+                if asset.type in [AssetType.DOMAIN, AssetType.SUBDOMAIN, AssetType.API_ENDPOINT]:
+                    findings.extend(WebVulnScanner.scan(asset.value, asset_id, scan.id))
+
+                # NEW: Technology Stack Detection
+                if asset.type in [AssetType.DOMAIN, AssetType.SUBDOMAIN, AssetType.API_ENDPOINT]:
+                    findings.extend(TechStackDetector.detect(asset.value, asset_id, scan.id))
+
+                # NEW: Comprehensive Port Scanner
+                if asset.type in [AssetType.DOMAIN, AssetType.SUBDOMAIN, AssetType.IP_ADDRESS, AssetType.IP_RANGE]:
+                    findings.extend(PortScanner.scan(asset.value, asset_id, scan.id, full_scan=False))
 
             # Deduplicate findings (same title + asset + scan = duplicate)
             unique_findings = {}
