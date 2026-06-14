@@ -17,6 +17,10 @@ class AssetType(str, enum.Enum):
     MOBILE_APP = "mobile_app"
     IP_ADDRESS = "ip_address"
     IP_RANGE = "ip_range"
+    CLOUD_STORAGE = "cloud_storage"
+    EMAIL_DOMAIN = "email_domain"
+    SOURCE_CODE_REPO = "source_code_repo"
+    SSL_CERTIFICATE = "ssl_certificate"
 
 
 class VerificationStatus(str, enum.Enum):

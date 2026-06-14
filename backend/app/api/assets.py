@@ -18,7 +18,7 @@ router = APIRouter()
 class AssetCreateRequest(BaseModel):
     """Create asset request."""
     name: str = Field(..., min_length=1)
-    asset_type: str = Field(..., pattern="^(domain|subdomain|api_endpoint|mobile_app|ip_address|ip_range)$")
+    asset_type: str = Field(..., pattern="^(domain|subdomain|api_endpoint|mobile_app|ip_address|ip_range|cloud_storage|email_domain|source_code_repo|ssl_certificate)$")
     value: str = Field(..., min_length=1)
     description: str = None
 

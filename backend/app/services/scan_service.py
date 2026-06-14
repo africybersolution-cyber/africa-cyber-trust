@@ -12,7 +12,11 @@ from sqlalchemy.orm import Session
 from urllib.parse import urlparse
 
 from app.models.scan import Scan, Finding
-from app.models.asset import Asset
+from app.models.asset import Asset, AssetType
+from app.services.cloud_storage_scanner import CloudStorageScanner
+from app.services.email_domain_scanner import EmailDomainScanner
+from app.services.source_code_repo_scanner import SourceCodeRepoScanner
+from app.services.ssl_certificate_scanner import SSLCertificateScanner
 
 
 class RecommendationGenerator:
@@ -296,15 +300,32 @@ class SecurityScanner:
         self.db.refresh(scan)
 
         try:
-            # Extract domain from asset value
-            domain = self._extract_domain(asset.value)
-
-            # Run all security checks
+            # Route to appropriate scanner based on asset type
             findings = []
-            findings.extend(self._check_ssl_tls(domain, asset_id, scan.id))
-            findings.extend(self._check_security_headers(domain, asset_id, scan.id))
-            findings.extend(self._check_dns_security(domain, asset_id, scan.id))
-            findings.extend(self._check_common_vulns(domain, asset_id, scan.id))
+
+            if asset.type in [AssetType.CLOUD_STORAGE]:
+                # Cloud storage scanner
+                findings.extend(CloudStorageScanner.scan(asset.value, asset_id, scan.id))
+
+            elif asset.type in [AssetType.EMAIL_DOMAIN]:
+                # Email domain scanner
+                findings.extend(EmailDomainScanner.scan(asset.value, asset_id, scan.id))
+
+            elif asset.type in [AssetType.SOURCE_CODE_REPO]:
+                # Source code repository scanner
+                findings.extend(SourceCodeRepoScanner.scan(asset.value, asset_id, scan.id))
+
+            elif asset.type in [AssetType.SSL_CERTIFICATE]:
+                # SSL certificate scanner
+                findings.extend(SSLCertificateScanner.scan(asset.value, asset_id, scan.id))
+
+            else:
+                # Domain-based assets (domain, subdomain, api_endpoint, ip_address, ip_range)
+                domain = self._extract_domain(asset.value)
+                findings.extend(self._check_ssl_tls(domain, asset_id, scan.id))
+                findings.extend(self._check_security_headers(domain, asset_id, scan.id))
+                findings.extend(self._check_dns_security(domain, asset_id, scan.id))
+                findings.extend(self._check_common_vulns(domain, asset_id, scan.id))
 
             # Deduplicate findings (same title + asset + scan = duplicate)
             unique_findings = {}
