@@ -1,6 +1,6 @@
 """Trial management service."""
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.models.user import User
 from app.models.subscription import Subscription
 
