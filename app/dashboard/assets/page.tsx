@@ -377,20 +377,7 @@ export default function AssetsPage() {
     );
   }
 
-  // Check if user has a company after auth is loaded
-  if (!company) {
-    return (
-      <div className="min-h-screen cyber-bg p-8 flex items-center justify-center">
-        <div className="cyber-card-raised p-8 max-w-md text-center">
-          <h2 className="text-2xl font-bold mb-4 text-white">Business Account Required</h2>
-          <p className="text-cyber-muted mb-6">Asset monitoring and deep scanning are only available for verified business accounts.</p>
-          <a href="/signup" className="inline-block px-8 py-3 rounded-xl font-semibold text-white shadow-lg" style={{ background: 'linear-gradient(135deg, #0047AB 0%, #1E90FF 100%)' }}>
-            Register Business
-          </a>
-        </div>
-      </div>
-    );
-  }
+  // Everyone can now add assets with STARTER tier - no business account required
 
   return (
     <div className="min-h-screen cyber-bg p-8">
