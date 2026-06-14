@@ -111,6 +111,10 @@ class AuthService:
         db.commit()
         db.refresh(user)
 
+        # Automatically start STARTER trial for all new users
+        from app.services.trial_service import TrialService
+        TrialService.start_trial(user, db, plan_name='starter')
+
         return user
 
     @staticmethod

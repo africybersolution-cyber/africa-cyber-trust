@@ -37,8 +37,8 @@ class User(Base):
     last_login_at = Column(DateTime(timezone=True), nullable=True)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=True)
 
-    # Trial system fields
-    account_type = Column(String(20), default='personal')  # 'personal' or 'business'
+    # Trial system fields (Everyone starts with STARTER trial)
+    account_type = Column(String(20), default='starter')  # 'starter', 'professional', 'enterprise'
     trial_started_at = Column(DateTime(timezone=True), nullable=True)
     trial_ends_at = Column(DateTime(timezone=True), nullable=True)
     trial_status = Column(String(20), default='active')  # 'active', 'expired', 'converted'
