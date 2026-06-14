@@ -162,12 +162,12 @@ export function AssetVerificationModal({ assetId, domain, onClose, onVerified }:
               <p className="text-gray-600 mb-4">
                 Add a TXT record to your domain's DNS settings
               </p>
-              <div className="bg-gray-100 rounded-xl p-4 font-mono text-sm">
+              <div className="bg-gray-100 rounded-xl p-4 font-mono text-sm text-gray-900">
                 <div className="mb-2">
-                  <span className="font-bold">Name:</span> {instructions?.dns_txt?.name}
+                  <span className="font-bold text-gray-900">Name:</span> <span className="text-blue-600">{instructions?.dns_txt?.name}</span>
                 </div>
                 <div>
-                  <span className="font-bold">Value:</span> {instructions?.dns_txt?.value}
+                  <span className="font-bold text-gray-900">Value:</span> <span className="text-blue-600 break-all">{instructions?.dns_txt?.value}</span>
                 </div>
               </div>
             </div>
@@ -189,12 +189,12 @@ export function AssetVerificationModal({ assetId, domain, onClose, onVerified }:
               <p className="text-gray-600 mb-4">
                 Upload a verification file to your website root
               </p>
-              <div className="bg-gray-100 rounded-xl p-4 font-mono text-sm">
+              <div className="bg-gray-100 rounded-xl p-4 font-mono text-sm text-gray-900">
                 <div className="mb-2">
-                  <span className="font-bold">File:</span> {instructions?.html_file?.filename}
+                  <span className="font-bold text-gray-900">File:</span> <span className="text-yellow-600">{instructions?.html_file?.filename}</span>
                 </div>
                 <div>
-                  <span className="font-bold">URL:</span> {instructions?.html_file?.url}
+                  <span className="font-bold text-gray-900">URL:</span> <span className="text-yellow-600 break-all">{instructions?.html_file?.url}</span>
                 </div>
               </div>
             </div>
