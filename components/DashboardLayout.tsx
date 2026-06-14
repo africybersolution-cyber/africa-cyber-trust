@@ -55,7 +55,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
               </div>
               <div>
                 <div className="font-bold text-sm text-white">{company ? company.name : user?.name}</div>
-                <div className="text-xs text-cyber-muted capitalize">{company ? `${company.plan} Plan` : user?.role}</div>
+                <div className="text-xs text-cyber-muted capitalize">{company ? `${company.plan} Plan` : `${user?.account_type || 'starter'} Plan`}</div>
               </div>
             </a>
 
