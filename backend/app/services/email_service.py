@@ -118,7 +118,10 @@ class EmailService:
             return True
 
         except Exception as e:
-            print(f"Failed to send email: {str(e)}")
+            print(f"[EMAIL] Failed to send verification email to {to_email}: {str(e)}")
+            print(f"        Error type: {type(e).__name__}")
+            import traceback
+            print(f"        Traceback: {traceback.format_exc()}")
             return False
 
     @staticmethod

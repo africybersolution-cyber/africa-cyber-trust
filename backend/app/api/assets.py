@@ -440,7 +440,7 @@ async def send_verification_email(
     # Generate verification link (use production URL)
     verification_link = f"https://www.africybertrust.com/verify-asset?asset={asset_id}&token={token}"
 
-    # Determine email address - extract clean domain from URL
+    # Determine clean domain label from the asset URL (for display in the email)
     domain = asset.value
     # Remove protocol if present
     if "://" in domain:
@@ -449,8 +449,18 @@ async def send_verification_email(
     domain = domain.rstrip("/")
     # Remove path if present
     domain = domain.split("/")[0]
+    # Remove port if present
+    domain = domain.split(":")[0]
+    # Remove leading www.
+    if domain.startswith("www."):
+        domain = domain[4:]
 
-    email_address = f"admin@{domain}"
+    # Send the verification link to the authenticated user's real inbox.
+    # NOTE: previously this sent to a synthetic admin@{domain} address, which
+    # almost never exists -> Gmail SMTP refuses the recipient -> send fails.
+    # The user's own email is a guaranteed-deliverable mailbox (same address
+    # the working payment-receipt flow uses).
+    email_address = current_user.email
 
     # Send email
     success = email_service.send_verification_email(
@@ -468,7 +478,8 @@ async def send_verification_email(
     else:
         raise HTTPException(
             status_code=500,
-            detail="Failed to send verification email"
+            detail=f"Failed to send verification email to {email_address}. "
+                   "Please check the email service logs for the SMTP error."
         )
 
 
