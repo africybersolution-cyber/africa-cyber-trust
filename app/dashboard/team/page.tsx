@@ -165,7 +165,7 @@ export default function TeamPage() {
                   className="inline-block px-6 py-3 rounded-xl font-semibold text-white"
                   style={{ background: `linear-gradient(135deg, ${BLUE} 0%, #1E90FF 100%)` }}
                 >
-                  {teamStats.access_level === 'personal' ? 'Upgrade to Professional ($49/month)' : 'Upgrade to Enterprise'}
+                  {teamStats.access_level === 'personal' ? 'Upgrade to Professional ($79/month)' : 'Upgrade to Enterprise'}
                 </a>
               </div>
             </div>

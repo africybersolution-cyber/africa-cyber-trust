@@ -253,7 +253,7 @@ export default function SettingsPage() {
                       <p className="text-gray-400 text-sm">You are on the Professional plan</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold" style={{ color: '#DAA520' }}>$199</div>
+                      <div className="text-2xl font-bold" style={{ color: '#DAA520' }}>$79</div>
                       <div className="text-sm text-gray-400">per month</div>
                     </div>
                   </div>
@@ -287,9 +287,9 @@ export default function SettingsPage() {
                   <h2 className="text-xl font-bold text-white mb-4">Billing History</h2>
                   <div className="space-y-3">
                     {[
-                      { date: 'Jun 11, 2026', amount: '$199.00', status: 'Paid' },
-                      { date: 'May 11, 2026', amount: '$199.00', status: 'Paid' },
-                      { date: 'Apr 11, 2026', amount: '$199.00', status: 'Paid' },
+                      { date: 'Jun 11, 2026', amount: '$79.00', status: 'Paid' },
+                      { date: 'May 11, 2026', amount: '$79.00', status: 'Paid' },
+                      { date: 'Apr 11, 2026', amount: '$79.00', status: 'Paid' },
                     ].map((invoice, idx) => (
                       <div key={idx} className="flex items-center justify-between p-4 rounded-lg bg-slate-900/50">
                         <div>

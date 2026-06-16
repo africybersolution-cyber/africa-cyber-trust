@@ -118,10 +118,10 @@ export default function CreditsWidget() {
               Upgrade to Personal - $5/mo
             </button>
             <button
-              onClick={() => handleUpgrade('Professional', '49')}
+              onClick={() => handleUpgrade('Professional', '79')}
               className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition shadow-md"
             >
-              Upgrade to Pro - $49/mo
+              Upgrade to Pro - $79/mo
             </button>
           </div>
         ) : (

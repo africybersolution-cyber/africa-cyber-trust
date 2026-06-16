@@ -77,7 +77,7 @@ const PLANS = [
   },
   {
     name: 'Business',
-    price: '$199',
+    price: '$79',
     cadence: 'per month',
     highlight: true,
     cta: 'Start Free Trial',
@@ -94,7 +94,7 @@ const PLANS = [
   },
   {
     name: 'Enterprise',
-    price: '$999',
+    price: '$299',
     cadence: 'per month',
     highlight: false,
     cta: 'Talk to Sales',
