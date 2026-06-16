@@ -289,7 +289,7 @@ async def initiate_crypto_payment(
         currency="USD",
         payment_method="crypto",
         provider=f"Polygon_{request.token_symbol}",
-        country="CRYPTO",
+        country=None,  # Crypto payments don't have a country
         status="pending"
     )
 
