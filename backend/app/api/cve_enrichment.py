@@ -3,9 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel
+from datetime import datetime
 
-from app.core.database import get_db
-from app.core.auth import get_current_user
+from app.db.database import get_db
+from app.api.auth import get_current_user
 from app.models.user import User
 from app.models.scan import Finding
 from app.models.asset import Asset
@@ -120,7 +121,7 @@ async def enrich_finding(
             "highest_cvss": enrichment["highest_cvss"],
             "critical_count": enrichment["critical_count"],
             "high_count": enrichment["high_count"],
-            "enriched_at": str(db.query(Finding).first().found_at)  # Current timestamp
+            "enriched_at": datetime.utcnow().isoformat()
         }
 
         # Upgrade severity if CVE is more severe

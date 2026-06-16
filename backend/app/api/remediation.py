@@ -5,8 +5,8 @@ from typing import Optional
 from datetime import datetime, timezone
 from pydantic import BaseModel
 
-from app.core.database import get_db
-from app.core.auth import get_current_user
+from app.db.database import get_db
+from app.api.auth import get_current_user
 from app.models.user import User
 from app.models.scan import Finding
 from app.models.asset import Asset

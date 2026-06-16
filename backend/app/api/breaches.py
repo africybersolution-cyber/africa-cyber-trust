@@ -5,8 +5,8 @@ from typing import List
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
-from app.core.database import get_db
-from app.core.auth import get_current_user
+from app.db.database import get_db
+from app.api.auth import get_current_user
 from app.models.user import User
 from app.models.breach import BreachCheck, BreachResult, PasteExposure
 from app.services.breach_monitor_service import breach_monitor_service

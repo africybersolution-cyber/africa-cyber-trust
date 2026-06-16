@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from fastapi import Depends
 from typing import Optional
 
-from app.core.database import get_db
+from app.db.database import get_db
 from app.models.public_check import PublicCheck
 from app.models.asset import Asset
 from datetime import datetime, timedelta
