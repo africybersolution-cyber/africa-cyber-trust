@@ -115,9 +115,12 @@ export default function BrandedLoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+                <label htmlFor="login-email" className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
                 <input
+                  id="login-email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -131,13 +134,16 @@ export default function BrandedLoginPage() {
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-300">Password</label>
+                  <label htmlFor="login-password" className="block text-sm font-medium text-gray-300">Password</label>
                   <a href="/forgot-password" className="text-sm font-medium hover:underline" style={{ color: '#DAA520' }}>
                     Forgot password?
                   </a>
                 </div>
                 <input
+                  id="login-password"
+                  name="password"
                   type="password"
+                  autoComplete="current-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

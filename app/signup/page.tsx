@@ -89,9 +89,12 @@ function SignupContent() {
             )}
 
             <div>
-              <label className="block text-sm font-bold mb-2 text-gray-300">Full Name</label>
+              <label htmlFor="signup-name" className="block text-sm font-bold mb-2 text-gray-300">Full Name</label>
               <input
+                id="signup-name"
+                name="name"
                 type="text"
+                autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border-2 border-blue-900/30 focus:border-blue-500 focus:outline-none transition-all bg-slate-900/50 text-white placeholder-gray-500"
@@ -101,9 +104,12 @@ function SignupContent() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold mb-2 text-gray-300">Email Address</label>
+              <label htmlFor="signup-email" className="block text-sm font-bold mb-2 text-gray-300">Email Address</label>
               <input
+                id="signup-email"
+                name="email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border-2 border-blue-900/30 focus:border-blue-500 focus:outline-none transition-all bg-slate-900/50 text-white placeholder-gray-500"
@@ -113,9 +119,12 @@ function SignupContent() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold mb-2 text-gray-300">Password</label>
+              <label htmlFor="signup-password" className="block text-sm font-bold mb-2 text-gray-300">Password</label>
               <input
+                id="signup-password"
+                name="new-password"
                 type="password"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border-2 border-blue-900/30 focus:border-blue-500 focus:outline-none transition-all bg-slate-900/50 text-white placeholder-gray-500"
@@ -127,9 +136,12 @@ function SignupContent() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold mb-2 text-gray-300">Confirm Password</label>
+              <label htmlFor="signup-confirm-password" className="block text-sm font-bold mb-2 text-gray-300">Confirm Password</label>
               <input
+                id="signup-confirm-password"
+                name="confirm-password"
                 type="password"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border-2 border-blue-900/30 focus:border-blue-500 focus:outline-none transition-all bg-slate-900/50 text-white placeholder-gray-500"
@@ -140,11 +152,13 @@ function SignupContent() {
 
             <div className="flex items-start pt-2">
               <input
+                id="signup-terms"
+                name="terms"
                 type="checkbox"
                 className="mt-1 mr-3 w-4 h-4 rounded border-gray-600 bg-slate-900"
                 required
               />
-              <p className="text-sm text-gray-400">
+              <label htmlFor="signup-terms" className="text-sm text-gray-400">
                 I agree to the{' '}
                 <a href="/terms" className="text-blue-400 hover:text-blue-300 font-semibold">
                   Terms of Service
@@ -153,7 +167,7 @@ function SignupContent() {
                 <a href="/privacy" className="text-blue-400 hover:text-blue-300 font-semibold">
                   Privacy Policy
                 </a>
-              </p>
+              </label>
             </div>
 
             <button
