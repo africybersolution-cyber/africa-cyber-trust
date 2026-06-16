@@ -6,6 +6,7 @@ import { config } from '@/lib/config';
 import DashboardLayout from '@/components/DashboardLayout';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { LOGO_BASE64 } from './logo-base64';
 
 const BLUE = '#0047AB';
 const GOLD = '#DAA520';
@@ -18,36 +19,6 @@ export default function ReportsPage() {
   const [assets, setAssets] = useState<any[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<string>('all');
   const [loading, setLoading] = useState(true);
-
-  // Helper function to load logo as base64
-  const loadLogoAsBase64 = (): Promise<string | null> => {
-    return new Promise((resolve) => {
-      console.log('[LOGO] Starting to load logo from /images/act-logo.png');
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        console.log('[LOGO] Image loaded successfully, dimensions:', img.width, 'x', img.height);
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0);
-          const dataUrl = canvas.toDataURL('image/png');
-          console.log('[LOGO] Converted to base64, length:', dataUrl.length);
-          resolve(dataUrl);
-        } else {
-          console.error('[LOGO] Failed to get canvas context');
-          resolve(null);
-        }
-      };
-      img.onerror = (e) => {
-        console.error('[LOGO] Failed to load image:', e);
-        resolve(null);
-      };
-      img.src = '/images/act-logo.png';
-    });
-  };
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
@@ -106,19 +77,10 @@ export default function ReportsPage() {
     doc.rect(0, 0, pageWidth, 35, 'F');
 
     // Add logo on the right
-    console.log('[REPORT] Loading logo for PDF...');
-    const logoBase64 = await loadLogoAsBase64();
-    console.log('[REPORT] Logo loaded, base64:', logoBase64 ? 'YES' : 'NO');
-    if (logoBase64) {
-      try {
-        console.log('[REPORT] Adding logo to PDF at position', pageWidth - 40, 5);
-        doc.addImage(logoBase64, 'PNG', pageWidth - 40, 5, 35, 25);
-        console.log('[REPORT] Logo added successfully!');
-      } catch (e) {
-        console.error('[REPORT] Failed to add logo to PDF:', e);
-      }
-    } else {
-      console.warn('[REPORT] Logo base64 is null, skipping');
+    try {
+      doc.addImage(LOGO_BASE64, 'PNG', pageWidth - 40, 5, 35, 25);
+    } catch (e) {
+      console.error('[REPORT] Failed to add logo to PDF:', e);
     }
 
     doc.setTextColor(255, 255, 255);
@@ -255,19 +217,10 @@ export default function ReportsPage() {
     doc.rect(0, 0, pageWidth, 35, 'F');
 
     // Add logo on the right
-    console.log('[REPORT] Loading logo for PDF...');
-    const logoBase64 = await loadLogoAsBase64();
-    console.log('[REPORT] Logo loaded, base64:', logoBase64 ? 'YES' : 'NO');
-    if (logoBase64) {
-      try {
-        console.log('[REPORT] Adding logo to PDF at position', pageWidth - 40, 5);
-        doc.addImage(logoBase64, 'PNG', pageWidth - 40, 5, 35, 25);
-        console.log('[REPORT] Logo added successfully!');
-      } catch (e) {
-        console.error('[REPORT] Failed to add logo to PDF:', e);
-      }
-    } else {
-      console.warn('[REPORT] Logo base64 is null, skipping');
+    try {
+      doc.addImage(LOGO_BASE64, 'PNG', pageWidth - 40, 5, 35, 25);
+    } catch (e) {
+      console.error('[REPORT] Failed to add logo to PDF:', e);
     }
 
     doc.setTextColor(255, 255, 255);
@@ -406,19 +359,10 @@ export default function ReportsPage() {
     doc.rect(0, 0, pageWidth, 35, 'F');
 
     // Add logo on the right
-    console.log('[REPORT] Loading logo for PDF...');
-    const logoBase64 = await loadLogoAsBase64();
-    console.log('[REPORT] Logo loaded, base64:', logoBase64 ? 'YES' : 'NO');
-    if (logoBase64) {
-      try {
-        console.log('[REPORT] Adding logo to PDF at position', pageWidth - 40, 5);
-        doc.addImage(logoBase64, 'PNG', pageWidth - 40, 5, 35, 25);
-        console.log('[REPORT] Logo added successfully!');
-      } catch (e) {
-        console.error('[REPORT] Failed to add logo to PDF:', e);
-      }
-    } else {
-      console.warn('[REPORT] Logo base64 is null, skipping');
+    try {
+      doc.addImage(LOGO_BASE64, 'PNG', pageWidth - 40, 5, 35, 25);
+    } catch (e) {
+      console.error('[REPORT] Failed to add logo to PDF:', e);
     }
 
     doc.setTextColor(255, 255, 255);
