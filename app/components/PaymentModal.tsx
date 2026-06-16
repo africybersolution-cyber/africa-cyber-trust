@@ -224,7 +224,7 @@ export default function PaymentModal({ plan, amount, onClose, onSuccess }: Payme
                 >
                   <div className="text-2xl mb-2">🪙</div>
                   <div className="font-semibold text-gray-900">Crypto</div>
-                  <div className="text-xs text-gray-500">USDT, USDC, POL</div>
+                  <div className="text-xs text-gray-500">USDT, USDC</div>
                 </button>
               </div>
             </div>

@@ -257,8 +257,8 @@ async def initiate_crypto_payment(
     User needs to send the payment from their wallet.
     """
     # Validate inputs
-    if request.plan_name not in ['personal', 'professional']:
-        raise HTTPException(status_code=400, detail="Invalid plan. Choose 'personal' or 'professional'")
+    if request.plan_name not in ['starter', 'professional', 'enterprise']:
+        raise HTTPException(status_code=400, detail="Invalid plan. Choose 'starter', 'professional', or 'enterprise'")
 
     if request.token_symbol not in ['USDT', 'USDC']:
         raise HTTPException(status_code=400, detail="Invalid token. Choose 'USDT' or 'USDC'")
