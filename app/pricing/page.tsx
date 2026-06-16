@@ -8,8 +8,8 @@ export default function PricingPage() {
   const plans = [
     {
       name: 'Starter',
-      price: 49,
-      annualPrice: 490,
+      price: 15,
+      annualPrice: 150,
       description: 'For small businesses and startups',
       features: [
         'Up to 5 assets',
@@ -28,8 +28,8 @@ export default function PricingPage() {
     },
     {
       name: 'Professional',
-      price: 199,
-      annualPrice: 1990,
+      price: 79,
+      annualPrice: 790,
       description: 'For businesses and professionals',
       features: [
         'Everything in Personal',
@@ -50,8 +50,8 @@ export default function PricingPage() {
     },
     {
       name: 'Enterprise',
-      price: 999,
-      annualPrice: 9990,
+      price: 299,
+      annualPrice: 2990,
       description: 'For large organizations',
       features: [
         'Everything in Professional',
@@ -134,7 +134,7 @@ export default function PricingPage() {
           </h1>
 
           <p className="text-xl text-gray-300 mb-8">
-            Comprehensive security monitoring for African businesses. Start with a 14-day free trial, plans from $49/month.
+            Comprehensive security monitoring for African businesses. Start with a 14-day free trial, plans from $15/month.
           </p>
 
           {/* Billing Toggle */}
@@ -280,7 +280,7 @@ export default function PricingPage() {
                   <h3 className="text-xl font-bold text-white mb-2">Compliance Reports</h3>
                   <p className="text-gray-400 text-sm mb-4">PCI-DSS, HIPAA, SOC 2 compliance reports</p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold" style={{ color: '#DAA520' }}>$199</span>
+                    <span className="text-3xl font-bold" style={{ color: '#DAA520' }}>$79</span>
                     <span className="text-gray-400">per report</span>
                   </div>
                 </div>
@@ -312,7 +312,7 @@ export default function PricingPage() {
               },
               {
                 q: 'Can I use this without a subscription?',
-                a: 'Yes! You can use the home page for 1 free scan per day without creating an account. For business monitoring with unlimited assets, upgrade to Professional ($199/month).'
+                a: 'Yes! You can use the home page for 1 free scan per day without creating an account. For business monitoring with unlimited assets, upgrade to Professional ($79/month).'
               }
             ].map((faq, i) => (
               <div key={i} className="bg-slate-800/40 backdrop-blur-sm rounded-xl p-6 border border-blue-900/30">

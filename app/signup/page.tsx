@@ -20,8 +20,8 @@ function SignupContent() {
   // Get plan from URL or default to 'starter'
   const plan = searchParams.get('plan') || 'starter';
   const planInfo = {
-    'starter': { name: 'Starter', price: '$49/month', trial: '14 days', color: '#0047AB' },
-    'professional': { name: 'Professional', price: '$199/month', trial: '14 days', color: '#DAA520' }
+    'starter': { name: 'Starter', price: '$15/month', trial: '14 days', color: '#0047AB' },
+    'professional': { name: 'Professional', price: '$79/month', trial: '14 days', color: '#DAA520' }
   };
   const currentPlan = planInfo[plan as keyof typeof planInfo] || planInfo['starter'];
 

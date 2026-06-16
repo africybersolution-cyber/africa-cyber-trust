@@ -54,7 +54,7 @@ export default function BillingPage() {
     {
       id: 'starter',
       name: 'Starter',
-      price: '$49',
+      price: '$15',
       period: '/month',
       features: [
         'Dashboard access',
@@ -70,7 +70,7 @@ export default function BillingPage() {
     {
       id: 'professional',
       name: 'Professional',
-      price: '$199',
+      price: '$79',
       period: '/month',
       features: [
         'Everything in Starter',
@@ -86,7 +86,7 @@ export default function BillingPage() {
     {
       id: 'enterprise',
       name: 'Enterprise',
-      price: '$999',
+      price: '$299',
       period: '/month',
       features: [
         'Everything in Professional',
@@ -103,9 +103,9 @@ export default function BillingPage() {
   ];
 
   const invoices = [
-    { id: 1, date: 'Jun 1, 2026', amount: '$199.00', status: 'Paid', plan: 'Professional' },
-    { id: 2, date: 'May 1, 2026', amount: '$199.00', status: 'Paid', plan: 'Professional' },
-    { id: 3, date: 'Apr 1, 2026', amount: '$199.00', status: 'Paid', plan: 'Professional' },
+    { id: 1, date: 'Jun 1, 2026', amount: '$79.00', status: 'Paid', plan: 'Professional' },
+    { id: 2, date: 'May 1, 2026', amount: '$79.00', status: 'Paid', plan: 'Professional' },
+    { id: 3, date: 'Apr 1, 2026', amount: '$79.00', status: 'Paid', plan: 'Professional' },
   ];
 
   const handleChangePlan = (planId: string) => {
@@ -174,7 +174,7 @@ export default function BillingPage() {
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-white">
-                {subscription?.plan === 'starter' ? '$49' : subscription?.plan === 'professional' ? '$199' : '$999'}
+                {subscription?.plan === 'starter' ? '$15' : subscription?.plan === 'professional' ? '$79' : '$299'}
               </div>
               <div className="text-sm text-cyber-muted">
                 per month
