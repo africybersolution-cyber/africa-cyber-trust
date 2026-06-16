@@ -8,11 +8,18 @@ import json
 class PricingService:
     """Manage pricing across 20 African countries with live exchange rates."""
 
-    # USD base prices
+    # USD base prices (monthly)
     USD_PRICES = {
         "starter": 49,
         "professional": 199,
         "enterprise": 999
+    }
+
+    # Annual prices (10 months - 2 months free!)
+    USD_PRICES_ANNUAL = {
+        "starter": 490,      # $49 × 10 = $490 (save $98/year)
+        "professional": 1990,  # $199 × 10 = $1,990 (save $398/year)
+        "enterprise": 9990    # $999 × 10 = $9,990 (save $1,998/year)
     }
 
     # Country configuration
@@ -187,15 +194,16 @@ class PricingService:
             return fallback_rates
 
     @staticmethod
-    async def get_country_pricing(country_code: str) -> Dict:
+    async def get_country_pricing(country_code: str, billing_cycle: str = "monthly") -> Dict:
         """
         Get pricing for a specific country with live exchange rates.
 
         Args:
             country_code: Two-letter country code (e.g., "RW")
+            billing_cycle: "monthly" or "annual" (annual = 2 months free)
 
         Returns:
-            Dictionary with country, currency, personal price, professional price, operators
+            Dictionary with country, currency, prices, operators, billing info
         """
         if country_code not in PricingService.COUNTRIES:
             raise ValueError(f"Country code '{country_code}' not supported")
@@ -211,24 +219,60 @@ class PricingService:
         if not exchange_rate:
             raise ValueError(f"Exchange rate for {currency} not available")
 
+        # Select USD prices based on billing cycle
+        if billing_cycle == "annual":
+            usd_prices = PricingService.USD_PRICES_ANNUAL
+        else:
+            usd_prices = PricingService.USD_PRICES
+
         # Calculate prices in local currency
-        starter_price = int(PricingService.USD_PRICES["starter"] * exchange_rate)
-        professional_price = int(PricingService.USD_PRICES["professional"] * exchange_rate)
-        enterprise_price = int(PricingService.USD_PRICES["enterprise"] * exchange_rate)
+        starter_price = int(usd_prices["starter"] * exchange_rate)
+        professional_price = int(usd_prices["professional"] * exchange_rate)
+        enterprise_price = int(usd_prices["enterprise"] * exchange_rate)
 
         # Round to nice numbers
         starter_price = PricingService._round_price(starter_price, currency)
         professional_price = PricingService._round_price(professional_price, currency)
         enterprise_price = PricingService._round_price(enterprise_price, currency)
 
+        # Calculate savings for annual billing
+        savings_info = None
+        if billing_cycle == "annual":
+            monthly_starter = int(PricingService.USD_PRICES["starter"] * exchange_rate * 12)
+            monthly_professional = int(PricingService.USD_PRICES["professional"] * exchange_rate * 12)
+            monthly_enterprise = int(PricingService.USD_PRICES["enterprise"] * exchange_rate * 12)
+
+            savings_info = {
+                "starter": {
+                    "annual_price": starter_price,
+                    "monthly_equivalent": monthly_starter,
+                    "savings": monthly_starter - starter_price,
+                    "months_free": 2
+                },
+                "professional": {
+                    "annual_price": professional_price,
+                    "monthly_equivalent": monthly_professional,
+                    "savings": monthly_professional - professional_price,
+                    "months_free": 2
+                },
+                "enterprise": {
+                    "annual_price": enterprise_price,
+                    "monthly_equivalent": monthly_enterprise,
+                    "savings": monthly_enterprise - enterprise_price,
+                    "months_free": 2
+                }
+            }
+
         return {
             "country": country_data["name"],
             "currency": currency,
+            "billing_cycle": billing_cycle,
             "starter": str(starter_price),
             "professional": str(professional_price),
             "enterprise": str(enterprise_price),
             "operators": list(country_data["operators"].keys()),
             "exchange_rate": exchange_rate,
+            "savings": savings_info,
             "last_updated": PricingService._cache_timestamp.isoformat() if PricingService._cache_timestamp else None
         }
 

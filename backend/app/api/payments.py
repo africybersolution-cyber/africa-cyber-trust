@@ -235,10 +235,21 @@ async def get_pricing():
 
 
 @router.get("/pricing/{country_code}")
-async def get_country_pricing(country_code: str):
-    """Get pricing for specific country with live exchange rates."""
+async def get_country_pricing(
+    country_code: str,
+    billing_cycle: str = "monthly"  # "monthly" or "annual"
+):
+    """
+    Get pricing for specific country with live exchange rates.
+
+    Query params:
+        billing_cycle: "monthly" or "annual" (annual = 2 months free!)
+    """
+    if billing_cycle not in ["monthly", "annual"]:
+        raise HTTPException(status_code=400, detail="billing_cycle must be 'monthly' or 'annual'")
+
     try:
-        pricing = await PricingService.get_country_pricing(country_code)
+        pricing = await PricingService.get_country_pricing(country_code, billing_cycle)
         return pricing
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
