@@ -2,7 +2,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import public_check, auth, company, assets, scans, ai_verify, payments, company_verification, admin, email_verification, alerts, team, admin_fix_users, breaches, trust_badge, remediation
+from app.api import public_check, auth, company, assets, scans, ai_verify, payments, company_verification, admin, email_verification, alerts, team, admin_fix_users, breaches, trust_badge, remediation, cve_enrichment
 
 # Create FastAPI application
 app = FastAPI(
@@ -148,6 +148,7 @@ app.include_router(team.router, prefix="/api/team", tags=["Team Management"])
 app.include_router(breaches.router, tags=["Breach Monitoring"])  # Breach monitoring (HaveIBeenPwned)
 app.include_router(trust_badge.router, tags=["Trust Badge"])  # Embeddable trust badges
 app.include_router(remediation.router, tags=["Remediation"])  # Finding remediation tracking
+app.include_router(cve_enrichment.router, tags=["CVE Intelligence"])  # CVE/NVD vulnerability intelligence
 
 
 if __name__ == "__main__":
