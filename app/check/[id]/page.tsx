@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { getSecurityIssueGuide, parseSecurityHeaders, SecurityIssueGuide } from '@/lib/security-issues-guide';
 import jsPDF from 'jspdf';
+import { LOGO_BASE64 } from '@/app/dashboard/reports/logo-base64';
 
 interface CheckResult {
   id: string;
@@ -137,6 +138,13 @@ export default function CheckResultPage() {
       // Header with gradient effect (simulated with rectangle)
       pdf.setFillColor(0, 71, 171); // #0047AB
       pdf.rect(0, 0, pageWidth, 50, 'F');
+
+      // Add logo on the right
+      try {
+        pdf.addImage(LOGO_BASE64, 'PNG', pageWidth - 40, 5, 35, 25);
+      } catch (e) {
+        console.error('[REPORT] Failed to add logo to PDF:', e);
+      }
 
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(24);

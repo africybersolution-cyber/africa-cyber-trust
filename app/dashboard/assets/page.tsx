@@ -7,6 +7,7 @@ import { AssetVerificationModal } from '@/components/asset-verification-modal';
 import { getIndustry, prioritizeFindings, isFindingRelevant } from '@/lib/industries';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { LOGO_BASE64 } from '@/app/dashboard/reports/logo-base64';
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState([]);
@@ -124,6 +125,13 @@ export default function AssetsPage() {
     // Header with branding
     doc.setFillColor(0, 71, 171); // #0047AB
     doc.rect(0, 0, pageWidth, 35, 'F');
+
+    // Add logo on the right
+    try {
+      doc.addImage(LOGO_BASE64, 'PNG', pageWidth - 40, 5, 35, 25);
+    } catch (e) {
+      console.error('[REPORT] Failed to add logo to PDF:', e);
+    }
 
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(24);
