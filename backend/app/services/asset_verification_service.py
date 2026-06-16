@@ -39,6 +39,10 @@ def _expected_value(token: str) -> str:
 def _content_matches(content: str, token: str) -> bool:
     if not content:
         return False
+    if not token:
+        # Never treat an empty token as verifiable, otherwise a file containing
+        # just "acti-verification=" would pass for any asset.
+        return False
     return _expected_value(token) in content.strip()
 
 
@@ -151,8 +155,15 @@ def verify_mobile_app_listing(value: str, token: str) -> Tuple[bool, str]:
     for url in urls:
         ok, status, text = _fetch(url)
         if ok:
-            # Stores sometimes HTML-escape the '=' sign; accept both forms.
-            if _content_matches(text, token) or f"acti-verification{token}" in text:
+            # Stores routinely HTML-escape the '=' sign in the public listing
+            # (Google Play renders it as &#x3D; or &#61;). Accept the raw form
+            # and both numeric-entity encodings of '='.
+            escaped_variants = (
+                _expected_value(token),
+                f"acti-verification&#x3D;{token}",
+                f"acti-verification&#61;{token}",
+            )
+            if any(v in text for v in escaped_variants):
                 return True, "Mobile app ownership verified via store listing token."
             return False, (
                 "Found the store listing but the verification token was not "
