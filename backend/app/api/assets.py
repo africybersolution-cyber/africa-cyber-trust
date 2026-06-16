@@ -461,12 +461,17 @@ async def send_verification_email(
     if domain.startswith("www."):
         domain = domain[4:]
 
-    # Send the verification link to the authenticated user's real inbox.
-    # NOTE: previously this sent to a synthetic admin@{domain} address, which
-    # almost never exists -> Gmail SMTP refuses the recipient -> send fails.
-    # The user's own email is a guaranteed-deliverable mailbox (same address
-    # the working payment-receipt flow uses).
+    # Validate that user's email belongs to the domain being verified
     email_address = current_user.email
+    email_domain = email_address.split('@')[-1].lower()
+
+    if email_domain != domain.lower():
+        raise HTTPException(
+            status_code=400,
+            detail=f"Email verification requires an email address at {domain}. "
+                   f"Your email ({email_address}) does not match this domain. "
+                   f"Please log in with an email address like admin@{domain} or contact@{domain}"
+        )
 
     # Send email
     success = email_service.send_verification_email(
