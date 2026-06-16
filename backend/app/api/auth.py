@@ -49,6 +49,7 @@ class BusinessRegisterRequest(BaseModel):
     domain: Optional[str] = None
     phone: Optional[str] = None
     size: Optional[str] = None
+    industry: Optional[str] = None
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -226,7 +227,8 @@ async def register_business(
             country=request.country,
             domain=request.domain,
             phone=request.phone,
-            size=request.size
+            size=request.size,
+            industry=request.industry
         )
 
         # Start 14-day trial for business (professional plan)
@@ -250,7 +252,8 @@ async def register_business(
                 "id": str(result["company"].id),
                 "name": result["company"].name,
                 "country": result["company"].country,
-                "plan": result["company"].plan_id
+                "plan": result["company"].plan_id,
+                "industry": getattr(result["company"], "industry", None)
             }
         }
 

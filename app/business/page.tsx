@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 import { INDUSTRY_LIST, getIndustry } from '@/lib/industries';
 
 const BLUE = '#0047AB';
@@ -109,20 +111,58 @@ const PLANS = [
 ];
 
 export default function BusinessPage() {
-  const [step, setStep] = useState<'landing' | 'register' | 'verify'>('landing');
+  const router = useRouter();
+  const { registerBusiness } = useAuth();
+  const [step, setStep] = useState<'landing' | 'register'>('landing');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
     domain: '',
     email: '',
+    name: '',
+    password: '',
+    confirmPassword: '',
     phone: '',
     country: '',
     size: '',
     industry: '',
   });
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStep('verify');
+    setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await registerBusiness({
+        company_name: formData.companyName,
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
+        country: formData.country,
+        domain: formData.domain || undefined,
+        phone: formData.phone || undefined,
+        size: formData.size || undefined,
+        industry: formData.industry || undefined,
+      });
+      // Account + 14-day trial created on the backend. Domain ownership is
+      // verified later, inside the dashboard, before any deep scanning.
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (step === 'landing') {
@@ -148,7 +188,7 @@ export default function BusinessPage() {
                 <a href="#modules" className="text-cyber-muted hover:text-white transition">Modules</a>
                 <a href="#pricing" className="text-cyber-muted hover:text-white transition">Pricing</a>
                 <a href="/contact" className="text-cyber-muted hover:text-white transition">Contact</a>
-                <a href="/auth/login" className="text-cyber-muted hover:text-white transition">Login</a>
+                <a href="/login" className="text-cyber-muted hover:text-white transition">Login</a>
                 <button
                   onClick={() => setStep('register')}
                   className="px-4 py-2 rounded-lg font-semibold text-white shadow-md transition-all hover:opacity-90"
@@ -393,6 +433,11 @@ export default function BusinessPage() {
 
             <div className="cyber-card-raised p-10">
               <form onSubmit={handleRegister} className="space-y-6">
+                {error && (
+                  <div className="bg-red-500/10 border-l-4 border-red-500 p-4 rounded">
+                    <p className="text-red-400 text-sm">{error}</p>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-semibold mb-2 text-cyber-muted">Company Name *</label>
                   <input
@@ -418,6 +463,18 @@ export default function BusinessPage() {
                   <p className="text-sm text-cyber-muted mt-2">We&apos;ll verify you own this domain before any deep scanning.</p>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-cyber-muted">Your Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-3 bg-[#050B1A] border border-cyber rounded-xl text-white focus:outline-none focus:border-blue-500 transition-all"
+                    placeholder="Jane Doe"
+                  />
+                </div>
+
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-semibold mb-2 text-cyber-muted">Business Email *</label>
@@ -439,6 +496,33 @@ export default function BusinessPage() {
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       className="w-full px-4 py-3 bg-[#050B1A] border border-cyber rounded-xl text-white focus:outline-none focus:border-blue-500 transition-all"
                       placeholder="+254 712 345 678"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-cyber-muted">Password *</label>
+                    <input
+                      type="password"
+                      required
+                      minLength={8}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full px-4 py-3 bg-[#050B1A] border border-cyber rounded-xl text-white focus:outline-none focus:border-blue-500 transition-all"
+                      placeholder="••••••••"
+                    />
+                    <p className="text-xs text-cyber-muted mt-1">At least 8 characters</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-cyber-muted">Confirm Password *</label>
+                    <input
+                      type="password"
+                      required
+                      value={formData.confirmPassword}
+                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                      className="w-full px-4 py-3 bg-[#050B1A] border border-cyber rounded-xl text-white focus:outline-none focus:border-blue-500 transition-all"
+                      placeholder="••••••••"
                     />
                   </div>
                 </div>
@@ -559,24 +643,44 @@ export default function BusinessPage() {
                   )}
                 </div>
 
+                <div className="flex items-start pt-2">
+                  <input type="checkbox" required className="mt-1 mr-3 w-4 h-4 rounded border-gray-600 bg-slate-900" />
+                  <p className="text-sm text-cyber-muted">
+                    I agree to the{' '}
+                    <a href="/terms" className="text-blue-400 hover:text-blue-300 font-semibold">Terms of Service</a>{' '}
+                    and{' '}
+                    <a href="/privacy" className="text-blue-400 hover:text-blue-300 font-semibold">Privacy Policy</a>
+                  </p>
+                </div>
+
                 <div className="flex gap-4">
                   <button
                     type="button"
                     onClick={() => setStep('landing')}
-                    className="flex-1 py-4 rounded-xl font-semibold border-2 transition-all hover:bg-white/5"
+                    disabled={loading}
+                    className="flex-1 py-4 rounded-xl font-semibold border-2 transition-all hover:bg-white/5 disabled:opacity-50"
                     style={{ borderColor: GOLD, color: GOLD }}
                   >
                     Back
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-4 rounded-xl font-semibold text-white shadow-xl transition-all hover:opacity-90"
+                    disabled={loading}
+                    className="flex-1 py-4 rounded-xl font-semibold text-white shadow-xl transition-all hover:opacity-90 disabled:opacity-50"
                     style={{ background: `linear-gradient(135deg, ${BLUE} 0%, #1E90FF 100%)` }}
                   >
-                    Continue to Verification
+                    {loading ? 'Creating account...' : 'Create Business Account'}
                   </button>
                 </div>
               </form>
+
+              <p className="text-center text-sm text-cyber-muted mt-6">
+                After signup you can verify domain ownership inside your dashboard to unlock deep scanning.
+              </p>
+              <p className="text-center text-sm text-cyber-muted mt-2">
+                Already have an account?{' '}
+                <a href="/login" className="text-blue-400 hover:text-blue-300 font-semibold">Sign in</a>
+              </p>
             </div>
           </div>
         </div>
@@ -584,94 +688,6 @@ export default function BusinessPage() {
     );
   }
 
-  // Verification step
-  return (
-    <main className="min-h-screen cyber-bg py-12">
-      <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-8">
-            <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center cyber-glow-blue" style={{ background: `linear-gradient(135deg, ${BLUE} 0%, ${GOLD} 100%)` }}>
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </div>
-            <h1 className="text-4xl font-bold mb-4 text-white">Verify Domain Ownership</h1>
-            <p className="text-cyber-muted max-w-2xl mx-auto">
-              Deep scanning is only unlocked after you prove ownership of <strong className="text-white">{formData.domain || 'your domain'}</strong>.
-            </p>
-          </div>
-
-          <div className="cyber-card-raised p-10">
-            <h2 className="text-2xl font-bold mb-6 text-white">Preview: Verification Methods Available</h2>
-            <p className="text-cyber-muted mb-6 text-sm">
-              ℹ️ These are preview examples. You'll choose your method on the next page.
-            </p>
-
-            <div className="space-y-4 opacity-60 pointer-events-none">
-              <div className="border border-cyber rounded-2xl p-6 transition-all" style={{ borderColor: BLUE }}>
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `linear-gradient(135deg, ${BLUE} 0%, #1E90FF 100%)` }}>
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2 text-white">DNS TXT Record <span className="text-xs" style={{ color: GOLD }}>(Recommended)</span></h3>
-                    <p className="text-cyber-muted mb-4">Add a TXT record to your domain&apos;s DNS settings</p>
-                    <div className="bg-[#050B1A] border border-cyber rounded-lg p-4 font-mono text-sm text-cyber-muted">
-                      <div className="mb-2"><strong className="text-white">Name:</strong> _acti-verify</div>
-                      <div><strong className="text-white">Value:</strong> acti-{Math.random().toString(36).substring(7)}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border border-cyber rounded-2xl p-6 transition-all">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #FFD700 100%)` }}>
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2 text-white">HTML File Upload</h3>
-                    <p className="text-cyber-muted mb-4">Upload a verification file to your website root</p>
-                    <div className="bg-[#050B1A] border border-cyber rounded-lg p-4 font-mono text-sm text-cyber-muted">
-                      <div className="mb-2"><strong className="text-white">File:</strong> acti-verify.html</div>
-                      <div><strong className="text-white">URL:</strong> https://{formData.domain || 'your-domain.com'}/acti-verify.html</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border border-cyber rounded-2xl p-6 transition-all">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #1E90FF 0%, #0047AB 100%)' }}>
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2 text-white">Email Verification</h3>
-                    <p className="text-cyber-muted">We&apos;ll send a verification link to admin@{formData.domain || 'your-domain.com'}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 flex gap-4">
-              <button
-                onClick={() => setStep('register')}
-                className="flex-1 py-4 rounded-xl font-semibold border-2 transition-all hover:bg-white/5"
-                style={{ borderColor: GOLD, color: GOLD }}
-              >
-                Back
-              </button>
-              <a
-                href={`/business/register?company=${encodeURIComponent(formData.companyName)}&domain=${encodeURIComponent(formData.domain)}&email=${encodeURIComponent(formData.email)}&phone=${encodeURIComponent(formData.phone)}&country=${encodeURIComponent(formData.country)}&size=${encodeURIComponent(formData.size)}&industry=${encodeURIComponent(formData.industry)}`}
-                className="flex-1 py-4 rounded-xl font-semibold text-white shadow-xl transition-all hover:opacity-90 text-center"
-                style={{ background: `linear-gradient(135deg, ${BLUE} 0%, #1E90FF 100%)` }}
-              >
-                Continue to Registration
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-  );
+  // No other steps — registration creates the account directly.
+  return null;
 }

@@ -139,7 +139,8 @@ class AuthService:
         country: str,
         domain: Optional[str] = None,
         phone: Optional[str] = None,
-        size: Optional[str] = None
+        size: Optional[str] = None,
+        industry: Optional[str] = None
     ) -> Company:
         """Create a new company/organization."""
         company = Company(
@@ -160,6 +161,8 @@ class AuthService:
             company.email = email
         if size and hasattr(company, 'size'):
             company.size = size
+        if industry and hasattr(company, 'industry'):
+            company.industry = industry
 
         db.add(company)
         db.commit()
@@ -177,7 +180,8 @@ class AuthService:
         country: str,
         domain: Optional[str] = None,
         phone: Optional[str] = None,
-        size: Optional[str] = None
+        size: Optional[str] = None,
+        industry: Optional[str] = None
     ) -> Dict[str, Any]:
         """Register a new business with owner user."""
         # Create company
@@ -188,7 +192,8 @@ class AuthService:
             country=country,
             domain=domain,
             phone=phone,
-            size=size
+            size=size,
+            industry=industry
         )
 
         # Create owner user
@@ -201,9 +206,16 @@ class AuthService:
             role="company_owner"
         )
 
-        # Generate access token
+        # Generate access token (include company_id so company-scoped
+        # queries work immediately after signup, matching the /login token).
         access_token = AuthService.create_access_token(
-            data={"sub": user.email, "user_id": str(user.id), "role": user.role}
+            data={
+                "sub": user.email,
+                "user_id": str(user.id),
+                "role": user.role,
+                "company_id": str(company.id),
+                "account_type": getattr(user, "account_type", None),
+            }
         )
 
         return {
