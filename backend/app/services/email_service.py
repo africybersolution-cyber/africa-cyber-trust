@@ -20,7 +20,8 @@ class EmailService:
     SMTP_SERVER = "smtp.gmail.com"
     SMTP_PORT = 587
     SENDER_EMAIL = "africybersolution@gmail.com"
-    SENDER_PASSWORD = "mwqwbdrywmsezcuh"  # Gmail App Password (spaces removed)
+    # SECURITY: Password from environment variable (fallback for local dev only)
+    SENDER_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
 
     # SendGrid API key (primary method - from environment variable)
     SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
