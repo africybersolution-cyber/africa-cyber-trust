@@ -80,7 +80,6 @@ Step 4: Verify
 IMPORTANCE: Without SPF, attackers can easily spoof your domain
 
 TIME: 10 minutes | SEVERITY: HIGH""",
-                    created_at=datetime.now(timezone.utc)
                 ))
             else:
                 spf_record = spf_records[0].strip('"')
@@ -118,7 +117,6 @@ Step 3: Test before deploying '-all'
 VERIFICATION: Check at mxtoolbox.com/spf.aspx
 
 TIME: 5 minutes | SEVERITY: CRITICAL""",
-                        created_at=datetime.now(timezone.utc)
                     ))
                 elif '~all' in spf_record or '-all' in spf_record:
                     findings.append(Finding(
@@ -129,7 +127,6 @@ TIME: 5 minutes | SEVERITY: CRITICAL""",
                         title="SPF Record Configured",
                         description=f"SPF record found and properly configured: {spf_record}",
                         recommendation="SPF is correctly configured. Monitor for any authorized sending sources that need to be added.",
-                        created_at=datetime.now(timezone.utc)
                     ))
 
         except dns.resolver.NXDOMAIN:
@@ -141,7 +138,6 @@ TIME: 5 minutes | SEVERITY: CRITICAL""",
                 title="Domain Does Not Exist",
                 description=f"Domain '{domain}' does not exist or DNS is misconfigured.",
                 recommendation="Verify domain name spelling and DNS configuration.",
-                created_at=datetime.now(timezone.utc)
             ))
         except Exception as e:
             findings.append(Finding(
@@ -152,7 +148,6 @@ TIME: 5 minutes | SEVERITY: CRITICAL""",
                 title="SPF Check Error",
                 description=f"Could not check SPF record: {str(e)}",
                 recommendation="Verify DNS is accessible and domain is correct.",
-                created_at=datetime.now(timezone.utc)
             ))
 
         return findings
@@ -204,7 +199,6 @@ Step 4: Verify
 IMPORTANCE: DMARC prevents email spoofing and phishing
 
 TIME: 15 minutes | SEVERITY: HIGH""",
-                    created_at=datetime.now(timezone.utc)
                 ))
             else:
                 dmarc_record = dmarc_records[0]
@@ -236,7 +230,6 @@ Step 4: Consider 'reject' for maximum security
   v=DMARC1; p=reject; rua=mailto:dmarc@yourdomain.com; pct=100
 
 TIME: Update takes 5 min, monitoring takes 2-4 weeks""",
-                        created_at=datetime.now(timezone.utc)
                     ))
                 elif 'p=quarantine' in dmarc_record or 'p=reject' in dmarc_record:
                     policy = 'quarantine' if 'p=quarantine' in dmarc_record else 'reject'
@@ -248,7 +241,6 @@ TIME: Update takes 5 min, monitoring takes 2-4 weeks""",
                         title=f"DMARC Enforced ({policy.upper()} Policy)",
                         description=f"DMARC is properly configured with {policy} policy: {dmarc_record}",
                         recommendation="Excellent! Continue monitoring DMARC reports and update SPF/DKIM as needed.",
-                        created_at=datetime.now(timezone.utc)
                     ))
 
         except dns.resolver.NXDOMAIN:
@@ -260,7 +252,6 @@ TIME: Update takes 5 min, monitoring takes 2-4 weeks""",
                 title="No DMARC Record Found",
                 description=f"No DMARC record at _dmarc.{domain}",
                 recommendation="Add DMARC record to prevent email spoofing. See SPF recommendation for steps.",
-                created_at=datetime.now(timezone.utc)
             ))
         except Exception as e:
             findings.append(Finding(
@@ -271,7 +262,6 @@ TIME: Update takes 5 min, monitoring takes 2-4 weeks""",
                 title="DMARC Check Error",
                 description=f"Could not check DMARC record: {str(e)}",
                 recommendation="Verify DNS and domain configuration.",
-                created_at=datetime.now(timezone.utc)
             ))
 
         return findings
@@ -294,7 +284,6 @@ TIME: Update takes 5 min, monitoring takes 2-4 weeks""",
                     title="MX Records Found",
                     description=f"Domain has {len(mx_records)} MX record(s): {', '.join(mx_records[:3])}",
                     recommendation="MX records are configured. Ensure they point to your actual mail servers.",
-                    created_at=datetime.now(timezone.utc)
                 ))
             else:
                 findings.append(Finding(
@@ -305,7 +294,6 @@ TIME: Update takes 5 min, monitoring takes 2-4 weeks""",
                     title="No MX Records",
                     description=f"Domain has no MX records. Email cannot be received.",
                     recommendation="If you need to receive email at this domain, add MX records pointing to your mail server.",
-                    created_at=datetime.now(timezone.utc)
                 ))
 
         except dns.resolver.NoAnswer:
@@ -317,7 +305,6 @@ TIME: Update takes 5 min, monitoring takes 2-4 weeks""",
                 title="No MX Records",
                 description="Domain has no MX records configured.",
                 recommendation="Add MX records if you need to receive email at this domain.",
-                created_at=datetime.now(timezone.utc)
             ))
         except Exception as e:
             findings.append(Finding(
@@ -328,7 +315,6 @@ TIME: Update takes 5 min, monitoring takes 2-4 weeks""",
                 title="MX Check Error",
                 description=f"Could not check MX records: {str(e)}",
                 recommendation="Verify DNS configuration.",
-                created_at=datetime.now(timezone.utc)
             ))
 
         return findings

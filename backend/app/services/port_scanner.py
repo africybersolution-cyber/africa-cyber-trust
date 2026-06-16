@@ -95,7 +95,6 @@ class PortScanner:
                 title="Invalid Port Scan Target",
                 description="Could not extract valid hostname/IP from target",
                 recommendation="Provide valid hostname or IP address",
-                created_at=datetime.now(timezone.utc)
             ))
             return findings
 
@@ -114,7 +113,6 @@ class PortScanner:
                 title="No Open Ports Detected",
                 description=f"Scanned {len(ports_to_scan)} ports on {target}, none are open or firewall is blocking.",
                 recommendation="Good! Minimal attack surface. Ensure only necessary services are running.",
-                created_at=datetime.now(timezone.utc)
             ))
             return findings
 
@@ -188,7 +186,6 @@ class PortScanner:
             title=f"{len(open_ports)} Open Ports Detected",
             description=f"Open ports on {target}: {port_list}",
             recommendation="Review all open ports. Close unnecessary services to reduce attack surface.",
-            created_at=datetime.now(timezone.utc)
         ))
 
         # Check each port for security issues
@@ -205,7 +202,6 @@ class PortScanner:
                     title=f"Dangerous Port {port} ({service}) Is Open",
                     description=f"Port {port} ({service}) is exposed to the internet. {risk_description}",
                     recommendation=PortScanner._get_port_remediation(port, service),
-                    created_at=datetime.now(timezone.utc)
                 ))
 
         # Check for database ports
@@ -249,7 +245,6 @@ Step 4: Network Segmentation
 IMPACT: Direct internet access to database = data breach
 
 TIME: 30 minutes | SEVERITY: CRITICAL""",
-                created_at=datetime.now(timezone.utc)
             ))
 
         # Check for remote access ports
@@ -299,7 +294,6 @@ Step 5: Enable MFA (Multi-Factor Authentication)
   - RDP: Windows MFA
 
 TIME: 1-2 hours | SEVERITY: MEDIUM-HIGH""",
-                created_at=datetime.now(timezone.utc)
             ))
 
         return findings

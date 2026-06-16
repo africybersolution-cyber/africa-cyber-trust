@@ -35,7 +35,6 @@ class SSLCertificateScanner:
                 title="Invalid SSL Certificate Target",
                 description=f"Could not parse hostname from: {value}",
                 recommendation="Provide hostname in format: domain.com:443 or https://domain.com",
-                created_at=datetime.now(timezone.utc)
             ))
             return findings
 
@@ -124,7 +123,6 @@ Step 3: Install received certificate
 VERIFICATION: Visit https://{hostname} - should show valid certificate
 
 TIME: 10-20 minutes | SEVERITY: CRITICAL""",
-                            created_at=datetime.now(timezone.utc)
                         ))
                     elif days_until_expiry <= 7:
                         findings.append(Finding(
@@ -150,7 +148,6 @@ Set up auto-renewal if not already enabled:
   sudo systemctl start certbot.timer
 
 TIME: 5 minutes | SEVERITY: CRITICAL""",
-                            created_at=datetime.now(timezone.utc)
                         ))
                     elif days_until_expiry <= 30:
                         findings.append(Finding(
@@ -173,7 +170,6 @@ Check auto-renewal is enabled:
   sudo systemctl status certbot.timer
 
 TIME: 5 minutes""",
-                            created_at=datetime.now(timezone.utc)
                         ))
                     else:
                         findings.append(Finding(
@@ -184,7 +180,6 @@ TIME: 5 minutes""",
                             title=f"SSL Certificate Valid ({days_until_expiry} Days Remaining)",
                             description=f"Certificate is valid and expires on {not_after.strftime('%Y-%m-%d')} ({days_until_expiry} days).",
                             recommendation="Certificate is valid. Ensure auto-renewal is configured to prevent expiry.",
-                            created_at=datetime.now(timezone.utc)
                         ))
 
                     # Check certificate issuer
@@ -219,7 +214,6 @@ WHY: Trusted certificates provide:
   - SEO benefits
 
 TIME: 15 minutes | SEVERITY: HIGH""",
-                            created_at=datetime.now(timezone.utc)
                         ))
 
                     # Check TLS version
@@ -249,7 +243,6 @@ Restart: sudo systemctl restart apache2
 VERIFY: https://www.ssllabs.com/ssltest/
 
 TIME: 10 minutes | SEVERITY: HIGH""",
-                            created_at=datetime.now(timezone.utc)
                         ))
                     else:
                         findings.append(Finding(
@@ -260,7 +253,6 @@ TIME: 10 minutes | SEVERITY: HIGH""",
                             title=f"Strong TLS Version: {tls_version}",
                             description=f"Server uses modern {tls_version} protocol. Good configuration!",
                             recommendation="TLS configuration is secure. Continue monitoring.",
-                            created_at=datetime.now(timezone.utc)
                         ))
 
         except ssl.SSLError as e:
@@ -286,7 +278,6 @@ ACTION:
 4. Test at: https://www.ssllabs.com/ssltest/analyze.html?d={hostname}
 
 TIME: 10-30 minutes depending on issue""",
-                created_at=datetime.now(timezone.utc)
             ))
         except socket.timeout:
             findings.append(Finding(
@@ -297,7 +288,6 @@ TIME: 10-30 minutes depending on issue""",
                 title="Connection Timeout",
                 description=f"Could not connect to {hostname}:{port} - connection timed out.",
                 recommendation=f"Verify {hostname} is accessible and port {port} is open. Check firewall rules.",
-                created_at=datetime.now(timezone.utc)
             ))
         except Exception as e:
             findings.append(Finding(
@@ -308,7 +298,6 @@ TIME: 10-30 minutes depending on issue""",
                 title="SSL Scan Error",
                 description=f"Could not scan SSL certificate: {str(e)}",
                 recommendation="Verify hostname and port are correct. Ensure server is accessible.",
-                created_at=datetime.now(timezone.utc)
             ))
 
         return findings

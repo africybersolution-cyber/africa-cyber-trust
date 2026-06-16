@@ -54,7 +54,6 @@ class SourceCodeRepoScanner:
                 title="Invalid Repository URL",
                 description=f"Could not parse repository URL: {repo_url}",
                 recommendation="Provide URL in format: github.com/user/repo or gitlab.com/user/repo",
-                created_at=datetime.now(timezone.utc)
             ))
             return findings
 
@@ -104,7 +103,6 @@ class SourceCodeRepoScanner:
                     title="Repository Private or Not Found",
                     description=f"GitHub repository '{owner}/{repo}' is private or doesn't exist. Cannot scan.",
                     recommendation="If repository exists and is private, that's good for security. Public repos can be scanned by anyone.",
-                    created_at=datetime.now(timezone.utc)
                 ))
                 return findings
 
@@ -117,7 +115,6 @@ class SourceCodeRepoScanner:
                     title="GitHub API Error",
                     description=f"Could not access GitHub API: HTTP {response.status_code}",
                     recommendation="Check repository URL and try again later.",
-                    created_at=datetime.now(timezone.utc)
                 ))
                 return findings
 
@@ -159,7 +156,6 @@ Step 3: Prevent future leaks
 ALTERNATIVE: Make repository private if not needed public
 
 TIME: 1-2 hours | SEVERITY: MEDIUM""",
-                    created_at=datetime.now(timezone.utc)
                 ))
 
                 # Scan README for common secrets (lightweight scan)
@@ -174,7 +170,6 @@ TIME: 1-2 hours | SEVERITY: MEDIUM""",
                 title="GitHub Scan Error",
                 description=f"Error scanning GitHub repository: {str(e)}",
                 recommendation="Verify repository URL and network connectivity.",
-                created_at=datetime.now(timezone.utc)
             ))
 
         return findings
@@ -233,7 +228,6 @@ Step 4: Add Pre-commit Hook
   git secrets --register-aws
 
 SEVERITY: CRITICAL - Credential is publicly visible!""",
-                            created_at=datetime.now(timezone.utc)
                         ))
 
         except Exception as e:
@@ -263,7 +257,6 @@ SEVERITY: CRITICAL - Credential is publicly visible!""",
                     title="Repository Private or Not Found",
                     description=f"GitLab repository '{owner}/{repo}' is private or doesn't exist.",
                     recommendation="If repository is private, that's secure. Public repos can expose code.",
-                    created_at=datetime.now(timezone.utc)
                 ))
                 return findings
 
@@ -279,7 +272,6 @@ SEVERITY: CRITICAL - Credential is publicly visible!""",
                         title="GitLab Repository is Public",
                         description=f"Repository is publicly accessible. Review for exposed secrets.",
                         recommendation="Use gitleaks or truffleHog to scan for secrets. Consider making private if not needed public.",
-                        created_at=datetime.now(timezone.utc)
                     ))
 
         except Exception as e:
@@ -291,7 +283,6 @@ SEVERITY: CRITICAL - Credential is publicly visible!""",
                 title="GitLab Scan Error",
                 description=f"Error scanning GitLab repository: {str(e)}",
                 recommendation="Verify repository URL.",
-                created_at=datetime.now(timezone.utc)
             ))
 
         return findings

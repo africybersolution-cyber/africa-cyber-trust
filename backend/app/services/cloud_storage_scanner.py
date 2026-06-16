@@ -34,7 +34,6 @@ class CloudStorageScanner:
                 title="Unknown Cloud Storage Format",
                 description=f"Could not identify cloud storage type from: {value}",
                 recommendation="Provide storage URL in format: s3://bucket, gs://bucket, or https://account.blob.core.windows.net/container",
-                created_at=datetime.now(timezone.utc)
             ))
             return findings
 
@@ -131,7 +130,6 @@ Step 4: Add bucket policy to deny public access
 VERIFICATION: Try accessing bucket URL in incognito - should return 403
 
 TIME: 5 minutes | SEVERITY: CRITICAL""",
-                    created_at=datetime.now(timezone.utc)
                 ))
             elif response.status_code == 403:
                 # Good! Bucket blocks public access
@@ -143,7 +141,6 @@ TIME: 5 minutes | SEVERITY: CRITICAL""",
                     title="S3 Bucket Access Properly Restricted",
                     description=f"S3 bucket '{bucket_name}' returns 403 Forbidden for anonymous access. Good configuration!",
                     recommendation="No action needed. Continue monitoring for configuration changes.",
-                    created_at=datetime.now(timezone.utc)
                 ))
             elif response.status_code == 404:
                 findings.append(Finding(
@@ -154,7 +151,6 @@ TIME: 5 minutes | SEVERITY: CRITICAL""",
                     title="S3 Bucket Not Found or Private",
                     description=f"S3 bucket '{bucket_name}' returned 404. Either doesn't exist, is in different region, or blocks listing.",
                     recommendation="If bucket exists, verify correct region and name. If accessible via AWS credentials, configuration is secure.",
-                    created_at=datetime.now(timezone.utc)
                 ))
 
         except Exception as e:
@@ -166,7 +162,6 @@ TIME: 5 minutes | SEVERITY: CRITICAL""",
                 title="S3 Bucket Scan Error",
                 description=f"Could not scan S3 bucket '{bucket_name}': {str(e)}",
                 recommendation="Verify bucket name and network connectivity. Bucket may be in different region.",
-                created_at=datetime.now(timezone.utc)
             ))
 
         return findings
@@ -208,7 +203,6 @@ Step 2: Via Azure CLI
 VERIFICATION: Try accessing container URL - should return 403
 
 TIME: 2 minutes | SEVERITY: CRITICAL""",
-                    created_at=datetime.now(timezone.utc)
                 ))
             elif response.status_code == 404:
                 findings.append(Finding(
@@ -219,7 +213,6 @@ TIME: 2 minutes | SEVERITY: CRITICAL""",
                     title="Azure Container Access Properly Restricted",
                     description=f"Container returns 404/403 for anonymous access. Properly secured.",
                     recommendation="No action needed. Continue monitoring.",
-                    created_at=datetime.now(timezone.utc)
                 ))
 
         except Exception as e:
@@ -231,7 +224,6 @@ TIME: 2 minutes | SEVERITY: CRITICAL""",
                 title="Azure Blob Scan Error",
                 description=f"Could not scan Azure container: {str(e)}",
                 recommendation="Verify account and container names.",
-                created_at=datetime.now(timezone.utc)
             ))
 
         return findings
@@ -268,7 +260,6 @@ Step 2: Via gcloud CLI
 VERIFICATION: Try accessing bucket - should return 403
 
 TIME: 3 minutes | SEVERITY: CRITICAL""",
-                    created_at=datetime.now(timezone.utc)
                 ))
             elif response.status_code == 403 or response.status_code == 404:
                 findings.append(Finding(
@@ -279,7 +270,6 @@ TIME: 3 minutes | SEVERITY: CRITICAL""",
                     title="GCP Bucket Access Properly Restricted",
                     description=f"Bucket access is properly restricted. Good configuration!",
                     recommendation="No action needed.",
-                    created_at=datetime.now(timezone.utc)
                 ))
 
         except Exception as e:
@@ -291,7 +281,6 @@ TIME: 3 minutes | SEVERITY: CRITICAL""",
                 title="GCP Bucket Scan Error",
                 description=f"Could not scan GCP bucket: {str(e)}",
                 recommendation="Verify bucket name and permissions.",
-                created_at=datetime.now(timezone.utc)
             ))
 
         return findings

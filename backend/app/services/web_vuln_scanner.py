@@ -115,7 +115,6 @@ class WebVulnScanner:
                 title="SSL Certificate Verification Failed",
                 description="SSL certificate verification failed. Site may have invalid or self-signed certificate.",
                 recommendation="Install a valid SSL certificate from a trusted CA (Let's Encrypt is free).",
-                created_at=datetime.now(timezone.utc)
             ))
         except requests.exceptions.Timeout:
             findings.append(Finding(
@@ -126,7 +125,6 @@ class WebVulnScanner:
                 title="Website Response Timeout",
                 description="Website did not respond within 10 seconds.",
                 recommendation="Check server availability and performance. Consider using a CDN.",
-                created_at=datetime.now(timezone.utc)
             ))
         except Exception as e:
             findings.append(Finding(
@@ -137,7 +135,6 @@ class WebVulnScanner:
                 title="Web Vulnerability Scan Error",
                 description=f"Could not complete web vulnerability scan: {str(e)}",
                 recommendation="Verify URL is accessible and server is responding.",
-                created_at=datetime.now(timezone.utc)
             ))
 
         return findings
@@ -211,7 +208,6 @@ IMPACT: Attackers can:
   - Execute admin functions
 
 TIME: 1-2 hours to fix | SEVERITY: CRITICAL""",
-                                created_at=datetime.now(timezone.utc)
                             ))
                             return findings  # Found vulnerability, stop testing
 
@@ -288,7 +284,6 @@ IMPACT: Attackers can:
   - Redirect to phishing sites
 
 TIME: 1-3 hours | SEVERITY: HIGH""",
-                            created_at=datetime.now(timezone.utc)
                         ))
                         return findings  # Found XSS, stop testing
 
@@ -372,7 +367,6 @@ IMPACT: Attackers can:
   - Access encryption keys
 
 TIME: 2-4 hours | SEVERITY: CRITICAL""",
-                                created_at=datetime.now(timezone.utc)
                             ))
                             return findings
 
@@ -458,7 +452,6 @@ IMPACT: Attackers can:
   - Pivot to internal network
 
 TIME: 1-2 hours | SEVERITY: CRITICAL""",
-                                created_at=datetime.now(timezone.utc)
                             ))
                             return findings
 
@@ -507,7 +500,6 @@ FOR EXPRESS.JS:
 VERIFY: Check HTTP headers no longer show version
 
 TIME: 5 minutes | SEVERITY: LOW""",
-                    created_at=datetime.now(timezone.utc)
                 ))
 
         # Check X-Powered-By header
@@ -521,7 +513,6 @@ TIME: 5 minutes | SEVERITY: LOW""",
                 title="Technology Stack Disclosed via X-Powered-By Header",
                 description=f"X-Powered-By header reveals: {powered_by}",
                 recommendation="Remove X-Powered-By header. For Express.js: app.disable('x-powered-by')",
-                created_at=datetime.now(timezone.utc)
             ))
 
         return findings
@@ -572,7 +563,6 @@ Step 4: Scan Git History
 
 SEVERITY: CRITICAL - Credential is publicly visible!
 TIME: 1 hour to fix + rotate credentials""",
-                    created_at=datetime.now(timezone.utc)
                 ))
 
         return findings
