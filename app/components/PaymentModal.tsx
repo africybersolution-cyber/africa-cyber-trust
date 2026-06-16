@@ -21,6 +21,8 @@ export default function PaymentModal({ plan, amount, onClose, onSuccess }: Payme
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [pricing, setPricing] = useState<any>(null);
+  const [depositAddress, setDepositAddress] = useState('');
+  const [depositAmount, setDepositAmount] = useState('');
 
   useEffect(() => {
     const fetchPricing = async () => {
@@ -116,9 +118,11 @@ export default function PaymentModal({ plan, amount, onClose, onSuccess }: Payme
         const data = await res.json();
 
         if (res.ok) {
-          setStep('processing');
-          // Store deposit address for display
+          // Store payment details
+          setDepositAddress(data.payment_details.payment_wallet);
+          setDepositAmount(data.payment_details.amount_usd);
           setError(''); // Clear any previous errors
+          setStep('processing');
           pollPaymentStatus(data.payment_id);
         } else {
           setError(data.detail || 'Payment initiation failed');
@@ -363,17 +367,52 @@ export default function PaymentModal({ plan, amount, onClose, onSuccess }: Payme
               <>
                 <div className="text-7xl mb-6">🪙</div>
                 <h3 className="text-2xl font-bold mb-3 text-gray-900">Send Crypto Payment</h3>
-                <p className="text-gray-600 mb-4 text-lg">
-                  Send <strong>{cryptoToken}</strong> to the address below
+                <p className="text-gray-600 mb-2 text-lg">
+                  Send <strong>${depositAmount} {cryptoToken}</strong> to:
                 </p>
-                <div className="p-4 bg-gray-100 rounded-xl mb-6 break-all font-mono text-sm">
-                  {/* Deposit address will be shown here from backend */}
-                  Fetching deposit address...
-                </div>
-                <div className="flex justify-center mb-4">
-                  <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-                </div>
-                <p className="text-sm text-gray-500">Waiting for blockchain confirmation...</p>
+
+                {depositAddress ? (
+                  <>
+                    <div className="relative mb-4">
+                      <div className="p-4 bg-gray-100 rounded-xl break-all font-mono text-sm text-gray-900 border-2 border-gray-300">
+                        {depositAddress}
+                      </div>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(depositAddress);
+                          alert('Address copied!');
+                        }}
+                        className="absolute top-2 right-2 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+                        title="Copy address"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div className="mb-6 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl text-left">
+                      <p className="text-sm text-yellow-800 mb-2">
+                        <strong>⚠️ Important:</strong>
+                      </p>
+                      <ul className="text-sm text-yellow-800 space-y-1">
+                        <li>• Send on <strong>Polygon network</strong> (NOT Ethereum!)</li>
+                        <li>• Amount: <strong>${depositAmount} {cryptoToken}</strong></li>
+                        <li>• Confirmation takes 1-2 minutes</li>
+                      </ul>
+                    </div>
+
+                    <div className="flex justify-center mb-4">
+                      <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+                    </div>
+                    <p className="text-sm text-gray-500">Waiting for blockchain confirmation...</p>
+                  </>
+                ) : (
+                  <div className="p-8">
+                    <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto"></div>
+                    <p className="text-sm text-gray-500 mt-4">Generating deposit address...</p>
+                  </div>
+                )}
               </>
             )}
           </div>
