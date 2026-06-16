@@ -13,6 +13,12 @@ from app.services.scan_service import get_scanner
 router = APIRouter()
 
 
+@router.options("/assets/{asset_id}/scan")
+async def start_asset_scan_options(asset_id: str):
+    """Handle OPTIONS preflight for scan endpoint."""
+    return {}
+
+
 @router.post("/assets/{asset_id}/scan")
 async def start_asset_scan(
     asset_id: str,

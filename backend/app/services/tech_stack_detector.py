@@ -136,8 +136,7 @@ class TechStackDetector:
                 category="scan_error",
                 title="Technology Detection Error",
                 description=f"Could not detect technology stack: {str(e)}",
-                recommendation="Verify URL is accessible",
-                created_at=datetime.now(timezone.utc)
+                recommendation="Verify URL is accessible"
             ))
 
         return findings
@@ -221,8 +220,7 @@ Step 9: Hide wp-admin
 Step 10: Scan for Vulnerabilities
   Use WPScan: wpscan --url {url}
 
-TIME: 2-3 hours initial setup | SEVERITY: MEDIUM""",
-                    created_at=datetime.now(timezone.utc)
+TIME: 2-3 hours initial setup | SEVERITY: MEDIUM"""
                 ))
 
                 # Check for common WordPress vulnerabilities
@@ -236,8 +234,7 @@ TIME: 2-3 hours initial setup | SEVERITY: MEDIUM""",
                     category="technology_stack",
                     title=f"CMS Detected: {cms_list}",
                     description=f"Website is running {cms_list}.",
-                    recommendation=f"Keep {cms_list} and all plugins/themes updated. Enable security features.",
-                    created_at=datetime.now(timezone.utc)
+                    recommendation=f"Keep {cms_list} and all plugins/themes updated. Enable security features."
                 ))
 
         # Web Server Findings
@@ -250,8 +247,7 @@ TIME: 2-3 hours initial setup | SEVERITY: MEDIUM""",
                 category="technology_stack",
                 title=f"Web Server: {server_list}",
                 description=f"Detected web server: {server_list}",
-                recommendation="Keep web server updated to latest stable version.",
-                created_at=datetime.now(timezone.utc)
+                recommendation="Keep web server updated to latest stable version."
             ))
 
         # JavaScript Framework Findings
@@ -291,8 +287,7 @@ Step 4: Consider Removing jQuery
   - Modern JavaScript can replace many jQuery functions
   - Reduces page load time
 
-TIME: 1-2 hours | SEVERITY: MEDIUM""",
-                            created_at=datetime.now(timezone.utc)
+TIME: 1-2 hours | SEVERITY: MEDIUM"""
                         ))
 
             findings.append(Finding(
@@ -302,8 +297,7 @@ TIME: 1-2 hours | SEVERITY: MEDIUM""",
                 category="technology_stack",
                 title=f"JavaScript Frameworks: {fw_list}",
                 description=f"Detected frameworks/libraries: {fw_list}",
-                recommendation="Keep all JavaScript libraries updated to latest versions.",
-                created_at=datetime.now(timezone.utc)
+                recommendation="Keep all JavaScript libraries updated to latest versions."
             ))
 
         # Programming Language Findings
@@ -316,8 +310,7 @@ TIME: 1-2 hours | SEVERITY: MEDIUM""",
                 category="technology_stack",
                 title=f"Programming Language/Framework: {lang_list}",
                 description=f"Detected: {lang_list}",
-                recommendation="Keep runtime and framework versions updated.",
-                created_at=datetime.now(timezone.utc)
+                recommendation="Keep runtime and framework versions updated."
             ))
 
         # If nothing detected
@@ -329,8 +322,7 @@ TIME: 1-2 hours | SEVERITY: MEDIUM""",
                 category="technology_stack",
                 title="Technology Stack Not Detected",
                 description="Could not identify specific technologies. Site may be using custom stack or obscured headers.",
-                recommendation="Good! Less information disclosure reduces attack surface.",
-                created_at=datetime.now(timezone.utc)
+                recommendation="Good! Less information disclosure reduces attack surface."
             ))
 
         return findings
@@ -372,8 +364,7 @@ Method 3: functions.php
 
 VERIFY: Visit /xmlrpc.php should return 403
 
-TIME: 5 minutes | SEVERITY: HIGH""",
-                    created_at=datetime.now(timezone.utc)
+TIME: 5 minutes | SEVERITY: HIGH"""
                 ))
 
             # Check wp-json API
@@ -410,8 +401,7 @@ Step 2: Use Security Plugin
 Step 3: Change Admin Username
   Don't use 'admin', 'administrator', or site name
 
-TIME: 10 minutes | SEVERITY: MEDIUM""",
-                            created_at=datetime.now(timezone.utc)
+TIME: 10 minutes | SEVERITY: MEDIUM"""
                         ))
                 except:
                     pass
