@@ -64,8 +64,23 @@ class Finding(Base):
     category = Column(String(100), nullable=True)
     cve_id = Column(String(50), nullable=True)
     found_at = Column(TIMESTAMP(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+
+    # Legacy fields (kept for backward compatibility)
     resolved = Column(Boolean, default=False, index=True)
     resolved_at = Column(TIMESTAMP(timezone=True), nullable=True)
+
+    # Remediation tracking
+    status = Column(String(20), default="open", nullable=False, index=True)
+    # Status values: 'open', 'in_progress', 'resolved', 'verified', 'false_positive', 'ignored'
+
+    assignee_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    resolution_notes = Column(Text, nullable=True)
+    marked_resolved_by = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    verified_by = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    verified_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    status_changed_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    status_changed_by = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
     finding_data = Column(JSONB, nullable=True)
 
     # Relationships
