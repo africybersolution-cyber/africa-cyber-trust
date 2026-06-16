@@ -1124,12 +1124,19 @@ export default function AssetsPage() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {scanResults.map((scan: any) => (
+                      {scanResults.filter((scan: any, index: number) => index === 0 || scan.status !== 'failed').map((scan: any, index: number) => (
                         <div key={scan.id} className="cyber-card p-4">
                           <div className="flex justify-between items-start mb-3">
-                            <div>
-                              <div className="font-bold text-lg text-white">
-                                Score: {scan.score}/100
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <div className="font-bold text-lg text-white">
+                                  Score: {scan.score || 'N/A'}/100
+                                </div>
+                                {index === 0 && (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400">
+                                    LATEST
+                                  </span>
+                                )}
                               </div>
                               <div className="text-sm text-cyber-muted">
                                 {new Date(scan.started_at).toLocaleString()}
