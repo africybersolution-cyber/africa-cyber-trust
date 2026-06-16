@@ -153,9 +153,9 @@ export default function ReportsPage() {
               headStyles: { fillColor: [0, 71, 171], textColor: 255, fontStyle: 'bold' },
               columnStyles: {
                 0: { cellWidth: 20, fontStyle: 'bold' },
-                1: { cellWidth: 40 },
-                2: { cellWidth: 55 },
-                3: { cellWidth: 65 }
+                1: { cellWidth: 38 },
+                2: { cellWidth: 53 },
+                3: { cellWidth: 63 }
               },
               margin: { left: 14, right: 14 },
               styles: { fontSize: 9, cellPadding: 3 },
