@@ -7,27 +7,29 @@ export default function PricingPage() {
 
   const plans = [
     {
-      name: 'Personal',
-      price: 5,
-      annualPrice: 50,
-      description: 'For individuals who need unlimited scans',
+      name: 'Starter',
+      price: 49,
+      annualPrice: 490,
+      description: 'For small businesses and startups',
       features: [
-        'Unlimited scam detection scans',
-        'Unlimited AI photo verification',
-        'Unlimited video deepfake detection',
+        'Up to 5 assets',
+        'Weekly security scans',
+        'Vulnerability scanning',
+        'Email alerts',
         'Scan history dashboard',
+        'PDF reports',
         'Email support',
         'Pay with Mobile Money or Crypto'
       ],
-      cta: 'Start 7-Day Trial',
-      ctaLink: '/signup?plan=personal',
+      cta: 'Start 14-Day Trial',
+      ctaLink: '/signup?plan=starter',
       popular: false,
       color: 'blue'
     },
     {
       name: 'Professional',
-      price: 49,
-      annualPrice: 490,
+      price: 199,
+      annualPrice: 1990,
       description: 'For businesses and professionals',
       features: [
         'Everything in Personal',
@@ -48,8 +50,8 @@ export default function PricingPage() {
     },
     {
       name: 'Enterprise',
-      price: null,
-      annualPrice: null,
+      price: 999,
+      annualPrice: 9990,
       description: 'For large organizations',
       features: [
         'Everything in Professional',
@@ -132,7 +134,7 @@ export default function PricingPage() {
           </h1>
 
           <p className="text-xl text-gray-300 mb-8">
-            Protect yourself from scams and fraud. Start with a free trial, pay only $5/month for unlimited scans.
+            Comprehensive security monitoring for African businesses. Start with a 14-day free trial, plans from $49/month.
           </p>
 
           {/* Billing Toggle */}
@@ -310,7 +312,7 @@ export default function PricingPage() {
               },
               {
                 q: 'Can I use this without a subscription?',
-                a: 'Yes! You can use the home page for 1 free scan per day without creating an account. For unlimited scans, upgrade to Personal ($5/month).'
+                a: 'Yes! You can use the home page for 1 free scan per day without creating an account. For business monitoring with unlimited assets, upgrade to Professional ($199/month).'
               }
             ].map((faq, i) => (
               <div key={i} className="bg-slate-800/40 backdrop-blur-sm rounded-xl p-6 border border-blue-900/30">

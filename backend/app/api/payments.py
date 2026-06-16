@@ -265,11 +265,14 @@ async def initiate_crypto_payment(
 
     # Get USD price for plan
     plan_prices = {
-        'personal': Decimal('5.00'),
-        'professional': Decimal('49.00')
+        'starter': Decimal('49.00'),
+        'professional': Decimal('199.00'),
+        'enterprise': Decimal('999.00')
     }
 
-    amount_usd = plan_prices[request.plan_name]
+    amount_usd = plan_prices.get(request.plan_name)
+    if not amount_usd:
+        raise HTTPException(status_code=400, detail="Invalid plan. Choose 'starter', 'professional', or 'enterprise'")
 
     # Create payment request
     payment_details = crypto_payment_service.create_payment_request(
@@ -351,7 +354,13 @@ async def verify_crypto_payment(
     payment.transaction_id = str(payment.id)
 
     # Determine plan name from payment amount
-    plan_name = 'personal' if payment.amount <= 10 else 'professional'
+    amount = float(payment.amount)
+    if amount <= 60:
+        plan_name = 'starter'
+    elif amount <= 500:
+        plan_name = 'professional'
+    else:
+        plan_name = 'enterprise'
 
     # Create or extend subscription (30 days)
     from app.models.subscription import Subscription as SubscriptionModel

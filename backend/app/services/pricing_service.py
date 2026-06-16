@@ -10,9 +10,9 @@ class PricingService:
 
     # USD base prices
     USD_PRICES = {
-        "starter": 19,
-        "professional": 69,
-        "enterprise": 199
+        "starter": 49,
+        "professional": 199,
+        "enterprise": 999
     }
 
     # Country configuration

@@ -10,9 +10,9 @@ from typing import Optional, Dict, Any
 class AccessLevel:
     """Access level constants."""
     FREE = "free"                  # No account, IP-based limit
-    STARTER = "starter"             # $19/month - dashboard + vuln scanning, 5 assets
-    PROFESSIONAL = "professional"   # $69/month - full features, unlimited assets, 10 team members
-    ENTERPRISE = "enterprise"       # $199/month - everything, unlimited team
+    STARTER = "starter"             # $49/month - dashboard + vuln scanning, 5 assets
+    PROFESSIONAL = "professional"   # $199/month - full features, unlimited assets, 10 team members
+    ENTERPRISE = "enterprise"       # $999/month - everything, unlimited team, white-label
 
 
 class AccessControlService:
