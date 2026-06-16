@@ -22,6 +22,7 @@ search works across every transport.
 """
 from typing import Dict, List, Tuple
 from urllib.parse import urlparse, quote
+import ipaddress
 
 import requests
 
@@ -79,6 +80,15 @@ def _clean_ip(value: str) -> str:
     return v
 
 
+def _is_private_ip(ip_str: str) -> bool:
+    """Check if an IP address is private/internal (RFC1918, loopback, link-local)."""
+    try:
+        ip = ipaddress.ip_address(ip_str)
+        return ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved
+    except ValueError:
+        return False
+
+
 def verify_ip_http_file(value: str, token: str) -> Tuple[bool, str]:
     """
     Verify ownership of an IP (or IP range) by serving a token file at
@@ -86,10 +96,21 @@ def verify_ip_http_file(value: str, token: str) -> Tuple[bool, str]:
 
     For an IP range (CIDR) we verify the network/base address — the user only
     needs one reachable host in the block to host the file.
+
+    Private IPs (RFC1918, loopback, link-local) are auto-approved since they
+    cannot be verified from the public internet.
     """
     ip = _clean_ip(value)
     if not ip:
         return False, "Could not parse an IP address from this asset."
+
+    # Auto-approve private/internal IPs - they cannot be verified from public internet
+    if _is_private_ip(ip):
+        return True, (
+            f"Private IP address detected ({ip}). Verification skipped - "
+            f"private IPs (192.168.x.x, 10.x.x.x, 172.16-31.x.x, 127.x.x.x) "
+            f"cannot be verified from the public internet. Auto-approved for scanning."
+        )
 
     # Try HTTPS first (common for load balancers), then plain HTTP.
     for scheme in ("https", "http"):
