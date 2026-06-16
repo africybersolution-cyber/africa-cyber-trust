@@ -139,13 +139,6 @@ export default function CheckResultPage() {
       pdf.setFillColor(0, 71, 171); // #0047AB
       pdf.rect(0, 0, pageWidth, 50, 'F');
 
-      // Add logo on the right
-      try {
-        pdf.addImage(LOGO_BASE64, 'PNG', pageWidth - 40, 5, 35, 25);
-      } catch (e) {
-        console.error('[REPORT] Failed to add logo to PDF:', e);
-      }
-
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
@@ -159,6 +152,13 @@ export default function CheckResultPage() {
       pdf.text(`Generated: ${new Date(result.created_at).toLocaleString()}`, pageWidth / 2, 42, { align: 'center' });
 
       yPos = 60;
+
+      // Add logo below header on white background
+      try {
+        pdf.addImage(LOGO_BASE64, 'PNG', pageWidth - 45, 53, 40, 28);
+      } catch (e) {
+        console.error('[REPORT] Failed to add logo to PDF:', e);
+      }
       pdf.setTextColor(0, 0, 0);
 
       // Overall Assessment Box

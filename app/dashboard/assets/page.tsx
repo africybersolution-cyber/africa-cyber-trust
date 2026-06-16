@@ -126,13 +126,6 @@ export default function AssetsPage() {
     doc.setFillColor(0, 71, 171); // #0047AB
     doc.rect(0, 0, pageWidth, 35, 'F');
 
-    // Add logo on the right
-    try {
-      doc.addImage(LOGO_BASE64, 'PNG', pageWidth - 40, 5, 35, 25);
-    } catch (e) {
-      console.error('[REPORT] Failed to add logo to PDF:', e);
-    }
-
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
@@ -143,6 +136,13 @@ export default function AssetsPage() {
     doc.text('Security Assessment Report', pageWidth / 2, 25, { align: 'center' });
 
     yPos = 45;
+
+    // Add logo below header on white background
+    try {
+      doc.addImage(LOGO_BASE64, 'PNG', pageWidth - 45, 38, 40, 28);
+    } catch (e) {
+      console.error('[REPORT] Failed to add logo to PDF:', e);
+    }
 
     // Report Info
     doc.setTextColor(0, 0, 0);
