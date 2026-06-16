@@ -1,18 +1,29 @@
 """Email service for sending verification emails."""
 import smtplib
+import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Optional
+
+try:
+    from sendgrid import SendGridAPIClient
+    from sendgrid.helpers.mail import Mail, Email, To, Content
+    SENDGRID_AVAILABLE = True
+except ImportError:
+    SENDGRID_AVAILABLE = False
 
 
 class EmailService:
     """Service for sending emails."""
 
-    # Gmail SMTP settings (configured for production)
+    # Gmail SMTP settings (fallback)
     SMTP_SERVER = "smtp.gmail.com"
     SMTP_PORT = 587
     SENDER_EMAIL = "africybersolution@gmail.com"
     SENDER_PASSWORD = "mwqwbdrywmsezcuh"  # Gmail App Password (spaces removed)
+
+    # SendGrid API key (primary method - from environment variable)
+    SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 
     @staticmethod
     def send_verification_email(
@@ -20,101 +31,117 @@ class EmailService:
         domain: str,
         verification_link: str
     ) -> bool:
-        """Send domain verification email."""
+        """Send domain verification email via SendGrid (primary) or SMTP (fallback)."""
+
+        # Email HTML content
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #0047AB 0%, #1E90FF 100%);
+                          color: white; padding: 30px; text-align: center; border-radius: 10px; }}
+                .content {{ background: #f9f9f9; padding: 30px; margin: 20px 0; border-radius: 10px; }}
+                .button {{ display: inline-block; background: #0047AB; color: white;
+                          padding: 15px 40px; text-decoration: none; border-radius: 8px;
+                          font-weight: bold; margin: 20px 0; }}
+                .button:hover {{ background: #1E90FF; }}
+                .footer {{ text-align: center; color: #666; font-size: 12px; margin-top: 20px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🛡️ Domain Verification</h1>
+                </div>
+
+                <div class="content">
+                    <h2>Verify {domain}</h2>
+                    <p>Hello,</p>
+                    <p>You've added <strong>{domain}</strong> to Africa Cyber Trust Infrastructure
+                       for security monitoring.</p>
+                    <p>Click the button below to verify that you own this domain:</p>
+
+                    <center>
+                        <a href="{verification_link}" class="button">
+                            Verify Domain Ownership
+                        </a>
+                    </center>
+
+                    <p><strong>This link will expire in 24 hours.</strong></p>
+
+                    <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                        If you didn't request this verification, you can safely ignore this email.
+                    </p>
+                </div>
+
+                <div class="footer">
+                    <p>© 2026 Africa Cyber Trust Infrastructure</p>
+                    <p>Building trusted digital infrastructure for Africa</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_content = f"""
+        Domain Verification - Africa Cyber Trust Infrastructure
+
+        You've added {domain} for security monitoring.
+
+        Click this link to verify domain ownership:
+        {verification_link}
+
+        This link will expire in 24 hours.
+
+        If you didn't request this, ignore this email.
+
+        © 2026 Africa Cyber Trust Infrastructure
+        """
+
+        # Try SendGrid first (works on Render)
+        if SENDGRID_AVAILABLE and EmailService.SENDGRID_API_KEY:
+            try:
+                print(f"[EMAIL] Attempting to send via SendGrid to {to_email}")
+                message = Mail(
+                    from_email=Email(EmailService.SENDER_EMAIL, "Africa Cyber Trust"),
+                    to_emails=To(to_email),
+                    subject=f"Verify your domain: {domain}",
+                    plain_text_content=Content("text/plain", text_content),
+                    html_content=Content("text/html", html_content)
+                )
+
+                sg = SendGridAPIClient(EmailService.SENDGRID_API_KEY)
+                response = sg.send(message)
+
+                print(f"[EMAIL] SendGrid success! Status: {response.status_code}")
+                return True
+
+            except Exception as e:
+                print(f"[EMAIL] SendGrid failed: {str(e)}")
+                print(f"[EMAIL] Falling back to SMTP...")
+
+        # Fallback to SMTP (works locally)
         try:
-            # Create message
+            print(f"[EMAIL] Attempting to send via SMTP to {to_email}")
             message = MIMEMultipart("alternative")
             message["Subject"] = f"Verify your domain: {domain}"
             message["From"] = f"Africa Cyber Trust <{EmailService.SENDER_EMAIL}>"
             message["To"] = to_email
 
-            # Email HTML content
-            html = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                    .header {{ background: linear-gradient(135deg, #0047AB 0%, #1E90FF 100%);
-                              color: white; padding: 30px; text-align: center; border-radius: 10px; }}
-                    .content {{ background: #f9f9f9; padding: 30px; margin: 20px 0; border-radius: 10px; }}
-                    .button {{ display: inline-block; background: #0047AB; color: white;
-                              padding: 15px 40px; text-decoration: none; border-radius: 8px;
-                              font-weight: bold; margin: 20px 0; }}
-                    .button:hover {{ background: #1E90FF; }}
-                    .footer {{ text-align: center; color: #666; font-size: 12px; margin-top: 20px; }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>🛡️ Domain Verification</h1>
-                    </div>
-
-                    <div class="content">
-                        <h2>Verify {domain}</h2>
-                        <p>Hello,</p>
-                        <p>You've added <strong>{domain}</strong> to Africa Cyber Trust Infrastructure
-                           for security monitoring.</p>
-                        <p>Click the button below to verify that you own this domain:</p>
-
-                        <center>
-                            <a href="{verification_link}" class="button">
-                                Verify Domain Ownership
-                            </a>
-                        </center>
-
-                        <p><strong>This link will expire in 24 hours.</strong></p>
-
-                        <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                            If you didn't request this verification, you can safely ignore this email.
-                        </p>
-                    </div>
-
-                    <div class="footer">
-                        <p>© 2026 Africa Cyber Trust Infrastructure</p>
-                        <p>Building trusted digital infrastructure for Africa</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
-
-            # Plain text fallback
-            text = f"""
-            Domain Verification - Africa Cyber Trust Infrastructure
-
-            You've added {domain} for security monitoring.
-
-            Click this link to verify domain ownership:
-            {verification_link}
-
-            This link will expire in 24 hours.
-
-            If you didn't request this, ignore this email.
-
-            © 2026 Africa Cyber Trust Infrastructure
-            """
-
-            # Attach both HTML and plain text versions
-            part1 = MIMEText(text, "plain")
-            part2 = MIMEText(html, "html")
+            part1 = MIMEText(text_content, "plain")
+            part2 = MIMEText(html_content, "html")
             message.attach(part1)
             message.attach(part2)
 
-            # Send email (only if SMTP credentials are configured)
-            if not EmailService.SENDER_PASSWORD:
-                print(f"[DEMO MODE] Would send verification email to: {to_email}")
-                print(f"Verification link: {verification_link}")
-                return True
-
-            # Send via SMTP with 10 second timeout
             with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT, timeout=10) as server:
                 server.starttls()
                 server.login(EmailService.SENDER_EMAIL, EmailService.SENDER_PASSWORD)
                 server.send_message(message)
 
+            print(f"[EMAIL] SMTP success!")
             return True
 
         except Exception as e:
