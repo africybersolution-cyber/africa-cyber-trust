@@ -8,18 +8,18 @@ import json
 class PricingService:
     """Manage pricing across 20 African countries with live exchange rates."""
 
-    # USD base prices (monthly)
+    # USD base prices (monthly) - Optimized for African market
     USD_PRICES = {
-        "starter": 49,
-        "professional": 199,
-        "enterprise": 999
+        "starter": 15,
+        "professional": 79,
+        "enterprise": 299
     }
 
     # Annual prices (10 months - 2 months free!)
     USD_PRICES_ANNUAL = {
-        "starter": 490,      # $49 × 10 = $490 (save $98/year)
-        "professional": 1990,  # $199 × 10 = $1,990 (save $398/year)
-        "enterprise": 9990    # $999 × 10 = $9,990 (save $1,998/year)
+        "starter": 150,      # $15 × 10 = $150 (save $30/year)
+        "professional": 790,  # $79 × 10 = $790 (save $158/year)
+        "enterprise": 2990    # $299 × 10 = $2,990 (save $598/year)
     }
 
     # Country configuration

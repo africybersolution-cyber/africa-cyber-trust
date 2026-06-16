@@ -274,11 +274,11 @@ async def initiate_crypto_payment(
     if request.token_symbol not in ['USDT', 'USDC']:
         raise HTTPException(status_code=400, detail="Invalid token. Choose 'USDT' or 'USDC'")
 
-    # Get USD price for plan
+    # Get USD price for plan (optimized for African market)
     plan_prices = {
-        'starter': Decimal('49.00'),
-        'professional': Decimal('199.00'),
-        'enterprise': Decimal('999.00')
+        'starter': Decimal('15.00'),
+        'professional': Decimal('79.00'),
+        'enterprise': Decimal('299.00')
     }
 
     amount_usd = plan_prices.get(request.plan_name)
@@ -366,9 +366,9 @@ async def verify_crypto_payment(
 
     # Determine plan name from payment amount
     amount = float(payment.amount)
-    if amount <= 60:
+    if amount <= 20:
         plan_name = 'starter'
-    elif amount <= 500:
+    elif amount <= 150:
         plan_name = 'professional'
     else:
         plan_name = 'enterprise'
