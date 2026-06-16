@@ -409,6 +409,12 @@ async def check_verification(
         raise HTTPException(status_code=500, detail=f"Verification check failed: {str(e)}")
 
 
+@router.options("/{asset_id}/verify/email/send")
+async def verify_email_send_options(asset_id: str):
+    """Handle OPTIONS preflight for email verification."""
+    return {}
+
+
 @router.post("/{asset_id}/verify/email/send")
 async def send_verification_email(
     asset_id: str,
