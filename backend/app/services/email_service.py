@@ -161,86 +161,80 @@ class EmailService:
         high_count: int,
         findings: list
     ) -> bool:
-        """Send security alert notification."""
-        try:
-            from datetime import datetime
+        """Send security alert notification via SendGrid (primary) or SMTP (fallback)."""
+        from datetime import datetime
 
-            message = MIMEMultipart("alternative")
-            message["Subject"] = f"🚨 Security Alert - {asset_name}"
-            message["From"] = f"Africa Cyber Trust <{EmailService.SENDER_EMAIL}>"
-            message["To"] = to_email
+        # Build findings HTML
+        findings_html = ""
+        for finding in findings[:5]:  # Top 5 issues
+            severity_colors = {
+                'critical': '#DC2626',
+                'high': '#F97316',
+                'medium': '#EAB308',
+                'low': '#3B82F6'
+            }
+            color = severity_colors.get(finding.get('severity', 'low'), '#6B7280')
 
-            # Build findings HTML
-            findings_html = ""
-            for finding in findings[:5]:  # Top 5 issues
-                severity_colors = {
-                    'critical': '#DC2626',
-                    'high': '#F97316',
-                    'medium': '#EAB308',
-                    'low': '#3B82F6'
-                }
-                color = severity_colors.get(finding.get('severity', 'low'), '#6B7280')
-
-                findings_html += f"""
-                <div style="margin: 15px 0; padding: 15px; border-left: 4px solid {color}; background-color: #F9FAFB; border-radius: 4px;">
-                    <div style="margin-bottom: 8px;">
-                        <span style="background-color: {color}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; margin-right: 10px;">
-                            {finding.get('severity', 'unknown')}
-                        </span>
-                        <span style="color: #6B7280; font-size: 12px;">{finding.get('category', 'Security')}</span>
-                    </div>
-                    <h4 style="margin: 8px 0; color: #111827;">{finding.get('title', 'Security Issue')}</h4>
-                    <p style="margin: 8px 0; color: #4B5563; font-size: 13px;">{finding.get('description', '')}</p>
-                    <p style="margin: 8px 0; color: #059669; font-size: 13px;">
-                        <strong>✓ Fix:</strong> {finding.get('recommendation', 'Review and address')}
-                    </p>
+            findings_html += f"""
+            <div style="margin: 15px 0; padding: 15px; border-left: 4px solid {color}; background-color: #F9FAFB; border-radius: 4px;">
+                <div style="margin-bottom: 8px;">
+                    <span style="background-color: {color}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; margin-right: 10px;">
+                        {finding.get('severity', 'unknown')}
+                    </span>
+                    <span style="color: #6B7280; font-size: 12px;">{finding.get('category', 'Security')}</span>
                 </div>
-                """
-
-            score_color = '#DC2626' if security_score < 40 else '#F97316' if security_score < 60 else '#EAB308' if security_score < 80 else '#10B981'
-
-            html = f"""
-            <!DOCTYPE html>
-            <html>
-            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
-                <div style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF;">
-                    <div style="background: linear-gradient(135deg, #0047AB 0%, #1E90FF 100%); padding: 30px 20px; text-align: center;">
-                        <h1 style="color: #FFFFFF; margin: 0; font-size: 24px;">🛡️ AFRICA CYBER TRUST</h1>
-                        <p style="color: #E0E7FF; margin: 10px 0 0 0;">Security Alert</p>
-                    </div>
-                    <div style="padding: 30px 20px;">
-                        <div style="background-color: #FEF2F2; border-left: 4px solid #DC2626; padding: 15px; margin-bottom: 25px;">
-                            <p style="margin: 0; color: #991B1B; font-weight: bold;">⚠️ Security issues detected on {asset_name}</p>
-                        </div>
-                        <table style="width: 100%; margin-bottom: 25px; border-collapse: collapse;">
-                            <tr><td style="padding: 10px 0; border-bottom: 1px solid #E5E7EB;"><strong>Asset:</strong></td><td style="padding: 10px 0; border-bottom: 1px solid #E5E7EB; text-align: right;">{asset_name}</td></tr>
-                            <tr><td style="padding: 10px 0; border-bottom: 1px solid #E5E7EB;"><strong>URL:</strong></td><td style="padding: 10px 0; border-bottom: 1px solid #E5E7EB; text-align: right;">{asset_url}</td></tr>
-                            <tr><td style="padding: 10px 0; border-bottom: 1px solid #E5E7EB;"><strong>Security Score:</strong></td><td style="padding: 10px 0; border-bottom: 1px solid #E5E7EB; text-align: right;"><span style="color: {score_color}; font-weight: bold; font-size: 20px;">{security_score}/100</span></td></tr>
-                            <tr><td style="padding: 10px 0;"><strong>Issues Found:</strong></td><td style="padding: 10px 0; text-align: right;"><span style="color: #DC2626; font-weight: bold;">{critical_count} Critical</span>, <span style="color: #F97316; font-weight: bold;">{high_count} High</span></td></tr>
-                        </table>
-                        <h2 style="color: #111827; margin: 30px 0 15px 0; font-size: 18px;">Security Issues Detected</h2>
-                        {findings_html}
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="https://www.africybertrust.com/dashboard/assets" style="background: linear-gradient(135deg, #0047AB 0%, #1E90FF 100%); color: #FFFFFF; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Full Report →</a>
-                        </div>
-                        <div style="background-color: #EFF6FF; padding: 15px; border-radius: 8px; margin-top: 25px;">
-                            <p style="margin: 0; color: #1E40AF; font-size: 13px;">
-                                <strong>💡 Recommendation:</strong> Address critical and high severity issues immediately.
-                            </p>
-                        </div>
-                    </div>
-                    <div style="background-color: #F9FAFB; padding: 20px; text-align: center; border-top: 1px solid #E5E7EB;">
-                        <p style="margin: 0 0 10px 0; color: #6B7280; font-size: 12px;">
-                            Scan: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}
-                        </p>
-                        <p style="margin: 0; color: #9CA3AF; font-size: 11px;">© {datetime.now().year} Africa Cyber Trust. All rights reserved.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
+                <h4 style="margin: 8px 0; color: #111827;">{finding.get('title', 'Security Issue')}</h4>
+                <p style="margin: 8px 0; color: #4B5563; font-size: 13px;">{finding.get('description', '')}</p>
+                <p style="margin: 8px 0; color: #059669; font-size: 13px;">
+                    <strong>Fix:</strong> {finding.get('recommendation', 'Review and address')}
+                </p>
+            </div>
             """
 
-            text = f"""
+        score_color = '#DC2626' if security_score < 40 else '#F97316' if security_score < 60 else '#EAB308' if security_score < 80 else '#10B981'
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #FFFFFF;">
+                <div style="background: linear-gradient(135deg, #0047AB 0%, #1E90FF 100%); padding: 30px 20px; text-align: center;">
+                    <h1 style="color: #FFFFFF; margin: 0; font-size: 24px;">AFRICA CYBER TRUST</h1>
+                    <p style="color: #E0E7FF; margin: 10px 0 0 0;">Security Alert</p>
+                </div>
+                <div style="padding: 30px 20px;">
+                    <div style="background-color: #FEF2F2; border-left: 4px solid #DC2626; padding: 15px; margin-bottom: 25px;">
+                        <p style="margin: 0; color: #991B1B; font-weight: bold;">Security issues detected on {asset_name}</p>
+                    </div>
+                    <table style="width: 100%; margin-bottom: 25px; border-collapse: collapse;">
+                        <tr><td style="padding: 10px 0; border-bottom: 1px solid #E5E7EB;"><strong>Asset:</strong></td><td style="padding: 10px 0; border-bottom: 1px solid #E5E7EB; text-align: right;">{asset_name}</td></tr>
+                        <tr><td style="padding: 10px 0; border-bottom: 1px solid #E5E7EB;"><strong>URL:</strong></td><td style="padding: 10px 0; border-bottom: 1px solid #E5E7EB; text-align: right;">{asset_url}</td></tr>
+                        <tr><td style="padding: 10px 0; border-bottom: 1px solid #E5E7EB;"><strong>Security Score:</strong></td><td style="padding: 10px 0; border-bottom: 1px solid #E5E7EB; text-align: right;"><span style="color: {score_color}; font-weight: bold; font-size: 20px;">{security_score}/100</span></td></tr>
+                        <tr><td style="padding: 10px 0;"><strong>Issues Found:</strong></td><td style="padding: 10px 0; text-align: right;"><span style="color: #DC2626; font-weight: bold;">{critical_count} Critical</span>, <span style="color: #F97316; font-weight: bold;">{high_count} High</span></td></tr>
+                    </table>
+                    <h2 style="color: #111827; margin: 30px 0 15px 0; font-size: 18px;">Security Issues Detected</h2>
+                    {findings_html}
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="https://www.africybertrust.com/dashboard/assets" style="background: linear-gradient(135deg, #0047AB 0%, #1E90FF 100%); color: #FFFFFF; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">View Full Report</a>
+                    </div>
+                    <div style="background-color: #EFF6FF; padding: 15px; border-radius: 8px; margin-top: 25px;">
+                        <p style="margin: 0; color: #1E40AF; font-size: 13px;">
+                            <strong>Recommendation:</strong> Address critical and high severity issues immediately.
+                        </p>
+                    </div>
+                </div>
+                <div style="background-color: #F9FAFB; padding: 20px; text-align: center; border-top: 1px solid #E5E7EB;">
+                    <p style="margin: 0 0 10px 0; color: #6B7280; font-size: 12px;">
+                        Scan: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}
+                    </p>
+                    <p style="margin: 0; color: #9CA3AF; font-size: 11px;">© {datetime.now().year} Africa Cyber Trust. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_content = f"""
 Security Alert - Africa Cyber Trust
 
 Asset: {asset_name}
@@ -252,24 +246,61 @@ Security issues have been detected on your asset. Please review the full report 
 https://www.africybertrust.com/dashboard/assets
 
 © {datetime.now().year} Africa Cyber Trust
-            """
+        """
 
-            part1 = MIMEText(text, "plain")
-            part2 = MIMEText(html, "html")
+        # Try SendGrid first (works on Render, more reliable)
+        if SENDGRID_AVAILABLE and EmailService.SENDGRID_API_KEY:
+            try:
+                print(f"[EMAIL] Attempting to send security alert via SendGrid to {to_email}")
+                message = Mail(
+                    from_email=Email(EmailService.SENDER_EMAIL, "Africa Cyber Trust"),
+                    to_emails=To(to_email),
+                    subject=f"Security Alert - {asset_name}",
+                    plain_text_content=Content("text/plain", text_content),
+                    html_content=Content("text/html", html_content)
+                )
+
+                sg = SendGridAPIClient(EmailService.SENDGRID_API_KEY)
+                response = sg.send(message)
+
+                print(f"[EMAIL] SendGrid success! Security alert sent. Status: {response.status_code}")
+                return True
+
+            except Exception as e:
+                print(f"[EMAIL] SendGrid failed: {str(e)}")
+                print(f"[EMAIL] Falling back to SMTP...")
+
+        # Fallback to SMTP
+        try:
+            print(f"[EMAIL] Attempting to send security alert via SMTP to {to_email}")
+            message = MIMEMultipart("alternative")
+            message["Subject"] = f"Security Alert - {asset_name}"
+            message["From"] = f"Africa Cyber Trust <{EmailService.SENDER_EMAIL}>"
+            message["Reply-To"] = EmailService.SENDER_EMAIL
+            message["To"] = to_email
+
+            part1 = MIMEText(text_content, "plain")
+            part2 = MIMEText(html_content, "html")
             message.attach(part1)
             message.attach(part2)
 
-            # Send via SMTP
-            with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT) as server:
+            with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT, timeout=10) as server:
+                server.set_debuglevel(0)
                 server.starttls()
                 server.login(EmailService.SENDER_EMAIL, EmailService.SENDER_PASSWORD)
-                server.send_message(message)
+                result = server.send_message(message)
 
-            print(f"[EMAIL] Security alert sent to {to_email}")
+                if result:
+                    print(f"[EMAIL] Warning - Some recipients rejected: {result}")
+
+            print(f"[EMAIL] SMTP success! Security alert sent to {to_email}")
             return True
 
         except Exception as e:
             print(f"[EMAIL] Failed to send security alert: {str(e)}")
+            print(f"        Error type: {type(e).__name__}")
+            import traceback
+            print(f"        Traceback: {traceback.format_exc()}")
             return False
 
     @staticmethod
