@@ -109,8 +109,8 @@ class EmailService:
                 print(f"Verification link: {verification_link}")
                 return True
 
-            # Send via SMTP
-            with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT) as server:
+            # Send via SMTP with 10 second timeout
+            with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT, timeout=10) as server:
                 server.starttls()
                 server.login(EmailService.SENDER_EMAIL, EmailService.SENDER_PASSWORD)
                 server.send_message(message)
