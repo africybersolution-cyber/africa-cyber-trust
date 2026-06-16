@@ -433,17 +433,24 @@ class SecurityScanner:
             # Send email alert if critical or high severity issues found
             if scan.critical_count > 0 or scan.high_count > 0:
                 try:
-                    # Get user email from company owner
+                    # Get user email from company owner or admin
                     from app.models.user import User
                     from app.models.company import Company
 
                     company = self.db.query(Company).filter(Company.id == asset.company_id).first()
                     if company:
-                        # Get company owner/admin
+                        # Try to get company admin first, then any user in the company
                         user = self.db.query(User).filter(
                             User.company_id == company.id,
                             User.role == 'company_admin'
                         ).first()
+
+                        # If no company_admin found, get the first active user (for personal accounts)
+                        if not user:
+                            user = self.db.query(User).filter(
+                                User.company_id == company.id,
+                                User.is_active == True
+                            ).first()
 
                         if user and user.email:
                             # Send alert email
