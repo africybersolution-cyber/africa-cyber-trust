@@ -18,6 +18,28 @@ export default function ReportsPage() {
   const [assets, setAssets] = useState<any[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<string>('all');
   const [loading, setLoading] = useState(true);
+
+  // Helper function to load logo as base64
+  const loadLogoAsBase64 = (): Promise<string | null> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        } else {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = '/images/act-logo.png';
+    });
+  };
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
@@ -71,9 +93,20 @@ export default function ReportsPage() {
     const pageHeight = doc.internal.pageSize.getHeight();
     let yPos = 20;
 
-    // Header
+    // Header with logo
     doc.setFillColor(0, 71, 171);
     doc.rect(0, 0, pageWidth, 35, 'F');
+
+    // Add logo on the right
+    const logoBase64 = await loadLogoAsBase64();
+    if (logoBase64) {
+      try {
+        doc.addImage(logoBase64, 'PNG', pageWidth - 40, 5, 35, 25);
+      } catch (e) {
+        console.log('Failed to add logo:', e);
+      }
+    }
+
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
@@ -203,9 +236,20 @@ export default function ReportsPage() {
     const pageHeight = doc.internal.pageSize.getHeight();
     let yPos = 20;
 
-    // Header
+    // Header with logo
     doc.setFillColor(0, 71, 171);
     doc.rect(0, 0, pageWidth, 35, 'F');
+
+    // Add logo on the right
+    const logoBase64 = await loadLogoAsBase64();
+    if (logoBase64) {
+      try {
+        doc.addImage(logoBase64, 'PNG', pageWidth - 40, 5, 35, 25);
+      } catch (e) {
+        console.log('Failed to add logo:', e);
+      }
+    }
+
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
@@ -337,9 +381,20 @@ export default function ReportsPage() {
     const pageHeight = doc.internal.pageSize.getHeight();
     let yPos = 20;
 
-    // Header
+    // Header with logo
     doc.setFillColor(0, 71, 171);
     doc.rect(0, 0, pageWidth, 35, 'F');
+
+    // Add logo on the right
+    const logoBase64 = await loadLogoAsBase64();
+    if (logoBase64) {
+      try {
+        doc.addImage(logoBase64, 'PNG', pageWidth - 40, 5, 35, 25);
+      } catch (e) {
+        console.log('Failed to add logo:', e);
+      }
+    }
+
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
