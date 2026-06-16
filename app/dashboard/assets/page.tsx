@@ -338,9 +338,15 @@ export default function AssetsPage() {
         setShowAddModal(false);
         setFormData({ name: '', asset_type: 'domain', value: '', description: '' });
 
-        // Show verification modal for domain/subdomain assets
-        if (formData.asset_type === 'domain' || formData.asset_type === 'subdomain') {
-          setVerifyingAsset(newAsset);
+        // Show verification modal for all self-service verifiable asset types.
+        // Mobile apps are added via the dedicated upload button, so they are
+        // excluded here.
+        const verifiableTypes = [
+          'domain', 'subdomain', 'email_domain', 'ssl_certificate', 'api_endpoint',
+          'ip_address', 'ip_range', 'source_code_repo', 'cloud_storage'
+        ];
+        if (verifiableTypes.includes(formData.asset_type)) {
+          setVerifyingAsset({ ...newAsset, type: newAsset.type || formData.asset_type });
           setShowVerifyModal(true);
         } else {
           loadAssets();
@@ -558,7 +564,7 @@ export default function AssetsPage() {
                         setVerifyingAsset(asset);
                         setShowVerifyModal(true);
                         setToast({
-                          message: '⚠️ Please verify domain ownership first',
+                          message: '⚠️ Please verify ownership of this asset first',
                           type: 'info'
                         });
                         setTimeout(() => setToast(null), 3000);
@@ -621,7 +627,7 @@ export default function AssetsPage() {
                         setVerifyingAsset(asset);
                         setShowVerifyModal(true);
                         setToast({
-                          message: '⚠️ Please verify domain ownership first',
+                          message: '⚠️ Please verify ownership of this asset first',
                           type: 'info'
                         });
                         setTimeout(() => setToast(null), 3000);
@@ -939,6 +945,7 @@ export default function AssetsPage() {
           <AssetVerificationModal
             assetId={verifyingAsset.id}
             domain={verifyingAsset.value}
+            assetType={verifyingAsset.type}
             onClose={() => {
               setShowVerifyModal(false);
               setVerifyingAsset(null);

@@ -6,11 +6,73 @@ import { useAuth } from '@/lib/auth-context';
 interface VerificationModalProps {
   assetId: string;
   domain: string;
+  assetType?: string;
   onClose: () => void;
   onVerified: () => void;
 }
 
-export function AssetVerificationModal({ assetId, domain, onClose, onVerified }: VerificationModalProps) {
+const DOMAIN_FAMILY = ['domain', 'subdomain', 'email_domain', 'ssl_certificate', 'api_endpoint'];
+
+// Per-type copy for the single-method asset types (IP, mobile app, repo, bucket).
+const TYPE_META: Record<string, { title: string; icon: string; subtitle: string; steps: string[] }> = {
+  ip_address: {
+    title: 'Verify IP Address Ownership',
+    icon: '🖥️',
+    subtitle: 'Prove control of this IP by serving a verification file.',
+    steps: [
+      'Place the file on a web server reachable at this IP.',
+      'The file path must be exactly /.well-known/act-verify.txt',
+      'The file must contain the verification token shown below.',
+      'Click "Verify & Complete Setup".',
+    ],
+  },
+  ip_range: {
+    title: 'Verify IP Range Ownership',
+    icon: '🌐',
+    subtitle: 'Serve a verification file from any host in this range.',
+    steps: [
+      'Pick one reachable host inside the range.',
+      'Serve the file at /.well-known/act-verify.txt on that host.',
+      'The file must contain the verification token below.',
+      'Click "Verify & Complete Setup".',
+    ],
+  },
+  mobile_app: {
+    title: 'Verify Mobile App Ownership',
+    icon: '📱',
+    subtitle: 'Prove you control the app store listing.',
+    steps: [
+      'Open your app in the Google Play or App Store developer console.',
+      'Add the verification token below anywhere in the public description.',
+      'Save / publish the listing (changes may take a few minutes to go live).',
+      'Click "Verify & Complete Setup". You can remove the token afterwards.',
+    ],
+  },
+  source_code_repo: {
+    title: 'Verify Repository Ownership',
+    icon: '🔐',
+    subtitle: 'Prove write access by committing a verification file.',
+    steps: [
+      'Create a file named act-verify.txt in the repository root.',
+      'Put the verification token below as its contents.',
+      'Commit and push to the default branch (main or master).',
+      'Click "Verify & Complete Setup".',
+    ],
+  },
+  cloud_storage: {
+    title: 'Verify Cloud Storage Ownership',
+    icon: '☁️',
+    subtitle: 'Prove write access by uploading a verification object.',
+    steps: [
+      'Create an object named act-verify.txt in the bucket root.',
+      'Put the verification token below as its contents.',
+      'Make the object publicly readable.',
+      'Click "Verify & Complete Setup".',
+    ],
+  },
+};
+
+export function AssetVerificationModal({ assetId, domain, assetType = 'domain', onClose, onVerified }: VerificationModalProps) {
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
@@ -19,6 +81,12 @@ export function AssetVerificationModal({ assetId, domain, onClose, onVerified }:
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const { token } = useAuth();
+
+  const isDomainFamily = DOMAIN_FAMILY.includes(assetType);
+  const typeMeta = TYPE_META[assetType];
+  // The backend returns instructions keyed by method; for single-method types
+  // grab the first (and only) entry.
+  const typeInstruction = instructions ? Object.values(instructions)[0] as any : null;
 
   useEffect(() => {
     loadVerificationInstructions();
@@ -133,6 +201,89 @@ export function AssetVerificationModal({ assetId, domain, onClose, onVerified }:
     );
   }
 
+  // ---- Type-specific UI (IP, mobile app, repo, cloud storage) ----
+  if (!isDomainFamily && typeMeta) {
+    const copyToken = () => {
+      if (typeInstruction?.content) navigator.clipboard?.writeText(typeInstruction.content);
+    };
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto">
+          <h2 className="text-3xl font-bold mb-2" style={{ color: '#0047AB' }}>
+            {typeMeta.icon} {typeMeta.title}
+          </h2>
+          <p className="text-gray-600 mb-6">
+            {typeMeta.subtitle} <span className="block mt-1 font-mono text-sm text-gray-800 break-all">{domain}</span>
+          </p>
+
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded mb-6">
+              <p className="text-red-700">{error}</p>
+            </div>
+          )}
+
+          <div className="border-2 border-blue-500 rounded-2xl p-6 mb-6">
+            <ol className="list-decimal list-inside space-y-2 text-gray-700 mb-5">
+              {typeMeta.steps.map((s, i) => (
+                <li key={i}>{s}</li>
+              ))}
+            </ol>
+
+            {typeInstruction?.url && (
+              <div className="bg-gray-100 rounded-xl p-4 font-mono text-sm text-gray-900 mb-3">
+                <span className="font-bold">URL:</span>{' '}
+                <span className="text-blue-600 break-all">{typeInstruction.url}</span>
+              </div>
+            )}
+            {typeInstruction?.filename && (
+              <div className="bg-gray-100 rounded-xl p-4 font-mono text-sm text-gray-900 mb-3">
+                <span className="font-bold">File name:</span>{' '}
+                <span className="text-blue-600">{typeInstruction.filename}</span>
+              </div>
+            )}
+
+            <div className="bg-gray-900 rounded-xl p-4 font-mono text-sm text-green-300 flex items-center justify-between gap-3">
+              <span className="break-all">{typeInstruction?.content || '...'}</span>
+              <button
+                onClick={copyToken}
+                className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+
+          {/* APK upload alternative for mobile apps */}
+          {assetType === 'mobile_app' && (
+            <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded mb-6 text-sm text-gray-700">
+              <strong>Alternative:</strong> Close this dialog and use the
+              <strong> 📱 Add Mobile App</strong> button to upload the signed APK/IPA
+              directly — uploading the build proves ownership without editing the listing.
+            </div>
+          )}
+
+          <div className="flex gap-4">
+            <button
+              onClick={onClose}
+              className="flex-1 py-4 rounded-xl font-semibold border-2 border-gray-300 hover:bg-gray-50 transition-colors"
+            >
+              Back
+            </button>
+            <button
+              onClick={handleVerify}
+              disabled={verifying}
+              className="flex-1 py-4 rounded-xl font-semibold text-white shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, #0047AB 0%, #1E90FF 100%)' }}
+            >
+              {verifying ? 'Verifying...' : 'Verify & Complete Setup'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- Domain-family UI (unchanged: DNS TXT + HTML file + email) ----
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-8 max-h-[90vh] overflow-y-auto">

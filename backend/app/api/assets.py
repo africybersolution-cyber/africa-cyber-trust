@@ -1,4 +1,5 @@
 """Asset management endpoints for business accounts."""
+import os
 from fastapi import APIRouter, Depends, HTTPException, status, Request, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -246,10 +247,25 @@ async def start_verification(
 
     # Import services
     from app.services.verification_service import verification_service
+    from app.services.asset_verification_service import asset_verification_service
     from app.services.token_service import token_service
 
     # Get IP address for audit
     ip_address = request.client.host if request else None
+
+    asset_type = asset.type.value
+
+    # Pick a sensible default method per asset type when the caller didn't
+    # explicitly choose one (the frontend leaves it as the domain default).
+    if method == "dns_txt" and asset_type in asset_verification_service.SUPPORTED:
+        type_default = {
+            "ip_address": "http_file",
+            "ip_range": "http_file",
+            "mobile_app": "app_listing",
+            "source_code_repo": "repo_file",
+            "cloud_storage": "bucket_file",
+        }
+        method = type_default.get(asset_type, method)
 
     # Create new verification token using token service
     success, token_obj, message = token_service.create_verification_token(
@@ -263,24 +279,44 @@ async def start_verification(
     if not success:
         raise HTTPException(status_code=429, detail=message)
 
-    # Extract clean domain from URL
-    domain = asset.value
-    if "://" in domain:
-        domain = domain.split("://")[1]
-    domain = domain.rstrip("/").split("/")[0]
+    # Domain-family asset types keep the existing DNS/HTML/email instructions.
+    if asset_type in ("domain", "subdomain", "email_domain", "ssl_certificate", "api_endpoint"):
+        domain = asset.value
+        if "://" in domain:
+            domain = domain.split("://")[1]
+        domain = domain.rstrip("/").split("/")[0]
 
-    # Get verification instructions
-    instructions = verification_service.get_verification_instructions(domain, token_obj.token)
+        instructions = verification_service.get_verification_instructions(domain, token_obj.token)
+
+        return {
+            "asset_id": str(asset.id),
+            "asset_type": asset_type,
+            "domain": domain,
+            "token": token_obj.token,
+            "token_expires_at": token_obj.expires_at.isoformat(),
+            "instructions": instructions,
+            "rate_limit_info": {
+                "max_attempts_per_hour": 10,
+                "token_valid_hours": 48 if method == "dns_txt" else 24
+            }
+        }
+
+    # Asset-type-specific instructions (IP, mobile app, repo, cloud storage).
+    type_instructions = asset_verification_service.get_instructions(
+        asset_type, asset.value, token_obj.token
+    )
 
     return {
         "asset_id": str(asset.id),
-        "domain": domain,
+        "asset_type": asset_type,
+        "domain": asset.value,
         "token": token_obj.token,
         "token_expires_at": token_obj.expires_at.isoformat(),
-        "instructions": instructions,
+        # Keyed by method so the frontend can render a single type-specific card.
+        "instructions": {type_instructions.get("method", method): type_instructions},
         "rate_limit_info": {
             "max_attempts_per_hour": 10,
-            "token_valid_hours": 48 if method == "dns_txt" else 24
+            "token_valid_hours": 48
         }
     }
 
@@ -310,6 +346,7 @@ async def check_verification(
 
     # Import services and models
     from app.services.verification_service import verification_service
+    from app.services.asset_verification_service import asset_verification_service
     from app.services.token_service import token_service
     from app.models.asset import VerificationStatus, VerificationMethod
     from app.models.verification import VerificationHistory, VerificationHistoryStatus
@@ -326,16 +363,33 @@ async def check_verification(
 
     token_obj = active_tokens[0]  # Get most recent active token
 
-    # Extract clean domain
+    asset_type = asset.type.value
+    is_domain_family = asset_type in ("domain", "subdomain", "email_domain", "ssl_certificate", "api_endpoint")
+
+    # Extract clean domain (only meaningful for the domain family)
     domain = asset.value
     if "://" in domain:
         domain = domain.split("://")[1]
     domain = domain.rstrip("/").split("/")[0]
 
+    # The verification_method column is a Postgres enum; map the granular
+    # method actually used onto an existing enum value so we never violate the
+    # enum type. The precise method is still recorded in history below.
+    METHOD_ENUM_MAP = {
+        "dns_txt": VerificationMethod.DNS_TXT,
+        "html_file": VerificationMethod.HTML_FILE,
+        "admin_email": VerificationMethod.ADMIN_EMAIL,
+        "http_file": VerificationMethod.HTML_FILE,
+        "repo_file": VerificationMethod.HTML_FILE,
+        "bucket_file": VerificationMethod.HTML_FILE,
+        "app_listing": VerificationMethod.MANUAL_APPROVAL,
+        "apk_upload": VerificationMethod.MANUAL_APPROVAL,
+    }
+
     # Create verification history record
     history = VerificationHistory(
         asset_id=asset_id,
-        method=method if method != "auto" else "dns_txt",
+        method=(method if method != "auto" else ("dns_txt" if is_domain_family else asset_type)),
         status="pending",
         attempted_at=datetime.now(timezone.utc),
         ip_address=ip_address,
@@ -346,10 +400,15 @@ async def check_verification(
     db.refresh(history)
 
     try:
-        # Perform verification check
-        success, message, method_used = verification_service.verify_domain(
-            domain, token_obj.token, method
-        )
+        # Perform verification check — branch by asset type
+        if is_domain_family:
+            success, message, method_used = verification_service.verify_domain(
+                domain, token_obj.token, method
+            )
+        else:
+            success, message, method_used = asset_verification_service.verify(
+                asset_type, asset.value, token_obj.token
+            )
 
         if success:
             # Mark token as used
@@ -358,7 +417,7 @@ async def check_verification(
             # Update asset verification status
             asset.verification_status = VerificationStatus.VERIFIED
             asset.verified_at = datetime.now(timezone.utc)
-            asset.verification_method = VerificationMethod.DNS_TXT if method_used == "dns_txt" else VerificationMethod.HTML_FILE
+            asset.verification_method = METHOD_ENUM_MAP.get(method_used, VerificationMethod.MANUAL_APPROVAL)
             asset.updated_at = datetime.now(timezone.utc)
 
             # Update history record
