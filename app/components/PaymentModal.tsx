@@ -11,10 +11,13 @@ interface PaymentModalProps {
 }
 
 export default function PaymentModal({ plan, amount, onClose, onSuccess }: PaymentModalProps) {
+  const [paymentMethod, setPaymentMethod] = useState<'mobile' | 'crypto'>('mobile');
   const [step, setStep] = useState<'details' | 'processing' | 'success'>('details');
   const [country, setCountry] = useState('RW');
   const [operator, setOperator] = useState('MTN');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [cryptoToken, setCryptoToken] = useState('USDT');
+  const [walletAddress, setWalletAddress] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [pricing, setPricing] = useState<any>(null);
@@ -62,7 +65,7 @@ export default function PaymentModal({ plan, amount, onClose, onSuccess }: Payme
   ];
 
   const handlePayment = async () => {
-    if (!phoneNumber) {
+    if (paymentMethod === 'mobile' && !phoneNumber) {
       setError('Please enter your phone number');
       return;
     }
@@ -73,27 +76,53 @@ export default function PaymentModal({ plan, amount, onClose, onSuccess }: Payme
     try {
       const token = localStorage.getItem('auth_token');
 
-      const res = await fetch(`${config.apiUrl}/api/payments/initiate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          plan_name: plan.toLowerCase(),
-          phone_number: phoneNumber,
-          country: country,
-          operator: operator
-        })
-      });
+      if (paymentMethod === 'mobile') {
+        const res = await fetch(`${config.apiUrl}/api/payments/initiate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            plan_name: plan.toLowerCase(),
+            phone_number: phoneNumber,
+            country: country,
+            operator: operator
+          })
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (res.ok) {
-        setStep('processing');
-        pollPaymentStatus(data.payment_id);
+        if (res.ok) {
+          setStep('processing');
+          pollPaymentStatus(data.payment_id);
+        } else {
+          setError(data.detail || 'Payment initiation failed');
+        }
       } else {
-        setError(data.detail || 'Payment initiation failed');
+        // Crypto payment
+        const res = await fetch(`${config.apiUrl}/api/payments/initiate-crypto`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            plan_name: plan.toLowerCase(),
+            token_symbol: cryptoToken
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          setStep('processing');
+          // Store deposit address for display
+          setError(''); // Clear any previous errors
+          pollPaymentStatus(data.payment_id);
+        } else {
+          setError(data.detail || 'Payment initiation failed');
+        }
       }
     } catch (err) {
       setError('Network error. Please try again.');
@@ -154,55 +183,137 @@ export default function PaymentModal({ plan, amount, onClose, onSuccess }: Payme
             <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200">
               <div className="text-sm text-gray-600 mb-1">Selected Plan</div>
               <div className="text-2xl font-bold text-blue-700 capitalize">{plan}</div>
-              {pricing && (
+              {paymentMethod === 'mobile' && pricing ? (
                 <div className="text-3xl font-bold text-gray-900">
                   {parseInt(pricing[plan.toLowerCase()] || amount || '0').toLocaleString()} {pricing.currency}
+                  <span className="text-lg text-gray-600">/month</span>
+                </div>
+              ) : (
+                <div className="text-3xl font-bold text-gray-900">
+                  ${amount || (plan === 'starter' ? '49' : plan === 'professional' ? '199' : '999')}
                   <span className="text-lg text-gray-600">/month</span>
                 </div>
               )}
             </div>
 
+            {/* Payment Method Selector */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold mb-3 text-gray-700">Payment Method</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('mobile')}
+                  className={`p-4 rounded-xl border-2 transition ${
+                    paymentMethod === 'mobile'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="text-2xl mb-2">📱</div>
+                  <div className="font-semibold text-gray-900">Mobile Money</div>
+                  <div className="text-xs text-gray-500">MTN, Airtel, M-Pesa</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('crypto')}
+                  className={`p-4 rounded-xl border-2 transition ${
+                    paymentMethod === 'crypto'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="text-2xl mb-2">🪙</div>
+                  <div className="font-semibold text-gray-900">Crypto</div>
+                  <div className="text-xs text-gray-500">USDT, USDC, POL</div>
+                </button>
+              </div>
+            </div>
+
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold mb-2 text-gray-700">Country</label>
-                <select
-                  value={country}
-                  onChange={(e) => {
-                    setCountry(e.target.value);
-                    setOperator(operators[e.target.value][0]);
-                  }}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition text-gray-900 font-medium"
-                >
-                  {countries.map((c) => (
-                    <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
-                  ))}
-                </select>
-              </div>
+              {paymentMethod === 'mobile' ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-gray-700">Country</label>
+                    <select
+                      value={country}
+                      onChange={(e) => {
+                        setCountry(e.target.value);
+                        setOperator(operators[e.target.value][0]);
+                      }}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition text-gray-900 font-medium"
+                    >
+                      {countries.map((c) => (
+                        <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-semibold mb-2 text-gray-700">Mobile Money Operator</label>
-                <select
-                  value={operator}
-                  onChange={(e) => setOperator(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition text-gray-900 font-medium"
-                >
-                  {operators[country].map((op) => (
-                    <option key={op} value={op}>{op}</option>
-                  ))}
-                </select>
-              </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-gray-700">Mobile Money Operator</label>
+                    <select
+                      value={operator}
+                      onChange={(e) => setOperator(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition text-gray-900 font-medium"
+                    >
+                      {operators[country].map((op) => (
+                        <option key={op} value={op}>{op}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-semibold mb-2 text-gray-700">Phone Number</label>
-                <input
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="+250788123456"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition text-gray-900 font-medium placeholder-gray-400"
-                />
-                <p className="text-xs text-gray-500 mt-1">Include country code (e.g., +250 for Rwanda)</p>
-              </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-gray-700">Phone Number</label>
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="+250788123456"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition text-gray-900 font-medium placeholder-gray-400"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Include country code (e.g., +250 for Rwanda)</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 text-gray-700">Cryptocurrency</label>
+                    <select
+                      value={cryptoToken}
+                      onChange={(e) => setCryptoToken(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition text-gray-900 font-medium"
+                    >
+                      <option value="USDT">USDT (Tether)</option>
+                      <option value="USDC">USDC (USD Coin)</option>
+                    </select>
+                  </div>
+
+                  <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
+                    <div className="flex items-start gap-2">
+                      <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="text-sm text-blue-800">
+                        <p className="font-semibold mb-1">How it works</p>
+                        <p>1. Click "Pay Now" to generate your deposit address</p>
+                        <p>2. Send {cryptoToken} from your wallet to the address</p>
+                        <p>3. Wait for blockchain confirmation</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
+                    <div className="flex items-start gap-2">
+                      <svg className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <div className="text-sm text-yellow-800">
+                        <p className="font-semibold mb-1">⚠️ Polygon Network Only</p>
+                        <p>Send on <strong>Polygon (MATIC)</strong> network, NOT Ethereum!</p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {error && (
                 <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl">
@@ -224,7 +335,7 @@ export default function PaymentModal({ plan, amount, onClose, onSuccess }: Payme
                 </button>
                 <button
                   onClick={handlePayment}
-                  disabled={loading || !phoneNumber}
+                  disabled={loading || (paymentMethod === 'mobile' && !phoneNumber)}
                   className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:from-blue-700 hover:to-blue-800 transition shadow-lg"
                 >
                   {loading ? 'Processing...' : 'Pay Now'}
@@ -236,15 +347,35 @@ export default function PaymentModal({ plan, amount, onClose, onSuccess }: Payme
 
         {step === 'processing' && (
           <div className="text-center py-12">
-            <div className="text-7xl mb-6">📱</div>
-            <h3 className="text-2xl font-bold mb-3 text-gray-900">Complete on Your Phone</h3>
-            <p className="text-gray-600 mb-6 text-lg">
-              Check your phone for the payment prompt from <strong>{operator}</strong>
-            </p>
-            <div className="flex justify-center mb-4">
-              <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-            </div>
-            <p className="text-sm text-gray-500">Waiting for payment confirmation...</p>
+            {paymentMethod === 'mobile' ? (
+              <>
+                <div className="text-7xl mb-6">📱</div>
+                <h3 className="text-2xl font-bold mb-3 text-gray-900">Complete on Your Phone</h3>
+                <p className="text-gray-600 mb-6 text-lg">
+                  Check your phone for the payment prompt from <strong>{operator}</strong>
+                </p>
+                <div className="flex justify-center mb-4">
+                  <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+                </div>
+                <p className="text-sm text-gray-500">Waiting for payment confirmation...</p>
+              </>
+            ) : (
+              <>
+                <div className="text-7xl mb-6">🪙</div>
+                <h3 className="text-2xl font-bold mb-3 text-gray-900">Send Crypto Payment</h3>
+                <p className="text-gray-600 mb-4 text-lg">
+                  Send <strong>{cryptoToken}</strong> to the address below
+                </p>
+                <div className="p-4 bg-gray-100 rounded-xl mb-6 break-all font-mono text-sm">
+                  {/* Deposit address will be shown here from backend */}
+                  Fetching deposit address...
+                </div>
+                <div className="flex justify-center mb-4">
+                  <div className="animate-spin w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+                </div>
+                <p className="text-sm text-gray-500">Waiting for blockchain confirmation...</p>
+              </>
+            )}
           </div>
         )}
 
