@@ -2,7 +2,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import public_check, auth, company, assets, scans, ai_verify, payments, company_verification, admin, email_verification, alerts, team, admin_fix_users, breaches, trust_badge, remediation, cve_enrichment
+from app.api import public_check, auth, company, assets, scans, ai_verify, payments, company_verification, admin, email_verification, alerts, team, admin_fix_users, breaches, trust_badge, remediation, cve_enrichment, free_trust_score
 
 # Create FastAPI application
 app = FastAPI(
@@ -133,6 +133,7 @@ async def scheduler_status():
 
 
 # Include API routers
+app.include_router(free_trust_score.router, tags=["Free Trust Score"])  # Public - no auth required
 app.include_router(public_check.router, prefix="/api/public-check", tags=["Public Checks"])
 app.include_router(ai_verify.router, prefix="/api/ai-verify", tags=["AI Verification"])
 app.include_router(payments.router, prefix="/api/payments", tags=["Payments & Subscriptions"])
