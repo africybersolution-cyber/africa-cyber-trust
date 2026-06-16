@@ -17,13 +17,13 @@ function SignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Get plan from URL or default to 'personal'
-  const plan = searchParams.get('plan') || 'personal';
+  // Get plan from URL or default to 'starter'
+  const plan = searchParams.get('plan') || 'starter';
   const planInfo = {
-    'personal': { name: 'Personal', price: '$5/month', trial: '7 days', color: '#0047AB' },
-    'professional': { name: 'Professional', price: '$49/month', trial: '14 days', color: '#DAA520' }
+    'starter': { name: 'Starter', price: '$49/month', trial: '14 days', color: '#0047AB' },
+    'professional': { name: 'Professional', price: '$199/month', trial: '14 days', color: '#DAA520' }
   };
-  const currentPlan = planInfo[plan as keyof typeof planInfo] || planInfo['personal'];
+  const currentPlan = planInfo[plan as keyof typeof planInfo] || planInfo['starter'];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

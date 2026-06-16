@@ -94,8 +94,8 @@ const PLANS = [
   },
   {
     name: 'Enterprise',
-    price: 'Custom',
-    cadence: 'contact us',
+    price: '$999',
+    cadence: 'per month',
     highlight: false,
     cta: 'Talk to Sales',
     href: '/contact',
