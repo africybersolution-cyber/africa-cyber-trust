@@ -2,7 +2,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import public_check, auth, company, assets, scans, ai_verify, payments, company_verification, admin, email_verification, alerts, team, admin_fix_users
+from app.api import public_check, auth, company, assets, scans, ai_verify, payments, company_verification, admin, email_verification, alerts, team, admin_fix_users, breaches
 
 # Create FastAPI application
 app = FastAPI(
@@ -145,6 +145,7 @@ app.include_router(scans.router, prefix="/api/scans", tags=["Scans"])
 app.include_router(email_verification.router, prefix="/api/email-verification", tags=["Email Verification"])
 app.include_router(alerts.router, prefix="/api/alerts", tags=["Alerts"])
 app.include_router(team.router, prefix="/api/team", tags=["Team Management"])
+app.include_router(breaches.router, tags=["Breach Monitoring"])  # Breach monitoring (HaveIBeenPwned)
 
 
 if __name__ == "__main__":

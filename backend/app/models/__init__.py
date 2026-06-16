@@ -5,6 +5,7 @@ from app.models.asset import Asset
 from app.models.public_check import PublicCheck
 from app.models.scan_job import ScanJob
 from app.models.alert import AlertSettings, Alert
+from app.models.breach import BreachCheck, BreachResult, PasteExposure
 
 __all__ = [
     "User",
@@ -14,4 +15,7 @@ __all__ = [
     "ScanJob",
     "AlertSettings",
     "Alert",
+    "BreachCheck",
+    "BreachResult",
+    "PasteExposure",
 ]
