@@ -64,6 +64,9 @@ web3==6.15.1
 # Africa's Talking (SMS/WhatsApp)
 africastalking==1.2.6
 
+# Twilio (SMS/WhatsApp - recommended for WhatsApp)
+twilio==9.0.4
+
 # Background job scheduler
 apscheduler==3.10.4
 

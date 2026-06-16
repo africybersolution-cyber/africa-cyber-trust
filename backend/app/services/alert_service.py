@@ -20,7 +20,7 @@ class AlertService:
     SMTP_SERVER = "smtp.gmail.com"
     SMTP_PORT = 587
     SMTP_EMAIL = "africybersolution@gmail.com"
-    SMTP_PASSWORD = "mwqwbdrywmsezcuh"  # Gmail app password (same as verification emails)
+    SMTP_PASSWORD = settings.GMAIL_APP_PASSWORD or "mwqwbdrywmsezcuh"  # From env, fallback for local dev
 
     # Africa's Talking configuration
     @staticmethod
@@ -87,33 +87,70 @@ class AlertService:
 
     @staticmethod
     async def send_whatsapp(phone_number: str, message: str) -> bool:
-        """Send WhatsApp message via Africa's Talking."""
+        """
+        Send WhatsApp message via Twilio WhatsApp API.
+
+        Falls back to Africa's Talking SMS if Twilio not configured.
+        """
         try:
-            if not settings.AFRICASTALKING_API_KEY:
-                print("[ALERT] WARNING: Africa's Talking API key not configured")
-                return False
+            # Method 1: Twilio WhatsApp (recommended - official WhatsApp Business API)
+            if settings.TWILIO_ACCOUNT_SID and settings.TWILIO_AUTH_TOKEN:
+                try:
+                    from twilio.rest import Client
 
-            AlertService._init_africastalking()
+                    client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
-            # Africa's Talking requires phone numbers in international format (e.g., +254712345678)
-            if not phone_number.startswith('+'):
-                print(f"[ALERT] WARNING: Phone number must start with + for WhatsApp: {phone_number}")
-                return False
+                    # Ensure phone number has +
+                    if not phone_number.startswith('+'):
+                        phone_number = '+' + phone_number
 
-            # Use SMS endpoint for WhatsApp (Africa's Talking handles routing)
-            sms = africastalking.SMS
-            response = sms.send(
-                message=message,
-                recipients=[phone_number],
-                sender_id=settings.AFRICASTALKING_FROM
-            )
+                    # Twilio WhatsApp requires 'whatsapp:' prefix
+                    twilio_from = f"whatsapp:{settings.TWILIO_PHONE_NUMBER}"
+                    twilio_to = f"whatsapp:{phone_number}"
 
-            print(f"[ALERT] SUCCESS WhatsApp sent to {phone_number}")
-            print(f"   Response: {response}")
-            return True
+                    msg = client.messages.create(
+                        from_=twilio_from,
+                        body=message,
+                        to=twilio_to
+                    )
+
+                    print(f"[ALERT] SUCCESS WhatsApp sent via Twilio to {phone_number}")
+                    print(f"   Message SID: {msg.sid}")
+                    return True
+
+                except ImportError:
+                    print("[ALERT] WARNING: Twilio SDK not installed (pip install twilio)")
+                except Exception as twilio_error:
+                    print(f"[ALERT] Twilio WhatsApp failed: {str(twilio_error)}")
+                    # Fall through to Method 2
+
+            # Method 2: Africa's Talking fallback (SMS-based)
+            if settings.AFRICASTALKING_API_KEY:
+                AlertService._init_africastalking()
+
+                # Ensure phone number has +
+                if not phone_number.startswith('+'):
+                    phone_number = '+' + phone_number
+
+                sms = africastalking.SMS
+                response = sms.send(
+                    message=message,
+                    recipients=[phone_number],
+                    sender_id=settings.AFRICASTALKING_FROM
+                )
+
+                print(f"[ALERT] SUCCESS WhatsApp/SMS sent via Africa's Talking to {phone_number}")
+                print(f"   Response: {response}")
+                return True
+
+            # No provider configured
+            print("[ALERT] WARNING: No WhatsApp provider configured (Twilio or Africa's Talking)")
+            return False
 
         except Exception as e:
             print(f"[ALERT] ERROR WhatsApp failed: {str(e)}")
+            import traceback
+            print(f"   Traceback: {traceback.format_exc()}")
             return False
 
     @staticmethod
