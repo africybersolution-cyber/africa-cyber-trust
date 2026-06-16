@@ -265,11 +265,11 @@ https://www.africybertrust.com/dashboard/assets
                 server.login(EmailService.SENDER_EMAIL, EmailService.SENDER_PASSWORD)
                 server.send_message(message)
 
-            print(f"✅ Security alert sent to {to_email}")
+            print(f"[EMAIL] Security alert sent to {to_email}")
             return True
 
         except Exception as e:
-            print(f"❌ Failed to send security alert: {str(e)}")
+            print(f"[EMAIL] Failed to send security alert: {str(e)}")
             return False
 
     @staticmethod

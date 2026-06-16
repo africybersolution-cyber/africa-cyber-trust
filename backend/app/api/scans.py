@@ -37,7 +37,15 @@ async def start_asset_scan(
 
     # Run scan synchronously (takes ~10 seconds)
     scanner = get_scanner(db)
-    scan = await scanner.scan_asset(asset_id)
+    try:
+        scan = await scanner.scan_asset(asset_id)
+    except Exception as e:
+        # scan_asset already recorded status="failed" with the error in scan_data.
+        # Surface a clear message to the user instead of a generic 500.
+        raise HTTPException(
+            status_code=502,
+            detail=f"Scan failed: {str(e)}"
+        )
 
     return {
         "message": "Scan completed",

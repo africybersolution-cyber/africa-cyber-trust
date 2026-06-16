@@ -469,18 +469,39 @@ class SecurityScanner:
                                 high_count=scan.high_count,
                                 findings=findings_data
                             )
-                            print(f"📧 Security alert sent to {user.email}")
+                            print(f"[EMAIL] Security alert sent to {user.email}")
                 except Exception as email_error:
-                    print(f"⚠️ Failed to send email alert: {email_error}")
-                    # Don't fail the scan if email fails
+                    # Email is best-effort. It must NEVER fail the scan, and this
+                    # handler must never raise (e.g. on consoles that can't encode
+                    # certain characters), so keep the message plain ASCII.
+                    try:
+                        print(f"[WARN] Failed to send email alert: {email_error}")
+                    except Exception:
+                        pass
 
             return scan
 
         except Exception as e:
-            scan.status = "failed"
-            scan.completed_at = datetime.now(timezone.utc)
-            scan.scan_data = {"error": str(e)}
-            self.db.commit()
+            # The scan failed. The outer transaction may already be in an aborted
+            # state (e.g. a failed flush/commit), so roll back first to guarantee
+            # the failed-status write below can actually commit and the user sees
+            # a clear error instead of a silently stuck scan.
+            try:
+                self.db.rollback()
+            except Exception:
+                pass
+            try:
+                scan.status = "failed"
+                scan.completed_at = datetime.now(timezone.utc)
+                scan.scan_data = {"error": str(e)}
+                self.db.add(scan)
+                self.db.commit()
+            except Exception as persist_error:
+                # Last-ditch: don't mask the original error if we can't persist.
+                try:
+                    print(f"[ERROR] Could not persist failed scan status: {persist_error}")
+                except Exception:
+                    pass
             raise
 
     def _extract_domain(self, value: str) -> str:
