@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 import uuid
 from datetime import datetime
 
-from app.models.base import Base
+from app.db.database import Base
 
 
 class BreachCheck(Base):
