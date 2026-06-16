@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/lib/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { ReactNode } from 'react';
 
 const BLUE = '#0047AB';
@@ -47,7 +48,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
       <nav className="border-b border-cyber bg-[#050B1A]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <a href="/dashboard" className="flex items-center gap-3">
+            <Link href="/dashboard" className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${BLUE} 0%, ${GOLD} 100%)` }}>
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -57,7 +58,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
                 <div className="font-bold text-sm text-white">{company ? company.name : user?.name}</div>
                 <div className="text-xs text-cyber-muted capitalize">{company ? `${company.plan} Plan` : `${user?.account_type || 'starter'} Plan`}</div>
               </div>
-            </a>
+            </Link>
 
             <div className="flex items-center gap-4">
               <button onClick={handleLogout} className="px-4 py-2 text-sm font-semibold text-cyber-muted hover:text-red-400 transition-colors">
@@ -78,7 +79,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
             <div className="cyber-card p-3 sticky top-24">
               <nav className="space-y-1">
                 {NAV.map((item) => (
-                  <a
+                  <Link
                     key={item.label}
                     href={item.href}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
@@ -90,7 +91,7 @@ export default function DashboardLayout({ children, title, subtitle }: Dashboard
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                     </svg>
                     {item.label}
-                  </a>
+                  </Link>
                 ))}
               </nav>
             </div>

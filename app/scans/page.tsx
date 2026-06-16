@@ -46,25 +46,42 @@ interface Finding {
 }
 
 export default function ScansPage() {
-  const { token } = useAuth();
+  const { token, loading: authLoading } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [scans, setScans] = useState<ScanData[]>([]);
   const [selectedScan, setSelectedScan] = useState<ScanData | null>(null);
   const [findings, setFindings] = useState<Finding[]>([]);
   const [loadingFindings, setLoadingFindings] = useState(false);
 
   useEffect(() => {
+    // Wait for the auth context to finish hydrating from localStorage before
+    // making any auth decision. Without this guard, `token` is null on the very
+    // first render (the context loads it in its own effect), which caused an
+    // immediate, spurious redirect to /login on first navigation here.
+    if (authLoading) return;
+
     if (!token) {
-      router.push('/login');
+      router.replace('/login');
       return;
     }
 
+    let cancelled = false;
+
     const fetchAllScans = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const assetsRes = await fetch(`${config.apiUrl}/api/assets`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+
+        if (assetsRes.status === 401) {
+          // Token expired/invalid — send the user to re-authenticate.
+          router.replace('/login');
+          return;
+        }
 
         if (!assetsRes.ok) throw new Error('Failed to fetch assets');
 
@@ -92,20 +109,49 @@ export default function ScansPage() {
           }
         }
 
-        allScans.sort((a, b) =>
+        // Hide failed scans. Keep the most recent scan per asset (even if it
+        // failed) so a brand-new failure is still visible, but drop older
+        // failed/cancelled scans that would otherwise clutter the list.
+        // Mirrors the filtering used on the Assets page report view.
+        const latestPerAsset = new Map<string, string>();
+        for (const scan of allScans) {
+          const key = scan.asset_id;
+          const prev = latestPerAsset.get(key);
+          if (!prev || new Date(scan.started_at).getTime() > new Date(prev).getTime()) {
+            latestPerAsset.set(key, scan.started_at);
+          }
+        }
+
+        const isFailed = (s: string) => {
+          const v = (s || '').toLowerCase();
+          return v === 'failed' || v === 'error' || v === 'cancelled' || v === 'canceled';
+        };
+
+        const visibleScans = allScans.filter((scan) => {
+          if (!isFailed(scan.status)) return true;
+          // Only keep a failed scan if it is the latest scan for its asset.
+          return latestPerAsset.get(scan.asset_id) === scan.started_at;
+        });
+
+        visibleScans.sort((a, b) =>
           new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
         );
 
-        setScans(allScans);
+        if (!cancelled) setScans(visibleScans);
       } catch (error) {
         console.error('Error fetching scans:', error);
+        if (!cancelled) setError('Could not load scans. Please try again.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchAllScans();
-  }, [token, router]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, authLoading, router]);
 
   const loadFindings = async (scan: ScanData) => {
     setSelectedScan(scan);
@@ -169,11 +215,43 @@ export default function ScansPage() {
     }
   };
 
-  if (loading) {
+  const getStatusColor = (status: string) => {
+    switch ((status || '').toLowerCase()) {
+      case 'completed': return { bg: 'bg-green-500/15', text: 'text-green-400' };
+      case 'running': return { bg: 'bg-blue-500/15', text: 'text-blue-400' };
+      case 'failed':
+      case 'error':
+      case 'cancelled':
+      case 'canceled': return { bg: 'bg-red-500/15', text: 'text-red-400' };
+      default: return { bg: 'bg-yellow-500/15', text: 'text-yellow-400' };
+    }
+  };
+
+  if (authLoading || loading) {
     return (
       <DashboardLayout title="Scans & Findings" subtitle="View security scan results">
-        <div className="text-center py-12">
-          <div className="text-white text-xl">Loading scans...</div>
+        <div className="text-center py-20">
+          <div className="w-16 h-16 border-4 border-t-blue-500 border-[#1B2C4F] rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-cyber-muted text-lg">Loading scans...</div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout title="Scans & Findings" subtitle="View security scan results">
+        <div className="cyber-card-raised p-12 text-center max-w-xl mx-auto">
+          <div className="text-5xl mb-4">⚠️</div>
+          <h3 className="text-xl font-bold text-white mb-2">Couldn&apos;t load scans</h3>
+          <p className="text-cyber-muted mb-6">{error}</p>
+          <button
+            onClick={() => router.refresh()}
+            className="inline-block px-6 py-3 rounded-xl font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: `linear-gradient(135deg, ${BLUE} 0%, #1E90FF 100%)` }}
+          >
+            Retry
+          </button>
         </div>
       </DashboardLayout>
     );
@@ -216,9 +294,14 @@ export default function ScansPage() {
                     className="text-3xl font-bold mb-1"
                     style={{ color: getScoreColor(scan.score) }}
                   >
-                    {scan.score}/100
+                    {scan.score != null ? `${scan.score}/100` : '—'}
                   </div>
-                  <div className="text-xs text-cyber-muted">{formatDate(scan.started_at)}</div>
+                  <div className="flex items-center justify-end gap-2">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize ${getStatusColor(scan.status).bg} ${getStatusColor(scan.status).text}`}>
+                      {scan.status}
+                    </span>
+                    <span className="text-xs text-cyber-muted">{formatDate(scan.started_at)}</span>
+                  </div>
                 </div>
               </div>
 
