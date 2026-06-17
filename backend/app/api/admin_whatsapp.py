@@ -10,6 +10,7 @@ from app.core.admin_deps import require_admin, require_super_admin, log_admin_ac
 from app.models.user import User
 from app.models.agent import Agent
 from app.services.whatsapp_service import whatsapp_service
+from app.services.agent_notifications_service import agent_notifications_service
 
 
 router = APIRouter(prefix="/api/admin/whatsapp", tags=["Admin - WhatsApp"])
@@ -192,4 +193,73 @@ async def get_whatsapp_config(
             "monthly_summary",
             "training_reminder"
         ]
+    }
+
+
+@router.post("/send-monthly-summaries")
+async def send_monthly_summaries(
+    req: Request,
+    admin: User = Depends(require_super_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Send monthly performance summary to all agents.
+
+    Manually trigger the monthly summary job.
+    """
+    result = agent_notifications_service.send_monthly_summaries(db)
+
+    # Audit log
+    await log_admin_action(
+        action="whatsapp_monthly_summaries",
+        actor=admin,
+        db=db,
+        request=req,
+        target_type="bulk",
+        target_id="all_agents",
+        context_data={
+            "sent": result["sent"],
+            "failed": result["failed"],
+            "total": result["total_agents"]
+        }
+    )
+
+    return {
+        "success": True,
+        "message": f"Sent {result['sent']} summaries to agents",
+        **result
+    }
+
+
+@router.post("/send-training-reminders")
+async def send_training_reminders(
+    req: Request,
+    admin: User = Depends(require_super_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Send training reminders to agents with incomplete required courses.
+
+    Manually trigger the training reminder job.
+    """
+    result = agent_notifications_service.send_training_reminders(db)
+
+    # Audit log
+    await log_admin_action(
+        action="whatsapp_training_reminders",
+        actor=admin,
+        db=db,
+        request=req,
+        target_type="bulk",
+        target_id="all_agents",
+        context_data={
+            "sent": result["sent"],
+            "total": result["total_agents"]
+        }
+    )
+
+    return {
+        "success": True,
+        "message": f"Sent {result['sent']} training reminders",
+        **result
     }
