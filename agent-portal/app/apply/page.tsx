@@ -9,7 +9,7 @@ export default function ApplyAgentPage() {
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
   const [referralCode, setReferralCode] = useState("");
-  const [step, setStep] = useState<"login" | "apply">("login");
+  const [step, setStep] = useState<"login" | "signup" | "apply">("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [token, setToken] = useState("");
@@ -203,19 +203,27 @@ export default function ApplyAgentPage() {
           </div>
         )}
 
-        {step === "login" && (
+        {(step === "login" || step === "signup") && (
           <>
             {/* Login/Signup Tabs */}
             <div className="flex gap-2 mb-6">
               <button
                 onClick={() => setStep("login")}
-                className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg font-medium"
+                className={`flex-1 py-2 px-4 rounded-lg font-medium ${
+                  step === "login"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
               >
                 Login
               </button>
               <button
-                onClick={() => setStep("signup" as any)}
-                className="flex-1 py-2 px-4 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200"
+                onClick={() => setStep("signup")}
+                className={`flex-1 py-2 px-4 rounded-lg font-medium ${
+                  step === "signup"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
               >
                 Sign Up
               </button>
