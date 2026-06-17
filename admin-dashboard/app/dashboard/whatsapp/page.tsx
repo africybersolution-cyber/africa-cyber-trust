@@ -10,6 +10,7 @@ export default function WhatsAppPage() {
     "Hello! This is a test message from Africa Cyber Trust admin."
   );
   const [sending, setSending] = useState(false);
+  const [bulkSending, setBulkSending] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -75,6 +76,46 @@ export default function WhatsAppPage() {
       alert("Error sending message");
     } finally {
       setSending(false);
+    }
+  };
+
+  const sendBulkNotification = async (type: "monthly" | "training") => {
+    if (
+      !confirm(
+        `Send ${type === "monthly" ? "monthly summaries" : "training reminders"} to all agents? This will send WhatsApp messages to all eligible agents.`
+      )
+    ) {
+      return;
+    }
+
+    const token = localStorage.getItem("admin_token");
+    setBulkSending(type);
+
+    try {
+      const endpoint =
+        type === "monthly"
+          ? "/api/admin/whatsapp/send-monthly-summaries"
+          : "/api/admin/whatsapp/send-training-reminders";
+
+      const response = await fetch(
+        `https://africa-cyber-trust.onrender.com${endpoint}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(`Success! ${data.message}\nSent: ${data.sent}\nFailed: ${data.failed || 0}\nSkipped: ${data.skipped || 0}`);
+      } else {
+        const error = await response.json();
+        alert(`Failed: ${error.detail || "Unknown error"}`);
+      }
+    } catch (error) {
+      alert("Error sending bulk notifications");
+    } finally {
+      setBulkSending(null);
     }
   };
 
@@ -192,6 +233,57 @@ export default function WhatsAppPage() {
               className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-medium disabled:opacity-50"
             >
               {sending ? "Sending..." : "📤 Send Test Message"}
+            </button>
+          </div>
+        </div>
+
+        {/* Bulk Notifications */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Bulk Notifications
+          </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Send automated notifications to all eligible agents
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={() => sendBulkNotification("monthly")}
+              disabled={bulkSending !== null || !config?.configured}
+              className="px-6 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-medium disabled:opacity-50 text-left"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📊</span>
+                <div>
+                  <div className="font-semibold">
+                    {bulkSending === "monthly"
+                      ? "Sending..."
+                      : "Send Monthly Summaries"}
+                  </div>
+                  <div className="text-xs opacity-90">
+                    Performance reports to all agents
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => sendBulkNotification("training")}
+              disabled={bulkSending !== null || !config?.configured}
+              className="px-6 py-4 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-lg font-medium disabled:opacity-50 text-left"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📚</span>
+                <div>
+                  <div className="font-semibold">
+                    {bulkSending === "training"
+                      ? "Sending..."
+                      : "Send Training Reminders"}
+                  </div>
+                  <div className="text-xs opacity-90">
+                    Remind agents of incomplete courses
+                  </div>
+                </div>
+              </div>
             </button>
           </div>
         </div>
