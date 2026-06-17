@@ -1,6 +1,12 @@
 """Test email sending."""
 import os
 import sys
+from dotenv import load_dotenv
+
+# Load .env file
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(env_path)
+print(f"Loading .env from: {env_path}")
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
