@@ -160,10 +160,16 @@ class EmailService:
         referral_code: str,
         portal_url: str = "http://localhost:3004"
     ) -> bool:
-        """Send agent approval email with login credentials via SendGrid (primary) or SMTP (fallback)."""
-        subject = "Your Africa Cyber Trust Agent Account is Approved"
+        """Send agent approval email with login credentials (same as payment receipts)."""
+        try:
+            # Create message
+            message = MIMEMultipart("alternative")
+            message["Subject"] = "Your Africa Cyber Trust Agent Account is Approved"
+            message["From"] = f"Africa Cyber Trust <{EmailService.SENDER_EMAIL}>"
+            message["To"] = to_email
 
-        html_content = f"""
+            # Email HTML content
+            html = f"""
         <!DOCTYPE html>
         <html>
         <head>
@@ -213,68 +219,44 @@ class EmailService:
         </html>
         """
 
-        text_content = f"""
-        Congratulations {agent_name}! Your Africa Cyber Trust agent application is approved.
+            # Plain text fallback
+            text = f"""
+Congratulations {agent_name}! Your Africa Cyber Trust agent application is approved.
 
-        Login Credentials:
-        Email: {to_email}
-        Password: {password}
-        Referral Code: {referral_code}
+Login Credentials:
+Email: {to_email}
+Password: {password}
+Referral Code: {referral_code}
 
-        Access the agent portal: {portal_url}
+Access the agent portal: {portal_url}
 
-        Next steps:
-        - Log in using the credentials above
-        - Complete the training courses
-        - Start referring customers and earning commissions
-        - Share your referral code to build your network
+Next steps:
+- Log in using the credentials above
+- Complete the training courses
+- Start referring customers and earning commissions
+- Share your referral code to build your network
 
-        Welcome to the Africa Cyber Trust agent network!
-        """
+Welcome to the Africa Cyber Trust agent network!
+"""
 
-        # Try SendGrid first (works on Render)
-        if SENDGRID_AVAILABLE and EmailService.SENDGRID_API_KEY:
-            try:
-                print(f"[EMAIL] Sending agent credentials via SendGrid to {to_email}")
-                message = Mail(
-                    from_email=Email(EmailService.SENDER_EMAIL, "Africa Cyber Trust"),
-                    to_emails=To(to_email),
-                    subject=subject,
-                    plain_text_content=Content("text/plain", text_content),
-                    html_content=Content("text/html", html_content)
-                )
-                sg = SendGridAPIClient(EmailService.SENDGRID_API_KEY)
-                response = sg.send(message)
-                print(f"[EMAIL] SendGrid success! Status: {response.status_code}")
-                return True
-            except Exception as e:
-                print(f"[EMAIL] SendGrid failed: {str(e)}")
-                print(f"[EMAIL] Falling back to SMTP...")
-
-        # Fallback to SMTP (works locally)
-        try:
-            print(f"[EMAIL] Attempting to send via SMTP to {to_email}")
-            message = MIMEMultipart("alternative")
-            message["Subject"] = subject
-            message["From"] = f"Africa Cyber Trust <{EmailService.SENDER_EMAIL}>"
-            message["To"] = to_email
-
-            part1 = MIMEText(text_content, "plain")
-            part2 = MIMEText(html_content, "html")
+            # Attach both HTML and plain text versions
+            part1 = MIMEText(text, "plain")
+            part2 = MIMEText(html, "html")
             message.attach(part1)
             message.attach(part2)
 
-            with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT, timeout=10) as server:
+            # Send via SMTP (same as payment receipts)
+            with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT) as server:
                 server.starttls()
                 server.login(EmailService.SENDER_EMAIL, EmailService.SENDER_PASSWORD)
                 server.send_message(message)
 
-            print(f"[EMAIL] SMTP success!")
+            print(f"[EMAIL] Agent credentials sent to {to_email}")
             return True
 
         except Exception as e:
-            print(f"[EMAIL] Failed to send agent credentials to {to_email}: {str(e)}")
-            print(f"        Error type: {type(e).__name__}")
+            print(f"[EMAIL] Failed to send agent credentials: {str(e)}")
+            print(f"        Error details: {type(e).__name__}")
             import traceback
             print(f"        Traceback: {traceback.format_exc()}")
             return False
@@ -709,10 +691,16 @@ https://www.africybertrust.com/dashboard/assets
         agent_name: str,
         reason: str
     ) -> bool:
-        """Send agent application rejection email."""
-        subject = "Africa Cyber Trust Agent Application Update"
+        """Send agent application rejection email (same as payment receipts)."""
+        try:
+            # Create message
+            message = MIMEMultipart("alternative")
+            message["Subject"] = "Africa Cyber Trust Agent Application Update"
+            message["From"] = f"Africa Cyber Trust <{EmailService.SENDER_EMAIL}>"
+            message["To"] = to_email
 
-        html_content = f"""
+            # Email HTML content
+            html = f"""
         <!DOCTYPE html>
         <html>
         <head>
@@ -750,67 +738,45 @@ https://www.africybertrust.com/dashboard/assets
         </html>
         """
 
-        text_content = f"""
-        Application Update - Africa Cyber Trust
+            # Plain text fallback
+            text = f"""
+Application Update - Africa Cyber Trust
 
-        Dear {agent_name},
+Dear {agent_name},
 
-        Thank you for your interest in becoming an Africa Cyber Trust agent.
+Thank you for your interest in becoming an Africa Cyber Trust agent.
 
-        After careful review of your application, we regret to inform you that we are unable to approve it at this time.
+After careful review of your application, we regret to inform you that we are unable to approve it at this time.
 
-        Reason:
-        {reason}
+Reason:
+{reason}
 
-        You may reapply after addressing the concerns mentioned above.
+You may reapply after addressing the concerns mentioned above.
 
-        If you have any questions or need clarification, please contact us at africybersolution@gmail.com.
+If you have any questions or need clarification, please contact us at africybersolution@gmail.com.
 
-        Best regards,
-        Africa Cyber Trust Team
-        """
+Best regards,
+Africa Cyber Trust Team
+"""
 
-        # Try SendGrid first
-        if SENDGRID_AVAILABLE and EmailService.SENDGRID_API_KEY:
-            try:
-                message = Mail(
-                    from_email=Email(EmailService.SENDER_EMAIL, "Africa Cyber Trust"),
-                    to_emails=To(to_email),
-                    subject=subject,
-                    plain_text_content=Content("text/plain", text_content),
-                    html_content=Content("text/html", html_content)
-                )
-                sg = SendGridAPIClient(EmailService.SENDGRID_API_KEY)
-                response = sg.send(message)
-                print(f"[EMAIL] Agent rejection sent via SendGrid to {to_email}")
-                return True
-            except Exception as e:
-                print(f"[EMAIL] SendGrid failed: {str(e)}")
-
-        # Fallback to SMTP (works locally)
-        try:
-            print(f"[EMAIL] Attempting to send via SMTP to {to_email}")
-            message = MIMEMultipart("alternative")
-            message["Subject"] = subject
-            message["From"] = f"Africa Cyber Trust <{EmailService.SENDER_EMAIL}>"
-            message["To"] = to_email
-
-            part1 = MIMEText(text_content, "plain")
-            part2 = MIMEText(html_content, "html")
+            # Attach both HTML and plain text versions
+            part1 = MIMEText(text, "plain")
+            part2 = MIMEText(html, "html")
             message.attach(part1)
             message.attach(part2)
 
-            with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT, timeout=10) as server:
+            # Send via SMTP (same as payment receipts)
+            with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT) as server:
                 server.starttls()
                 server.login(EmailService.SENDER_EMAIL, EmailService.SENDER_PASSWORD)
                 server.send_message(message)
 
-            print(f"[EMAIL] SMTP success!")
+            print(f"[EMAIL] Agent rejection sent to {to_email}")
             return True
 
         except Exception as e:
-            print(f"[EMAIL] Failed to send agent rejection to {to_email}: {str(e)}")
-            print(f"        Error type: {type(e).__name__}")
+            print(f"[EMAIL] Failed to send agent rejection: {str(e)}")
+            print(f"        Error details: {type(e).__name__}")
             import traceback
             print(f"        Traceback: {traceback.format_exc()}")
             return False
