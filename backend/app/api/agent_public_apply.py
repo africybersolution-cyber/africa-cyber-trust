@@ -65,6 +65,7 @@ async def apply_as_agent_public(
             id=uuid.uuid4(),
             email=request.email,
             name=request.name,
+            phone_number=request.phone_number,
             hashed_password=pwd_context.hash(temp_password),
             role=UserRole.NORMAL_USER,
             is_active=False,  # INACTIVE until approved

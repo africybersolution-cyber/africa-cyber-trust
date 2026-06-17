@@ -90,8 +90,26 @@ async def startup_event():
                     print("[OK] Password reset columns added")
                 else:
                     print("[OK] Password reset columns already exist")
+
+                # Check if phone_number column exists
+                result = conn.execute(text("""
+                    SELECT column_name
+                    FROM information_schema.columns
+                    WHERE table_name='users' AND column_name='phone_number'
+                """))
+
+                if not result.fetchone():
+                    print("[DB] Adding phone_number column to users table...")
+                    conn.execute(text("""
+                        ALTER TABLE users
+                        ADD COLUMN phone_number VARCHAR(20)
+                    """))
+                    conn.commit()
+                    print("[OK] phone_number column added")
+                else:
+                    print("[OK] phone_number column already exists")
         except Exception as e:
-            print(f"[WARNING] Could not add password reset columns: {e}")
+            print(f"[WARNING] Could not add columns: {e}")
 
     # Start background scheduler for automated tasks
     from app.services.scheduler_service import scheduler_service

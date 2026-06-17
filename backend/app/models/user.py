@@ -30,6 +30,7 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     name = Column(String(255), nullable=False)
+    phone_number = Column(String(20), nullable=True)  # For WhatsApp notifications
     hashed_password = Column(String(255), nullable=False)
     role = Column(Enum(UserRole), nullable=False, default=UserRole.NORMAL_USER, index=True)
     email_verified = Column(Boolean, default=False)
