@@ -66,7 +66,7 @@ async def log_admin_action(
     request: Request,
     target_type: Optional[str] = None,
     target_id: Optional[str] = None,
-    metadata: Optional[dict] = None
+    context_data: Optional[dict] = None
 ) -> AdminAuditLog:
     """
     Log an admin action to the audit trail.
@@ -103,7 +103,7 @@ async def log_admin_action(
         action=action,
         target_type=target_type,
         target_id=target_id,
-        metadata=metadata,
+        context_data=context_data,
         ip_address=ip_address,
         created_at=datetime.utcnow()
     )

@@ -22,7 +22,7 @@ class AdminAuditLog(Base):
     action = Column(String(60), nullable=False, index=True)  # create_user, grant_plan, impersonate, etc
     target_type = Column(String(40), nullable=True)  # user, asset, payment, agent, etc
     target_id = Column(Text, nullable=True)  # UUID or identifier of the target
-    metadata = Column(JSONB, nullable=True)  # Additional context (plan_name, duration, etc)
+    context_data = Column(JSONB, nullable=True)  # Additional context (plan_name, duration, etc)
     ip_address = Column(INET, nullable=True)  # IP address of the admin
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, index=True)
 
@@ -40,7 +40,7 @@ class AdminAuditLog(Base):
             "action": self.action,
             "target_type": self.target_type,
             "target_id": self.target_id,
-            "metadata": self.metadata,
+            "context_data": self.context_data,
             "ip_address": str(self.ip_address) if self.ip_address else None,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }

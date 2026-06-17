@@ -49,7 +49,7 @@ def upgrade(engine):
                 action VARCHAR(60) NOT NULL,
                 target_type VARCHAR(40),
                 target_id TEXT,
-                metadata JSONB,
+                context_data JSONB,
                 ip_address INET,
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
             );
