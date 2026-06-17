@@ -290,7 +290,7 @@ async def update_user_status(
     }
 
 
-@router.get("/")
+@router.get("")
 async def list_users(
     email: Optional[str] = None,
     role: Optional[str] = None,

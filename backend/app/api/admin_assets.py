@@ -35,7 +35,7 @@ class ManualScanRequest(BaseModel):
 
 # ===== ENDPOINTS =====
 
-@router.get("/")
+@router.get("")
 async def list_all_assets(
     company_id: Optional[str] = None,
     user_email: Optional[str] = None,

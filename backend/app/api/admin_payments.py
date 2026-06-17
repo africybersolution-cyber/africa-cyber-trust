@@ -29,7 +29,7 @@ class RefundRequest(BaseModel):
 
 # ===== ENDPOINTS =====
 
-@router.get("/")
+@router.get("")
 async def list_all_payments(
     user_email: Optional[str] = None,
     status: Optional[str] = None,

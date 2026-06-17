@@ -16,7 +16,7 @@ from app.models.admin_audit import AdminAuditLog
 router = APIRouter(prefix="/api/admin/audit-logs", tags=["Admin - Audit"])
 
 
-@router.get("/")
+@router.get("")
 async def list_audit_logs(
     action: Optional[str] = None,
     actor_email: Optional[str] = None,

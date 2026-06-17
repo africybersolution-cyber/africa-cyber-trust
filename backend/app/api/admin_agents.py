@@ -166,7 +166,7 @@ async def get_agent_leaderboard(
 
 # ===== ENDPOINTS =====
 
-@router.get("/")
+@router.get("")
 async def list_agents(
     status: Optional[str] = None,
     country: Optional[str] = None,
