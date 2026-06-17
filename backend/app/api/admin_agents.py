@@ -41,6 +41,128 @@ class SetCountryManagerRequest(BaseModel):
     country: str
 
 
+# ===== LEADERBOARD =====
+
+@router.get("/leaderboard")
+async def get_agent_leaderboard(
+    period: str = Query("all_time", regex="^(all_time|this_month|this_week)$"),
+    metric: str = Query("sales", regex="^(sales|commissions)$"),
+    limit: int = Query(20, ge=1, le=100),
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Get agent leaderboard rankings.
+
+    Periods: all_time, this_month, this_week
+    Metrics: sales, commissions
+    """
+    from datetime import datetime, timedelta
+
+    # Base query - only approved agents
+    query = db.query(Agent).filter(Agent.status == "approved")
+
+    # Apply period filter
+    if period == "this_month":
+        month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        # Use monthly_sales for this month
+        if metric == "sales":
+            query = query.order_by(Agent.monthly_sales.desc())
+        else:
+            # Get commissions this month
+            query = query.join(Commission, Commission.agent_id == Agent.id).filter(
+                Commission.created_at >= month_start
+            ).group_by(Agent.id).order_by(
+                func.sum(Commission.commission_amount).desc()
+            )
+    elif period == "this_week":
+        week_start = datetime.utcnow() - timedelta(days=datetime.utcnow().weekday())
+        week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        if metric == "sales":
+            # No weekly sales tracking - use monthly as proxy
+            query = query.order_by(Agent.monthly_sales.desc())
+        else:
+            # Get commissions this week
+            query = query.join(Commission, Commission.agent_id == Agent.id).filter(
+                Commission.created_at >= week_start
+            ).group_by(Agent.id).order_by(
+                func.sum(Commission.commission_amount).desc()
+            )
+    else:  # all_time
+        if metric == "sales":
+            query = query.order_by(Agent.total_sales.desc())
+        else:
+            query = query.order_by(Agent.total_commissions.desc())
+
+    # Get top agents
+    agents = query.limit(limit).all()
+
+    # Build leaderboard
+    leaderboard = []
+    for idx, agent in enumerate(agents, start=1):
+        user = db.query(User).filter(User.id == agent.user_id).first()
+        stats = AgentService.get_agent_stats(db, agent.id)
+
+        # Calculate metric value based on period
+        if period == "this_month":
+            if metric == "sales":
+                metric_value = float(agent.monthly_sales or 0)
+            else:
+                month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                month_commissions = db.query(func.sum(Commission.commission_amount)).filter(
+                    Commission.agent_id == agent.id,
+                    Commission.created_at >= month_start
+                ).scalar() or 0
+                metric_value = float(month_commissions)
+        elif period == "this_week":
+            week_start = datetime.utcnow() - timedelta(days=datetime.utcnow().weekday())
+            week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+
+            if metric == "sales":
+                # Approximate weekly sales (monthly / 4)
+                metric_value = float(agent.monthly_sales or 0) / 4
+            else:
+                week_commissions = db.query(func.sum(Commission.commission_amount)).filter(
+                    Commission.agent_id == agent.id,
+                    Commission.created_at >= week_start
+                ).scalar() or 0
+                metric_value = float(week_commissions)
+        else:  # all_time
+            if metric == "sales":
+                metric_value = float(agent.total_sales or 0)
+            else:
+                metric_value = float(agent.total_commissions or 0)
+
+        leaderboard.append({
+            "rank": idx,
+            "agent": {
+                "id": str(agent.id),
+                "referral_code": agent.referral_code,
+                "user": {
+                    "id": str(user.id),
+                    "name": user.name,
+                    "email": user.email
+                } if user else None,
+                "country": agent.country,
+                "tier": agent.tier,
+                "is_country_manager": agent.is_country_manager
+            },
+            "metric_value": metric_value,
+            "total_sales": float(agent.total_sales or 0),
+            "total_commissions": float(agent.total_commissions or 0),
+            "total_customers": stats.get("total_customers", 0),
+            "sub_agents": stats.get("sub_agents", 0)
+        })
+
+    return {
+        "period": period,
+        "metric": metric,
+        "total": len(leaderboard),
+        "leaderboard": leaderboard
+    }
+
+
 # ===== ENDPOINTS =====
 
 @router.get("/")
