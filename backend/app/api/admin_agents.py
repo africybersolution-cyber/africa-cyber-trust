@@ -335,7 +335,7 @@ async def approve_agent(
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     user.is_active = True
-    user.password_hash = pwd_context.hash(new_password)
+    user.hashed_password = pwd_context.hash(new_password)  # FIXED: correct field name
 
     # Approve agent
     agent.status = "approved"

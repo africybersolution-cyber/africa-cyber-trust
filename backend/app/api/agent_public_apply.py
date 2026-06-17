@@ -76,6 +76,9 @@ async def apply_as_agent_public(
         db.flush()  # Get the user ID
         user = new_user
     else:
+        # Update existing user's phone if provided
+        if request.phone_number and not existing_user.phone_number:
+            existing_user.phone_number = request.phone_number
         user = existing_user
 
     # Generate referral code (8 chars, random)
