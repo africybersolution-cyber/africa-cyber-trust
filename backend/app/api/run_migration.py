@@ -60,7 +60,7 @@ async def run_migration_008(db: Session = Depends(get_db)):
                 started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
                 completed_at TIMESTAMP WITH TIME ZONE,
                 certificate_url VARCHAR(500),
-                metadata JSONB,
+                extra_data JSONB,
                 UNIQUE(agent_id, course_id)
             );
         """))

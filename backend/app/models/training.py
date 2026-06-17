@@ -56,4 +56,4 @@ class CourseCompletion(Base):
     certificate_url = Column(String(500), nullable=True)
 
     # For tracking video watch time or quiz attempts
-    metadata = Column(JSONB, nullable=True)
+    extra_data = Column(JSONB, nullable=True)
