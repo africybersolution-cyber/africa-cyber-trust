@@ -386,6 +386,13 @@ export default function AdminDashboard() {
               </div>
               <p className="text-sm text-gray-500 mt-1">Process commission payouts</p>
             </a>
+            <a href="/dashboard/fraud" className="bg-white hover:bg-red-50 border border-red-200 rounded-lg p-4 transition-colors">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-gray-900">Fraud Detection</h3>
+                <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">New</span>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">Scan for suspicious activity</p>
+            </a>
           </div>
         </div>
       </div>
