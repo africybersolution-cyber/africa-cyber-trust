@@ -26,6 +26,7 @@ app.add_middleware(
         "http://localhost:3001",
         "http://localhost:3002",  # Admin dashboard (old)
         "http://localhost:3003",  # Admin dashboard (new - cache bypass)
+        "http://localhost:3004",  # Agent portal
         "https://africa-cyber-trust.vercel.app",
     ] + settings.cors_origins,  # Also include any from environment
     allow_credentials=True,
