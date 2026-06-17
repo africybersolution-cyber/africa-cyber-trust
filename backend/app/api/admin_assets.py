@@ -144,7 +144,7 @@ async def bypass_verification(
         request=req,
         target_type="asset",
         target_id=str(asset.id),
-        metadata={
+        context_data={
             "asset_type": asset.asset_type,
             "asset_value": asset.value,
             "was_verified": was_verified,
@@ -207,7 +207,7 @@ async def trigger_manual_scan(
         request=req,
         target_type="asset",
         target_id=str(asset.id),
-        metadata={
+        context_data={
             "scan_id": str(scan.id),
             "scan_type": request.scan_type,
             "reason": request.reason

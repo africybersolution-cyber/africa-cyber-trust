@@ -245,7 +245,7 @@ async def issue_refund(
         request=req,
         target_type="payment",
         target_id=str(payment.id),
-        metadata={
+        context_data={
             "refund_amount": float(refund_amount),
             "original_amount": float(payment.amount),
             "reason": request.reason,

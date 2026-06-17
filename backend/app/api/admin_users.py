@@ -153,7 +153,7 @@ async def create_user(
         request=req,
         target_type="user",
         target_id=str(user.id),
-        metadata={
+        context_data={
             "email": user.email,
             "role": request.role,
             "account_type": request.account_type,
@@ -222,7 +222,7 @@ async def grant_plan(
         request=req,
         target_type="user",
         target_id=str(user.id),
-        metadata={
+        context_data={
             "plan_name": request.plan_name,
             "duration_days": request.duration_days,
             "reason": request.reason,
@@ -276,7 +276,7 @@ async def update_user_status(
         request=req,
         target_type="user",
         target_id=str(user.id),
-        metadata={
+        context_data={
             "old_status": old_status,
             "new_status": request.is_active,
             "reason": request.reason
