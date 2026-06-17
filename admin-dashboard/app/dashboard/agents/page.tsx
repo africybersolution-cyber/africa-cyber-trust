@@ -100,12 +100,20 @@ export default function AgentsPage() {
                 Approve agents, manage payouts, assign country managers
               </p>
             </div>
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"
-            >
-              ← Back to Dashboard
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => router.push("/dashboard/agents/leaderboard")}
+                className="px-4 py-2 text-sm bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-lg font-medium"
+              >
+                🏆 Leaderboard
+              </button>
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
           </div>
         </div>
       </div>
