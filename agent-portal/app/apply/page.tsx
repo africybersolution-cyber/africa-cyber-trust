@@ -119,6 +119,8 @@ export default function ApplyAgentPage() {
       );
 
       if (response.ok) {
+        alert("Account created successfully! Now complete your agent application.");
+
         // Auto-login after signup
         const loginResponse = await fetch(
           "https://africa-cyber-trust.onrender.com/api/auth/login",

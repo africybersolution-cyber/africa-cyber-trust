@@ -36,11 +36,20 @@ export default function LoginPage() {
         // Redirect to dashboard
         router.push("/dashboard");
       } else {
-        const error = await response.json();
-        setError(error.detail || "Login failed");
+        const errorData = await response.json();
+        // Handle both string and array/object error formats
+        let errorMsg = "Login failed";
+        if (typeof errorData.detail === 'string') {
+          errorMsg = errorData.detail;
+        } else if (Array.isArray(errorData.detail)) {
+          errorMsg = errorData.detail[0]?.msg || "Login failed";
+        } else if (errorData.detail?.msg) {
+          errorMsg = errorData.detail.msg;
+        }
+        setError(errorMsg);
       }
-    } catch (error) {
-      setError("Network error. Please try again.");
+    } catch (error: any) {
+      setError(error?.message || "Network error. Please try again.");
     } finally {
       setLoading(false);
     }

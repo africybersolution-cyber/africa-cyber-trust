@@ -33,12 +33,29 @@ export default function DashboardPage() {
         setAgent(data.agent);
         setStats(data.stats);
       } else {
-        // Not an agent yet
-        alert("You are not approved as an agent yet. Please wait for admin approval.");
+        // Not an agent yet - get error details
+        let errorMessage = "You are not approved as an agent yet. Please wait for admin approval.";
+
+        try {
+          const errorData = await response.json();
+          if (errorData.detail) {
+            // Handle both string and object error formats
+            errorMessage = typeof errorData.detail === 'string'
+              ? errorData.detail
+              : JSON.stringify(errorData.detail);
+          }
+        } catch (e) {
+          // If parsing fails, use default message
+        }
+
+        alert(errorMessage);
         router.push("/");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to load dashboard:", error);
+      const errorMsg = error?.message || "Failed to load dashboard. Please try again.";
+      alert(errorMsg);
+      router.push("/");
     } finally {
       setLoading(false);
     }
