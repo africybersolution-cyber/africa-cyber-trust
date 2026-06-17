@@ -38,6 +38,7 @@ interface LiveMetrics {
 export default function AdminDashboard() {
   const [metrics, setMetrics] = useState<LiveMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
@@ -62,27 +63,48 @@ export default function AdminDashboard() {
   }, [router]);
 
   const loadMetrics = async (token: string) => {
+    setError(null);
     try {
-      const response = await fetch("https://africa-cyber-trust.onrender.com/api/admin/analytics/live-metrics", {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      });
+      // Add cache-busting timestamp
+      const cacheBust = `?_t=${Date.now()}`;
+      const response = await fetch(
+        `https://africa-cyber-trust.onrender.com/api/admin/analytics/live-metrics${cacheBust}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+          cache: "no-store", // Force no cache
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
         setMetrics(data);
+        setError(null);
       } else if (response.status === 401) {
         // Token expired
         localStorage.removeItem("admin_token");
         localStorage.removeItem("admin_user");
         router.push("/");
       } else {
-        console.error("API error:", response.status, await response.text());
+        const errorText = await response.text();
+        const errorMsg = `API Error ${response.status}: ${errorText}`;
+        console.error(errorMsg);
+        setError(errorMsg);
+        // Set empty metrics
+        setMetrics({
+          users: { total: 0, active: 0, trial: 0, recent_signups_7d: 0 },
+          revenue: { total_all_time: 0, this_month: 0, mrr: 0, currency: "USD" },
+          subscriptions: { active: 0, starter: 0, professional: 0, enterprise: 0 },
+          platform: { total_assets: 0, total_scans: 0, total_findings: 0, critical_findings: 0 },
+          payments: { mobile_money: 0, crypto: 0, total: 0 }
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
+      const errorMsg = error?.message || "Network error - check CORS/connection";
       console.error("Failed to load metrics:", error);
-      // Set empty metrics so dashboard still shows
+      setError(`Connection Failed: ${errorMsg}. Clear browser cache or use Incognito mode.`);
+      // Set empty metrics
       setMetrics({
         users: { total: 0, active: 0, trial: 0, recent_signups_7d: 0 },
         revenue: { total_all_time: 0, this_month: 0, mrr: 0, currency: "USD" },
@@ -152,6 +174,59 @@ export default function AdminDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Error Banner */}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-red-900 mb-1">
+                  Failed to Load Metrics
+                </h3>
+                <p className="text-sm text-red-700 mb-3">{error}</p>
+                <div className="text-xs text-red-600 space-y-1">
+                  <p><strong>Fix:</strong> Clear browser cache (Ctrl+Shift+Delete) and refresh, or use Incognito mode (Ctrl+Shift+N)</p>
+                  <p><strong>Alternative:</strong> Agent pages work fine - click "Manage Agents" below</p>
+                </div>
+              </div>
+              <button
+                onClick={() => loadMetrics(localStorage.getItem("admin_token") || "")}
+                className="px-3 py-1 text-xs bg-red-100 hover:bg-red-200 text-red-800 rounded"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Actions (if error) */}
+        {error && (
+          <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Can't load metrics? Agent management works fine!
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              The agent pages are new routes with no CORS cache issues. Start here:
+            </p>
+            <div className="flex gap-3">
+              <a
+                href="/dashboard/agents"
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+              >
+                → Manage Agents
+              </a>
+              <a
+                href="/dashboard/agents/payouts"
+                className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+              >
+                → Process Payouts
+              </a>
+            </div>
+          </div>
+        )}
+
         {/* Revenue Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatCard
