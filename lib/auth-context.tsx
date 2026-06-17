@@ -23,7 +23,7 @@ interface AuthContextType {
   company: Company | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string, account_type?: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, account_type?: string, referral_code?: string) => Promise<void>;
   registerBusiness: (data: BusinessRegistrationData) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -109,13 +109,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('💾 Saved to localStorage');
   };
 
-  const signup = async (email: string, password: string, name: string, account_type: string = 'personal') => {
+  const signup = async (email: string, password: string, name: string, account_type: string = 'personal', referral_code?: string) => {
     const response = await fetch(`${API_URL}/api/auth/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password, name, account_type }),
+      body: JSON.stringify({ email, password, name, account_type, referral_code }),
     });
 
     if (!response.ok) {

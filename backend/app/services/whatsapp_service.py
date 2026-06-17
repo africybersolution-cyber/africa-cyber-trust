@@ -167,6 +167,38 @@ Login to complete: [Dashboard Link]"""
 
         return self.send_message(to_number, message)
 
+    def send_agent_rejected(self, to_number: str, agent_name: str, reason: str) -> dict:
+        """Send agent application rejection notification."""
+        message = f"""❌ *Application Update*
+
+Hi {agent_name},
+
+Unfortunately, your agent application has been rejected.
+
+*Reason:* {reason}
+
+You may reapply after addressing the concerns mentioned above.
+
+For questions, contact: africybersolution@gmail.com"""
+
+        return self.send_message(to_number, message)
+
+    def send_payout_rejected(self, to_number: str, agent_name: str, amount: float, reason: str) -> dict:
+        """Send payout rejection notification."""
+        message = f"""⚠️ *Payout Request Rejected*
+
+Hi {agent_name},
+
+Your payout request of *${amount:.2f}* has been rejected.
+
+*Reason:* {reason}
+
+Please contact support if you have questions.
+
+*Support:* africybersolution@gmail.com"""
+
+        return self.send_message(to_number, message)
+
 
 # Singleton instance
 whatsapp_service = WhatsAppService()

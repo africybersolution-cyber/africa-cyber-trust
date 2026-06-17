@@ -19,6 +19,8 @@ function SignupContent() {
 
   // Get plan from URL or default to 'starter'
   const plan = searchParams.get('plan') || 'starter';
+  // Get referral code from URL (?ref=AGENT123)
+  const referralCode = searchParams.get('ref') || '';
   const planInfo = {
     'starter': { name: 'Starter', price: '$15/month', trial: '14 days', color: '#0047AB' },
     'professional': { name: 'Professional', price: '$79/month', trial: '14 days', color: '#DAA520' }
@@ -42,7 +44,7 @@ function SignupContent() {
     setLoading(true);
 
     try {
-      await signup(email, password, name, plan);
+      await signup(email, password, name, plan, referralCode);
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Signup failed. Please try again.');

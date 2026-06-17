@@ -694,6 +694,108 @@ https://www.africybertrust.com/dashboard/assets
             print(f"        Traceback: {traceback.format_exc()}")
             return False
 
+    @staticmethod
+    def send_agent_rejection(
+        to_email: str,
+        agent_name: str,
+        reason: str
+    ) -> bool:
+        """Send agent application rejection email."""
+        subject = "Africa Cyber Trust Agent Application Update"
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; background-color: #f4f4f7; margin: 0; padding: 0; }}
+                .container {{ max-width: 600px; margin: 40px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }}
+                .header {{ background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%); color: white; padding: 40px 20px; text-align: center; }}
+                .content {{ padding: 40px 30px; }}
+                .reason-box {{ background-color: #FEF2F2; border-left: 4px solid #DC2626; padding: 20px; margin: 20px 0; border-radius: 4px; }}
+                .footer {{ background-color: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 12px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1 style="margin: 0; font-size: 28px;">Application Update</h1>
+                </div>
+                <div class="content">
+                    <p>Dear {agent_name},</p>
+                    <p>Thank you for your interest in becoming an Africa Cyber Trust agent.</p>
+                    <p>After careful review of your application, we regret to inform you that we are unable to approve it at this time.</p>
+                    <div class="reason-box">
+                        <strong>Reason:</strong><br>
+                        {reason}
+                    </div>
+                    <p><strong>You may reapply after addressing the concerns mentioned above.</strong></p>
+                    <p>If you have any questions or need clarification, please contact us at <a href="mailto:africybersolution@gmail.com">africybersolution@gmail.com</a>.</p>
+                    <p>Best regards,<br><strong>Africa Cyber Trust Team</strong></p>
+                </div>
+                <div class="footer">
+                    <p>© 2026 Africa Cyber Trust Infrastructure</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_content = f"""
+        Application Update - Africa Cyber Trust
+
+        Dear {agent_name},
+
+        Thank you for your interest in becoming an Africa Cyber Trust agent.
+
+        After careful review of your application, we regret to inform you that we are unable to approve it at this time.
+
+        Reason:
+        {reason}
+
+        You may reapply after addressing the concerns mentioned above.
+
+        If you have any questions or need clarification, please contact us at africybersolution@gmail.com.
+
+        Best regards,
+        Africa Cyber Trust Team
+        """
+
+        # Try SendGrid first
+        if SENDGRID_AVAILABLE and EmailService.SENDGRID_API_KEY:
+            try:
+                message = Mail(
+                    from_email=Email(EmailService.SENDER_EMAIL, "Africa Cyber Trust"),
+                    to_emails=To(to_email),
+                    subject=subject,
+                    plain_text_content=Content("text/plain", text_content),
+                    html_content=Content("text/html", html_content)
+                )
+                sg = SendGridAPIClient(EmailService.SENDGRID_API_KEY)
+                response = sg.send(message)
+                print(f"[EMAIL] Agent rejection sent via SendGrid to {to_email}")
+                return True
+            except Exception as e:
+                print(f"[EMAIL] SendGrid failed: {str(e)}")
+
+        # Fallback to SMTP
+        try:
+            message = MIMEMultipart("alternative")
+            message["Subject"] = subject
+            message["From"] = f"Africa Cyber Trust <{EmailService.SENDER_EMAIL}>"
+            message["To"] = to_email
+            message.attach(MIMEText(text_content, "plain"))
+            message.attach(MIMEText(html_content, "html"))
+            with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT, timeout=10) as server:
+                server.starttls()
+                server.login(EmailService.SENDER_EMAIL, EmailService.SENDER_PASSWORD)
+                server.send_message(message)
+            print(f"[EMAIL] Agent rejection sent via SMTP to {to_email}")
+            return True
+        except Exception as e:
+            print(f"[EMAIL] Failed to send agent rejection to {to_email}: {str(e)}")
+            return False
+
 
 # Create singleton instance
 email_service = EmailService()

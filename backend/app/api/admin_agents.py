@@ -418,6 +418,30 @@ async def reject_agent(
 
     db.commit()
 
+    # Send rejection notifications
+    user = db.query(User).filter(User.id == agent.user_id).first()
+    if user:
+        # Send rejection email
+        try:
+            EmailService.send_agent_rejection(
+                to_email=user.email,
+                agent_name=user.name,
+                reason=request.reason
+            )
+        except Exception as e:
+            print(f"[WARNING] Failed to send rejection email: {e}")
+
+        # Send WhatsApp notification
+        if user.phone_number:
+            try:
+                whatsapp_service.send_agent_rejected(
+                    to_number=user.phone_number,
+                    agent_name=user.name,
+                    reason=request.reason
+                )
+            except Exception as e:
+                print(f"[WARNING] Failed to send rejection WhatsApp: {e}")
+
     # Audit log
     await log_admin_action(
         action="reject_agent",
@@ -502,15 +526,20 @@ async def process_payout(
         payout.processed_by = admin.id
         payout.transaction_reference = request.transaction_reference
 
-        # Mark commissions as paid
-        commissions = db.query(Commission).filter(
+        # Mark commissions as paid (accumulate until we match payout amount)
+        pending_commissions = db.query(Commission).filter(
             Commission.agent_id == payout.agent_id,
             Commission.status == "pending"
-        ).limit(int(payout.amount / 10)).all()  # Rough estimate
+        ).order_by(Commission.created_at.asc()).all()
 
-        for commission in commissions:
+        remaining_amount = float(payout.amount)
+        for commission in pending_commissions:
+            if remaining_amount <= 0:
+                break
+
             commission.status = "paid"
             commission.paid_at = datetime.utcnow()
+            remaining_amount -= float(commission.commission_amount)
 
         # Send WhatsApp notification for approved payout
         agent = db.query(Agent).filter(Agent.id == payout.agent_id).first()
@@ -532,6 +561,21 @@ async def process_payout(
         payout.processed_at = datetime.utcnow()
         payout.processed_by = admin.id
         payout.rejection_reason = request.rejection_reason
+
+        # Send WhatsApp notification for rejected payout
+        agent = db.query(Agent).filter(Agent.id == payout.agent_id).first()
+        if agent:
+            user = db.query(User).filter(User.id == agent.user_id).first()
+            if user and user.phone_number:
+                try:
+                    whatsapp_service.send_payout_rejected(
+                        to_number=user.phone_number,
+                        agent_name=user.name,
+                        amount=float(payout.amount),
+                        reason=request.rejection_reason or "No reason provided"
+                    )
+                except Exception as e:
+                    print(f"[WARNING] WhatsApp payout rejection notification failed: {e}")
 
     else:
         raise HTTPException(status_code=400, detail="Action must be 'approve' or 'reject'")

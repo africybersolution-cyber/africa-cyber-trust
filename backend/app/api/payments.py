@@ -301,6 +301,14 @@ async def initiate_crypto_payment(
         plan_name=request.plan_name
     )
 
+    # Get user's country from their company if available
+    user_country = None
+    if current_user.company_id:
+        from app.models.company import Company
+        company = db.query(Company).filter(Company.id == current_user.company_id).first()
+        if company and company.country:
+            user_country = company.country
+
     # Create payment record in database
     payment = Payment(
         user_id=current_user.id,
@@ -308,7 +316,7 @@ async def initiate_crypto_payment(
         currency="USD",
         payment_method="crypto",
         provider=f"Polygon_{request.token_symbol}",
-        country=None,  # Crypto payments don't have a country
+        country=user_country,  # Get from company if available (for country-manager commission)
         status="pending"
     )
 
