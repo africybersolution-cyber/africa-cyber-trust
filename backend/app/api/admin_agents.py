@@ -480,6 +480,21 @@ async def process_payout(
             commission.status = "paid"
             commission.paid_at = datetime.utcnow()
 
+        # Send WhatsApp notification for approved payout
+        agent = db.query(Agent).filter(Agent.id == payout.agent_id).first()
+        if agent:
+            user = db.query(User).filter(User.id == agent.user_id).first()
+            if user and user.phone_number:
+                try:
+                    whatsapp_service.send_payout_processed(
+                        to_number=user.phone_number,
+                        agent_name=user.name,
+                        amount=float(payout.amount),
+                        method="Mobile Money" if payout.method == "mobile_money" else "Crypto"
+                    )
+                except Exception as e:
+                    print(f"[WARNING] WhatsApp payout notification failed: {e}")
+
     elif request.action == "reject":
         payout.status = "rejected"
         payout.processed_at = datetime.utcnow()

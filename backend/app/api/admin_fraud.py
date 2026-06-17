@@ -10,6 +10,7 @@ from app.core.admin_deps import require_admin, require_super_admin, log_admin_ac
 from app.models.user import User
 from app.models.agent import Agent
 from app.services.fraud_detection_service import FraudDetectionService
+from app.services.whatsapp_service import whatsapp_service
 
 
 router = APIRouter(prefix="/api/admin/fraud", tags=["Admin - Fraud Detection"])
@@ -134,6 +135,18 @@ async def suspend_fraudulent_agent(
     agent.rejection_reason = f"Suspended for fraud: {request.reason}"
 
     db.commit()
+
+    # Send WhatsApp fraud alert
+    user = db.query(User).filter(User.id == agent.user_id).first()
+    if user and user.phone_number:
+        try:
+            whatsapp_service.send_fraud_alert(
+                to_number=user.phone_number,
+                agent_name=user.name,
+                reason=request.reason
+            )
+        except Exception as e:
+            print(f"[WARNING] WhatsApp fraud alert failed: {e}")
 
     # Audit log
     await log_admin_action(
