@@ -33,15 +33,6 @@ export default function DashboardLayout({
       exact: true,
     },
     {
-      label: "Admin",
-      icon: "⚙️",
-      children: [
-        { label: "Manage Users", path: "/dashboard/users" },
-        { label: "Analytics", path: "/dashboard/analytics" },
-        { label: "Audit Logs", path: "/dashboard/audit" },
-      ],
-    },
-    {
       label: "Agent Management",
       icon: "👥",
       children: [
