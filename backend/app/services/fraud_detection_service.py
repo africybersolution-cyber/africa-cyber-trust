@@ -69,9 +69,9 @@ class FraudDetectionService:
                 })
 
         # Check 3: Self-referral (user referred by their own agent code)
-        if user.agent_referred_by:
+        if user.referred_by_code:
             agent = db.query(Agent).filter(
-                Agent.referral_code == user.agent_referred_by
+                Agent.referral_code == user.referred_by_code
             ).first()
 
             if agent and agent.user_id == user.id:
@@ -100,7 +100,7 @@ class FraudDetectionService:
 
         # Check 1: Inactive referrals (customers who never paid)
         referred_users = db.query(User).filter(
-            User.agent_referred_by == agent.referral_code
+            User.referred_by_code == agent.referral_code
         ).all()
 
         if len(referred_users) > 0:
@@ -127,7 +127,7 @@ class FraudDetectionService:
         # Check 2: Rapid signups (multiple referrals in short time)
         one_hour_ago = datetime.utcnow() - timedelta(hours=1)
         recent_referrals = db.query(User).filter(
-            User.agent_referred_by == agent.referral_code,
+            User.referred_by_code == agent.referral_code,
             User.created_at >= one_hour_ago
         ).all()
 
@@ -145,7 +145,7 @@ class FraudDetectionService:
             User.phone_number,
             func.count(User.id).label("count")
         ).filter(
-            User.agent_referred_by == agent.referral_code,
+            User.referred_by_code == agent.referral_code,
             User.phone_number.isnot(None)
         ).group_by(User.phone_number).having(func.count(User.id) > 1).all()
 

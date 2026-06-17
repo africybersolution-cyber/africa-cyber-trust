@@ -155,12 +155,12 @@ class AgentService:
 
         # Get customer
         customer = db.query(User).filter(User.id == payment.user_id).first()
-        if not customer or not customer.agent_referred_by:
+        if not customer or not customer.referred_by_code:
             return commissions  # No agent referral
 
         # Find referring agent
         agent = db.query(Agent).filter(
-            Agent.referral_code == customer.agent_referred_by,
+            Agent.referral_code == customer.referred_by_code,
             Agent.status == "approved"
         ).first()
 
@@ -252,7 +252,7 @@ class AgentService:
 
         # Total customers referred
         total_customers = db.query(func.count(User.id)).filter(
-            User.agent_referred_by == agent.referral_code
+            User.referred_by_code == agent.referral_code
         ).scalar() or 0
 
         # Sub-agents
