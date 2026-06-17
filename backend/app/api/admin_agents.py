@@ -12,6 +12,7 @@ from app.core.admin_deps import require_admin, require_super_admin, log_admin_ac
 from app.models.user import User
 from app.models.agent import Agent, Commission, AgentPayout
 from app.services.agent_service import AgentService
+from app.services.whatsapp_service import whatsapp_service
 
 
 router = APIRouter(prefix="/api/admin/agents", tags=["Admin - Agents"])
@@ -327,6 +328,19 @@ async def approve_agent(
 
     db.commit()
     db.refresh(agent)
+
+    # Send WhatsApp notification
+    user = db.query(User).filter(User.id == agent.user_id).first()
+    if user and user.phone_number:
+        try:
+            whatsapp_service.send_agent_approved(
+                to_number=user.phone_number,
+                agent_name=user.name,
+                referral_code=agent.referral_code
+            )
+        except Exception as e:
+            print(f"[WARNING] WhatsApp notification failed: {e}")
+            # Don't fail approval if WhatsApp fails
 
     # Audit log
     await log_admin_action(

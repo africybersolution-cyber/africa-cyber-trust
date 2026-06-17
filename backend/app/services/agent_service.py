@@ -8,6 +8,7 @@ from sqlalchemy import func, and_
 from app.models.agent import Agent, Commission, AgentPayout, AgentMonthlySales
 from app.models.subscription import Payment
 from app.models.user import User
+from app.services.whatsapp_service import whatsapp_service
 import uuid
 
 
@@ -199,6 +200,21 @@ class AgentService:
             )
             if cm_commission:
                 commissions.append(cm_commission)
+
+        # Send WhatsApp notifications to agents who earned commissions
+        for commission in commissions:
+            try:
+                agent_user = db.query(User).filter(User.id == commission.agent.user_id).first()
+                if agent_user and agent_user.phone_number:
+                    whatsapp_service.send_commission_earned(
+                        to_number=agent_user.phone_number,
+                        agent_name=agent_user.name,
+                        amount=float(commission.commission_amount),
+                        customer_email=customer.email
+                    )
+            except Exception as e:
+                print(f"[WARNING] WhatsApp notification failed for agent {commission.agent_id}: {e}")
+                # Don't fail commission processing if WhatsApp fails
 
         return commissions
 
