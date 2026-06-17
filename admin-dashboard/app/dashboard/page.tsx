@@ -150,30 +150,16 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-gray-500 text-sm mt-1">Real-time platform metrics</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                <p className="text-xs text-gray-500">{user?.role}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                Logout
-              </button>
-            </div>
+        <div className="px-6 py-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+            <p className="text-gray-500 text-sm mt-1">Real-time platform metrics</p>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="px-6 py-8">
         {/* Error Banner */}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
@@ -342,75 +328,6 @@ export default function AdminDashboard() {
                 <span className="text-xl font-bold text-gray-900">{metrics.payments.total}</span>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Navigation - Admin */}
-        <div className="mt-8">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
-            Admin Management
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a href="/dashboard/users" className="bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-4 transition-colors">
-              <h3 className="font-semibold text-gray-900">Manage Users</h3>
-              <p className="text-sm text-gray-500 mt-1">Create, suspend, grant plans</p>
-            </a>
-            <a href="/dashboard/analytics" className="bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-4 transition-colors">
-              <h3 className="font-semibold text-gray-900">Analytics</h3>
-              <p className="text-sm text-gray-500 mt-1">Revenue, growth, top customers</p>
-            </a>
-            <a href="/dashboard/audit" className="bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-4 transition-colors">
-              <h3 className="font-semibold text-gray-900">Audit Logs</h3>
-              <p className="text-sm text-gray-500 mt-1">View all admin actions</p>
-            </a>
-          </div>
-        </div>
-
-        {/* Navigation - Agents */}
-        <div className="mt-8">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
-            Agent Management
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a href="/dashboard/agents" className="bg-white hover:bg-blue-50 border border-blue-200 rounded-lg p-4 transition-colors">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-gray-900">Manage Agents</h3>
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">New</span>
-              </div>
-              <p className="text-sm text-gray-500 mt-1">Approve, reject, assign country managers</p>
-            </a>
-            <a href="/dashboard/agents/payouts" className="bg-white hover:bg-green-50 border border-green-200 rounded-lg p-4 transition-colors">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-gray-900">Payout Requests</h3>
-                <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">New</span>
-              </div>
-              <p className="text-sm text-gray-500 mt-1">Process commission payouts</p>
-            </a>
-            <a href="/dashboard/fraud" className="bg-white hover:bg-red-50 border border-red-200 rounded-lg p-4 transition-colors">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-gray-900">Fraud Detection</h3>
-                <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">New</span>
-              </div>
-              <p className="text-sm text-gray-500 mt-1">Scan for suspicious activity</p>
-            </a>
-          </div>
-
-          {/* Navigation - Training & WhatsApp */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <a href="/dashboard/training" className="bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg p-4 transition-colors">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-gray-900">📚 Training Courses</h3>
-                <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">New</span>
-              </div>
-              <p className="text-sm text-gray-500 mt-1">Create and manage agent training</p>
-            </a>
-            <a href="/dashboard/whatsapp" className="bg-white hover:bg-green-50 border border-green-200 rounded-lg p-4 transition-colors">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-gray-900">📱 WhatsApp Notifications</h3>
-                <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">New</span>
-              </div>
-              <p className="text-sm text-gray-500 mt-1">Test and manage agent notifications</p>
-            </a>
           </div>
         </div>
       </div>
