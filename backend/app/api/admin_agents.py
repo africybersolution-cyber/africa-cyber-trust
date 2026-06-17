@@ -663,3 +663,74 @@ async def set_country_manager(
         "is_country_manager": True,
         "message": f"Agent is now country manager for {agent.country}"
     }
+
+
+@router.delete("/{agent_id}")
+async def delete_agent(
+    agent_id: str,
+    delete_user: bool = False,
+    req: Request = None,
+    admin: User = Depends(require_super_admin),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete agent record (and optionally the associated user).
+
+    Use this to reset/clean up test agents or remove agents completely.
+    """
+    agent = db.query(Agent).filter(Agent.id == uuid.UUID(agent_id)).first()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    user = db.query(User).filter(User.id == agent.user_id).first()
+    user_email = user.email if user else "Unknown"
+
+    # Delete related records first (to avoid foreign key constraints)
+    # Delete commissions
+    deleted_commissions = db.query(Commission).filter(Commission.agent_id == agent.id).delete()
+
+    # Delete payouts
+    deleted_payouts = db.query(AgentPayout).filter(AgentPayout.agent_id == agent.id).delete()
+
+    # Delete monthly sales records
+    from app.models.agent import AgentMonthlySales
+    deleted_monthly = db.query(AgentMonthlySales).filter(AgentMonthlySales.agent_id == agent.id).delete()
+
+    # Delete the agent
+    db.delete(agent)
+
+    # Optionally delete the user account
+    if delete_user and user:
+        db.delete(user)
+
+    db.commit()
+
+    # Audit log
+    if req:
+        await log_admin_action(
+            action="delete_agent",
+            actor=admin,
+            db=db,
+            request=req,
+            target_type="agent",
+            target_id=str(agent_id),
+            context_data={
+                "email": user_email,
+                "referral_code": agent.referral_code,
+                "deleted_user": delete_user,
+                "deleted_commissions": deleted_commissions,
+                "deleted_payouts": deleted_payouts
+            }
+        )
+
+    return {
+        "success": True,
+        "message": f"Agent {user_email} deleted successfully",
+        "deleted": {
+            "agent": True,
+            "user": delete_user,
+            "commissions": deleted_commissions,
+            "payouts": deleted_payouts,
+            "monthly_sales": deleted_monthly
+        }
+    }

@@ -61,6 +61,34 @@ export default function AgentsPage() {
     }
   };
 
+  const handleDelete = async (agent: Agent) => {
+    if (!confirm(`Delete agent ${agent.user.email}?\n\nThis will permanently remove:\n- Agent record\n- All commissions\n- All payouts\n\nThe user account will remain (set delete_user=true to remove it too)`)) {
+      return;
+    }
+
+    const token = localStorage.getItem("admin_token");
+    try {
+      const response = await fetch(
+        `https://africa-cyber-trust.onrender.com/api/admin/agents/${agent.id}?delete_user=false`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.ok) {
+        alert("Agent deleted successfully!");
+        loadAgents(); // Reload the list
+      } else {
+        const error = await response.json();
+        alert(`Failed to delete agent: ${error.detail || "Unknown error"}`);
+      }
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("Failed to delete agent");
+    }
+  };
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       pending: "bg-yellow-100 text-yellow-800",
@@ -258,14 +286,22 @@ export default function AgentsPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() =>
-                            router.push(`/dashboard/agents/${agent.id}`)
-                          }
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          View →
-                        </button>
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() =>
+                              router.push(`/dashboard/agents/${agent.id}`)
+                            }
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleDelete(agent)}
+                            className="text-red-600 hover:text-red-900 font-medium"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
