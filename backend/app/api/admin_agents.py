@@ -320,7 +320,24 @@ async def approve_agent(
     if agent.status != "pending":
         raise HTTPException(status_code=400, detail=f"Agent is already {agent.status}")
 
-    # Approve
+    # Get user
+    user = db.query(User).filter(User.id == agent.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found for this agent")
+
+    # Generate random password for new agent
+    import random
+    import string
+    new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
+
+    # Update user account: activate + set new password
+    from passlib.context import CryptContext
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+    user.is_active = True
+    user.password_hash = pwd_context.hash(new_password)
+
+    # Approve agent
     agent.status = "approved"
     agent.approved_at = datetime.utcnow()
     agent.approved_by = admin.id
@@ -329,9 +346,55 @@ async def approve_agent(
     db.commit()
     db.refresh(agent)
 
+    # Send email with credentials
+    try:
+        email_queue = {
+            "to": user.email,
+            "subject": "🎉 Congratulations! Your Agent Application is Approved",
+            "html": f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #2563eb;">Congratulations {user.name}!</h2>
+                <p>Your application to become an Africa Cyber Trust agent has been <strong>approved</strong>! 🎉</p>
+
+                <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="margin-top: 0;">Your Login Credentials:</h3>
+                    <p><strong>Email:</strong> {user.email}</p>
+                    <p><strong>Password:</strong> <code style="background-color: #e5e7eb; padding: 4px 8px; border-radius: 4px;">{new_password}</code></p>
+                    <p><strong>Agent Portal:</strong> <a href="http://localhost:3004" style="color: #2563eb;">http://localhost:3004</a></p>
+                    <p><strong>Your Referral Code:</strong> <code style="background-color: #dbeafe; padding: 4px 8px; border-radius: 4px; color: #1e40af; font-weight: bold;">{agent.referral_code}</code></p>
+                </div>
+
+                <p><strong>What's Next?</strong></p>
+                <ul>
+                    <li>Log in to your agent portal using the credentials above</li>
+                    <li>Complete the training courses to learn how to be a successful agent</li>
+                    <li>Start referring customers and earning commissions!</li>
+                    <li>Share your referral code to build your network</li>
+                </ul>
+
+                <p style="margin-top: 30px;">Welcome to the Africa Cyber Trust agent network!</p>
+
+                <p style="color: #6b7280; font-size: 12px; margin-top: 40px;">
+                    This email was sent by Africa Cyber Trust. If you did not apply to become an agent, please ignore this email.
+                </p>
+            </div>
+            """,
+            "created_at": datetime.utcnow().isoformat()
+        }
+
+        # Add to email queue
+        from app.models.subscription import EmailQueue
+        email_doc = EmailQueue(**email_queue)
+        db.add(email_doc)
+        db.commit()
+
+        print(f"[INFO] Credentials email queued for {user.email}")
+    except Exception as e:
+        print(f"[WARNING] Failed to queue credentials email: {e}")
+        # Don't fail approval if email queueing fails
+
     # Send WhatsApp notification
-    user = db.query(User).filter(User.id == agent.user_id).first()
-    if user and user.phone_number:
+    if user.phone_number:
         try:
             whatsapp_service.send_agent_approved(
                 to_number=user.phone_number,
