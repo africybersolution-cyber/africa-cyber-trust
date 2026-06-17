@@ -348,50 +348,74 @@ async def approve_agent(
 
     # Send email with credentials
     try:
-        email_queue = {
-            "to": user.email,
-            "subject": "🎉 Congratulations! Your Agent Application is Approved",
-            "html": f"""
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #2563eb;">Congratulations {user.name}!</h2>
-                <p>Your application to become an Africa Cyber Trust agent has been <strong>approved</strong>! 🎉</p>
+        from app.services.email_service import EmailService
 
-                <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <h3 style="margin-top: 0;">Your Login Credentials:</h3>
-                    <p><strong>Email:</strong> {user.email}</p>
-                    <p><strong>Password:</strong> <code style="background-color: #e5e7eb; padding: 4px 8px; border-radius: 4px;">{new_password}</code></p>
-                    <p><strong>Agent Portal:</strong> <a href="http://localhost:3004" style="color: #2563eb;">http://localhost:3004</a></p>
-                    <p><strong>Your Referral Code:</strong> <code style="background-color: #dbeafe; padding: 4px 8px; border-radius: 4px; color: #1e40af; font-weight: bold;">{agent.referral_code}</code></p>
+        email_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #0047AB 0%, #1E90FF 100%);
+                          color: white; padding: 30px; text-align: center; border-radius: 10px; }}
+                .content {{ background: #f9f9f9; padding: 30px; margin: 20px 0; border-radius: 10px; }}
+                .credentials {{ background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+                .code {{ background-color: #e5e7eb; padding: 4px 8px; border-radius: 4px; font-family: monospace; }}
+                .button {{ display: inline-block; background: #0047AB; color: white;
+                          padding: 15px 40px; text-decoration: none; border-radius: 8px;
+                          font-weight: bold; margin: 20px 0; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🎉 Congratulations!</h1>
+                    <p>Your Agent Application is Approved</p>
                 </div>
 
-                <p><strong>What's Next?</strong></p>
-                <ul>
-                    <li>Log in to your agent portal using the credentials above</li>
-                    <li>Complete the training courses to learn how to be a successful agent</li>
-                    <li>Start referring customers and earning commissions!</li>
-                    <li>Share your referral code to build your network</li>
-                </ul>
+                <div class="content">
+                    <h2>Welcome {user.name}!</h2>
+                    <p>Your application to become an Africa Cyber Trust agent has been <strong>approved</strong>! You can now start earning commissions by referring customers to our cybersecurity services.</p>
 
-                <p style="margin-top: 30px;">Welcome to the Africa Cyber Trust agent network!</p>
+                    <div class="credentials">
+                        <h3>Your Login Credentials:</h3>
+                        <p><strong>Email:</strong> {user.email}</p>
+                        <p><strong>Password:</strong> <span class="code">{new_password}</span></p>
+                        <p><strong>Your Referral Code:</strong> <span class="code" style="background-color: #dbeafe; color: #1e40af; font-weight: bold;">{agent.referral_code}</span></p>
+                    </div>
 
-                <p style="color: #6b7280; font-size: 12px; margin-top: 40px;">
+                    <a href="http://localhost:3004" class="button">Access Agent Portal</a>
+
+                    <h3>What's Next?</h3>
+                    <ul>
+                        <li>Log in to your agent portal using the credentials above</li>
+                        <li>Complete the training courses to learn how to be a successful agent</li>
+                        <li>Start referring customers and earning commissions!</li>
+                        <li>Share your referral code to build your network</li>
+                    </ul>
+
+                    <p style="margin-top: 30px;"><strong>Welcome to the Africa Cyber Trust agent network!</strong></p>
+                </div>
+
+                <p style="color: #6b7280; font-size: 12px; text-align: center;">
                     This email was sent by Africa Cyber Trust. If you did not apply to become an agent, please ignore this email.
                 </p>
             </div>
-            """,
-            "created_at": datetime.utcnow().isoformat()
-        }
+        </body>
+        </html>
+        """
 
-        # Add to email queue
-        from app.models.subscription import EmailQueue
-        email_doc = EmailQueue(**email_queue)
-        db.add(email_doc)
-        db.commit()
+        EmailService.send_verification_email(
+            to_email=user.email,
+            domain="Agent Credentials",
+            verification_link=email_html  # Reusing this param for HTML content
+        )
 
-        print(f"[INFO] Credentials email queued for {user.email}")
+        print(f"[INFO] Credentials email sent to {user.email}")
     except Exception as e:
-        print(f"[WARNING] Failed to queue credentials email: {e}")
-        # Don't fail approval if email queueing fails
+        print(f"[WARNING] Failed to send credentials email: {e}")
+        # Don't fail approval if email sending fails
 
     # Send WhatsApp notification
     if user.phone_number:
