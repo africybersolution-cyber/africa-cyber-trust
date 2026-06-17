@@ -251,23 +251,32 @@ class EmailService:
                 print(f"[EMAIL] SendGrid failed: {str(e)}")
                 print(f"[EMAIL] Falling back to SMTP...")
 
-        # Fallback to SMTP
+        # Fallback to SMTP (works locally)
         try:
-            print(f"[EMAIL] Sending agent credentials via SMTP to {to_email}")
+            print(f"[EMAIL] Attempting to send via SMTP to {to_email}")
             message = MIMEMultipart("alternative")
             message["Subject"] = subject
             message["From"] = f"Africa Cyber Trust <{EmailService.SENDER_EMAIL}>"
             message["To"] = to_email
-            message.attach(MIMEText(text_content, "plain"))
-            message.attach(MIMEText(html_content, "html"))
+
+            part1 = MIMEText(text_content, "plain")
+            part2 = MIMEText(html_content, "html")
+            message.attach(part1)
+            message.attach(part2)
+
             with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT, timeout=10) as server:
                 server.starttls()
                 server.login(EmailService.SENDER_EMAIL, EmailService.SENDER_PASSWORD)
                 server.send_message(message)
-            print(f"[EMAIL] SMTP success! Agent credentials sent.")
+
+            print(f"[EMAIL] SMTP success!")
             return True
+
         except Exception as e:
             print(f"[EMAIL] Failed to send agent credentials to {to_email}: {str(e)}")
+            print(f"        Error type: {type(e).__name__}")
+            import traceback
+            print(f"        Traceback: {traceback.format_exc()}")
             return False
 
     @staticmethod
@@ -778,22 +787,32 @@ https://www.africybertrust.com/dashboard/assets
             except Exception as e:
                 print(f"[EMAIL] SendGrid failed: {str(e)}")
 
-        # Fallback to SMTP
+        # Fallback to SMTP (works locally)
         try:
+            print(f"[EMAIL] Attempting to send via SMTP to {to_email}")
             message = MIMEMultipart("alternative")
             message["Subject"] = subject
             message["From"] = f"Africa Cyber Trust <{EmailService.SENDER_EMAIL}>"
             message["To"] = to_email
-            message.attach(MIMEText(text_content, "plain"))
-            message.attach(MIMEText(html_content, "html"))
+
+            part1 = MIMEText(text_content, "plain")
+            part2 = MIMEText(html_content, "html")
+            message.attach(part1)
+            message.attach(part2)
+
             with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT, timeout=10) as server:
                 server.starttls()
                 server.login(EmailService.SENDER_EMAIL, EmailService.SENDER_PASSWORD)
                 server.send_message(message)
-            print(f"[EMAIL] Agent rejection sent via SMTP to {to_email}")
+
+            print(f"[EMAIL] SMTP success!")
             return True
+
         except Exception as e:
             print(f"[EMAIL] Failed to send agent rejection to {to_email}: {str(e)}")
+            print(f"        Error type: {type(e).__name__}")
+            import traceback
+            print(f"        Traceback: {traceback.format_exc()}")
             return False
 
 
