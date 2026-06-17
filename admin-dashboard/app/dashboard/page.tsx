@@ -394,6 +394,17 @@ export default function AdminDashboard() {
               <p className="text-sm text-gray-500 mt-1">Scan for suspicious activity</p>
             </a>
           </div>
+
+          {/* Navigation - Training */}
+          <div>
+            <a href="/dashboard/training" className="bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg p-4 transition-colors inline-block">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-gray-900">📚 Training Courses</h3>
+                <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">New</span>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">Create and manage agent training</p>
+            </a>
+          </div>
         </div>
       </div>
     </div>
