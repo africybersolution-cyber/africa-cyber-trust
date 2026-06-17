@@ -38,6 +38,11 @@ export default function DashboardLayout({
       path: "/dashboard/analytics",
     },
     {
+      label: "User Management",
+      icon: "👤",
+      path: "/dashboard/users",
+    },
+    {
       label: "Agent Management",
       icon: "👥",
       children: [
@@ -66,6 +71,11 @@ export default function DashboardLayout({
       children: [
         { label: "WhatsApp Notifications", path: "/dashboard/whatsapp" },
       ],
+    },
+    {
+      label: "Audit Logs",
+      icon: "📋",
+      path: "/dashboard/audit",
     },
   ];
 
