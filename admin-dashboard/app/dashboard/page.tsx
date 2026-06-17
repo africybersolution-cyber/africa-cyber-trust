@@ -270,20 +270,48 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Navigation */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a href="/dashboard/users" className="bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-4 transition-colors">
-            <h3 className="font-semibold text-gray-900">Manage Users</h3>
-            <p className="text-sm text-gray-500 mt-1">Create, suspend, grant plans</p>
-          </a>
-          <a href="/dashboard/analytics" className="bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-4 transition-colors">
-            <h3 className="font-semibold text-gray-900">Analytics</h3>
-            <p className="text-sm text-gray-500 mt-1">Revenue, growth, top customers</p>
-          </a>
-          <a href="/dashboard/audit" className="bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-4 transition-colors">
-            <h3 className="font-semibold text-gray-900">Audit Logs</h3>
-            <p className="text-sm text-gray-500 mt-1">View all admin actions</p>
-          </a>
+        {/* Navigation - Admin */}
+        <div className="mt-8">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+            Admin Management
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a href="/dashboard/users" className="bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-4 transition-colors">
+              <h3 className="font-semibold text-gray-900">Manage Users</h3>
+              <p className="text-sm text-gray-500 mt-1">Create, suspend, grant plans</p>
+            </a>
+            <a href="/dashboard/analytics" className="bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-4 transition-colors">
+              <h3 className="font-semibold text-gray-900">Analytics</h3>
+              <p className="text-sm text-gray-500 mt-1">Revenue, growth, top customers</p>
+            </a>
+            <a href="/dashboard/audit" className="bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-4 transition-colors">
+              <h3 className="font-semibold text-gray-900">Audit Logs</h3>
+              <p className="text-sm text-gray-500 mt-1">View all admin actions</p>
+            </a>
+          </div>
+        </div>
+
+        {/* Navigation - Agents */}
+        <div className="mt-8">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+            Agent Management
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a href="/dashboard/agents" className="bg-white hover:bg-blue-50 border border-blue-200 rounded-lg p-4 transition-colors">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-gray-900">Manage Agents</h3>
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">New</span>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">Approve, reject, assign country managers</p>
+            </a>
+            <a href="/dashboard/agents/payouts" className="bg-white hover:bg-green-50 border border-green-200 rounded-lg p-4 transition-colors">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-gray-900">Payout Requests</h3>
+                <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">New</span>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">Process commission payouts</p>
+            </a>
+          </div>
         </div>
       </div>
     </div>
