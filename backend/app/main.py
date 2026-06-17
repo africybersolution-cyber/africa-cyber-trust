@@ -2,7 +2,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import public_check, auth, company, assets, scans, ai_verify, payments, company_verification, admin, email_verification, alerts, team, admin_fix_users, breaches, trust_badge, remediation, cve_enrichment, free_trust_score, admin_users, admin_analytics, admin_audit, admin_assets, admin_payments, admin_setup, run_migration, agents, admin_agents
+from app.api import public_check, auth, company, assets, scans, ai_verify, payments, company_verification, admin, email_verification, alerts, team, admin_fix_users, breaches, trust_badge, remediation, cve_enrichment, free_trust_score, admin_users, admin_analytics, admin_audit, admin_assets, admin_payments, admin_setup, run_migration, agents, admin_agents, admin_fraud
 
 # Create FastAPI application
 app = FastAPI(
@@ -153,6 +153,7 @@ app.include_router(admin_assets.router, tags=["Admin - Assets"])  # Asset overri
 app.include_router(admin_payments.router, tags=["Admin - Payments"])  # Payment management & refunds
 app.include_router(agents.router, tags=["Agents"])  # Agent dashboard & payouts
 app.include_router(admin_agents.router, tags=["Admin - Agents"])  # Agent approval & management
+app.include_router(admin_fraud.router, tags=["Admin - Fraud Detection"])  # Fraud detection & prevention
 app.include_router(admin_fix_users.router, prefix="/api", tags=["Admin Setup"])  # One-time user fix
 app.include_router(admin_setup.router, prefix="/api", tags=["Admin Setup"])  # One-time super admin setup
 app.include_router(run_migration.router, prefix="/api", tags=["Admin Setup"])  # One-time migration runner
