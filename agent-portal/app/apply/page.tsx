@@ -7,6 +7,7 @@ export default function ApplyAgentPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [country, setCountry] = useState("");
   const [referralCode, setReferralCode] = useState("");
   const [step, setStep] = useState<"login" | "signup" | "apply">("login");
@@ -114,7 +115,12 @@ export default function ApplyAgentPage() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, name }),
+          body: JSON.stringify({
+            email,
+            password,
+            name,
+            phone_number: phoneNumber,
+          }),
         }
       );
 
@@ -297,6 +303,23 @@ export default function ApplyAgentPage() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="your@email.com"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number (WhatsApp)
+                  </label>
+                  <input
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="+250788123456"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Include country code for WhatsApp notifications
+                  </p>
                 </div>
 
                 <div>
