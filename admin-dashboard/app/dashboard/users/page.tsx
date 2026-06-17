@@ -296,9 +296,30 @@ export default function UsersPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                        {user.role}
-                      </span>
+                      {user.is_agent ? (
+                        <div className="flex flex-col gap-1">
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 w-fit">
+                            Agent
+                            {user.agent?.tier ? ` · ${user.agent.tier}` : ""}
+                          </span>
+                          {user.agent?.referral_code && (
+                            <span className="text-xs text-gray-500">
+                              {user.agent.referral_code}
+                              {user.agent?.country
+                                ? ` · ${user.agent.country}`
+                                : ""}
+                              {user.agent?.status &&
+                              user.agent.status !== "approved"
+                                ? ` · ${user.agent.status}`
+                                : ""}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                          {user.role}
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {user.account_type}

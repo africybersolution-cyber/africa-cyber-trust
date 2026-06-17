@@ -305,6 +305,8 @@ async def list_users(
 
     Supports pagination and filtering by email, role, and status.
     """
+    from app.models.agent import Agent
+
     query = db.query(User)
 
     # Apply filters
@@ -312,11 +314,18 @@ async def list_users(
         query = query.filter(User.email.ilike(f"%{email}%"))
 
     if role:
-        try:
-            user_role = UserRole[role.upper()]
-            query = query.filter(User.role == user_role)
-        except:
-            pass  # Invalid role, ignore filter
+        # "agent" is NOT a User.role value. Agents are users that have an
+        # approved record in the `agents` table, so filter via a join.
+        if role.lower() == "agent":
+            query = query.join(Agent, User.id == Agent.user_id).filter(
+                Agent.status == "approved"
+            )
+        else:
+            try:
+                user_role = UserRole[role.upper()]
+                query = query.filter(User.role == user_role)
+            except KeyError:
+                pass  # Invalid role, ignore filter
 
     if is_active is not None:
         query = query.filter(User.is_active == is_active)
@@ -326,6 +335,26 @@ async def list_users(
 
     # Apply pagination
     users = query.order_by(User.created_at.desc()).offset(skip).limit(limit).all()
+
+    # Look up agent profiles for the returned users in one query so we can
+    # flag/enrich agents in the response (helps the UI distinguish agents
+    # from regular customers).
+    user_ids = [u.id for u in users]
+    agents_by_user = {}
+    if user_ids:
+        agent_rows = db.query(Agent).filter(Agent.user_id.in_(user_ids)).all()
+        agents_by_user = {a.user_id: a for a in agent_rows}
+
+    def _agent_info(user_id):
+        a = agents_by_user.get(user_id)
+        if not a:
+            return None
+        return {
+            "status": a.status,            # pending, approved, rejected, suspended
+            "referral_code": a.referral_code,
+            "tier": a.tier,                # bronze, silver, gold
+            "country": a.country,
+        }
 
     return {
         "total": total,
@@ -341,7 +370,9 @@ async def list_users(
                 "is_active": u.is_active,
                 "trial_status": u.trial_status,
                 "created_at": u.created_at.isoformat() if u.created_at else None,
-                "last_login_at": u.last_login_at.isoformat() if u.last_login_at else None
+                "last_login_at": u.last_login_at.isoformat() if u.last_login_at else None,
+                "is_agent": u.id in agents_by_user,
+                "agent": _agent_info(u.id),
             }
             for u in users
         ]
