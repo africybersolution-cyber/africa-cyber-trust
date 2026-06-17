@@ -18,10 +18,15 @@ app = FastAPI(
     redirect_slashes=False,
 )
 
-# CORS middleware
+# CORS middleware - Allow all localhost ports for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",  # Admin dashboard
+        "https://africa-cyber-trust.vercel.app",
+    ] + settings.cors_origins,  # Also include any from environment
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
