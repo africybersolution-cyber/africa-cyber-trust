@@ -77,9 +77,19 @@ export default function AdminDashboard() {
         localStorage.removeItem("admin_token");
         localStorage.removeItem("admin_user");
         router.push("/");
+      } else {
+        console.error("API error:", response.status, await response.text());
       }
     } catch (error) {
       console.error("Failed to load metrics:", error);
+      // Set empty metrics so dashboard still shows
+      setMetrics({
+        users: { total: 0, active: 0, trial: 0, recent_signups_7d: 0 },
+        revenue: { total_all_time: 0, this_month: 0, mrr: 0, currency: "USD" },
+        subscriptions: { active: 0, starter: 0, professional: 0, enterprise: 0 },
+        platform: { total_assets: 0, total_scans: 0, total_findings: 0, critical_findings: 0 },
+        payments: { mobile_money: 0, crypto: 0, total: 0 }
+      });
     } finally {
       setLoading(false);
     }
