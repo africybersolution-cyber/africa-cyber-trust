@@ -117,15 +117,22 @@ async def startup_event():
                 """))
 
                 if not result.fetchone():
-                    print("[DB] Adding status column to findings table...")
+                    print("[DB] Adding missing columns to findings table...")
                     conn.execute(text("""
                         ALTER TABLE findings
-                        ADD COLUMN status VARCHAR(50) DEFAULT 'open'
+                        ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'open',
+                        ADD COLUMN IF NOT EXISTS assignee_id UUID,
+                        ADD COLUMN IF NOT EXISTS resolution_notes TEXT,
+                        ADD COLUMN IF NOT EXISTS marked_resolved_by UUID,
+                        ADD COLUMN IF NOT EXISTS verified_by UUID,
+                        ADD COLUMN IF NOT EXISTS verified_at TIMESTAMP WITH TIME ZONE,
+                        ADD COLUMN IF NOT EXISTS status_changed_at TIMESTAMP WITH TIME ZONE,
+                        ADD COLUMN IF NOT EXISTS status_changed_by UUID
                     """))
                     conn.commit()
-                    print("[OK] status column added to findings")
+                    print("[OK] Missing findings columns added")
                 else:
-                    print("[OK] findings.status column already exists")
+                    print("[OK] findings columns already exist")
         except Exception as e:
             print(f"[WARNING] Could not add columns: {e}")
 
