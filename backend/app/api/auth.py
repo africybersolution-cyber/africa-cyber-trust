@@ -27,6 +27,7 @@ class UserSignupRequest(BaseModel):
     password: str = Field(..., min_length=8)
     name: str = Field(..., min_length=2)
     account_type: str = Field(default='starter')  # 'starter', 'professional', or 'enterprise'
+    referral_code: Optional[str] = None  # Agent referral code (links customer to agent for commissions)
 
     class Config:
         json_schema_extra = {
@@ -109,7 +110,8 @@ async def signup(
             db=db,
             email=request.email,
             password=request.password,
-            name=request.name
+            name=request.name,
+            referred_by_code=request.referral_code
         )
 
         # Set account type and start plan-specific trial

@@ -153,6 +153,124 @@ class EmailService:
             return False
 
     @staticmethod
+    def send_agent_credentials(
+        to_email: str,
+        agent_name: str,
+        password: str,
+        referral_code: str,
+        portal_url: str = "http://localhost:3004"
+    ) -> bool:
+        """Send agent approval email with login credentials via SendGrid (primary) or SMTP (fallback)."""
+        subject = "Your Africa Cyber Trust Agent Account is Approved"
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #0047AB 0%, #1E90FF 100%);
+                          color: white; padding: 30px; text-align: center; border-radius: 10px; }}
+                .content {{ background: #f9f9f9; padding: 30px; margin: 20px 0; border-radius: 10px; }}
+                .credentials {{ background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+                .code {{ background-color: #e5e7eb; padding: 4px 8px; border-radius: 4px; font-family: monospace; }}
+                .button {{ display: inline-block; background: #0047AB; color: white;
+                          padding: 15px 40px; text-decoration: none; border-radius: 8px;
+                          font-weight: bold; margin: 20px 0; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🎉 Congratulations!</h1>
+                    <p>Your Agent Application is Approved</p>
+                </div>
+                <div class="content">
+                    <h2>Welcome {agent_name}!</h2>
+                    <p>Your application to become an Africa Cyber Trust agent has been <strong>approved</strong>! You can now start earning commissions by referring customers to our cybersecurity services.</p>
+                    <div class="credentials">
+                        <h3>Your Login Credentials:</h3>
+                        <p><strong>Email:</strong> {to_email}</p>
+                        <p><strong>Password:</strong> <span class="code">{password}</span></p>
+                        <p><strong>Your Referral Code:</strong> <span class="code" style="background-color: #dbeafe; color: #1e40af; font-weight: bold;">{referral_code}</span></p>
+                    </div>
+                    <a href="{portal_url}" class="button">Access Agent Portal</a>
+                    <h3>What's Next?</h3>
+                    <ul>
+                        <li>Log in to your agent portal using the credentials above</li>
+                        <li>Complete the training courses to learn how to be a successful agent</li>
+                        <li>Start referring customers and earning commissions!</li>
+                        <li>Share your referral code to build your network</li>
+                    </ul>
+                    <p style="margin-top: 30px;"><strong>Welcome to the Africa Cyber Trust agent network!</strong></p>
+                </div>
+                <p style="color: #6b7280; font-size: 12px; text-align: center;">
+                    This email was sent by Africa Cyber Trust. If you did not apply to become an agent, please ignore this email.
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_content = f"""
+        Congratulations {agent_name}! Your Africa Cyber Trust agent application is approved.
+
+        Login Credentials:
+        Email: {to_email}
+        Password: {password}
+        Referral Code: {referral_code}
+
+        Access the agent portal: {portal_url}
+
+        Next steps:
+        - Log in using the credentials above
+        - Complete the training courses
+        - Start referring customers and earning commissions
+        - Share your referral code to build your network
+
+        Welcome to the Africa Cyber Trust agent network!
+        """
+
+        # Try SendGrid first (works on Render)
+        if SENDGRID_AVAILABLE and EmailService.SENDGRID_API_KEY:
+            try:
+                print(f"[EMAIL] Sending agent credentials via SendGrid to {to_email}")
+                message = Mail(
+                    from_email=Email(EmailService.SENDER_EMAIL, "Africa Cyber Trust"),
+                    to_emails=To(to_email),
+                    subject=subject,
+                    plain_text_content=Content("text/plain", text_content),
+                    html_content=Content("text/html", html_content)
+                )
+                sg = SendGridAPIClient(EmailService.SENDGRID_API_KEY)
+                response = sg.send(message)
+                print(f"[EMAIL] SendGrid success! Status: {response.status_code}")
+                return True
+            except Exception as e:
+                print(f"[EMAIL] SendGrid failed: {str(e)}")
+                print(f"[EMAIL] Falling back to SMTP...")
+
+        # Fallback to SMTP
+        try:
+            print(f"[EMAIL] Sending agent credentials via SMTP to {to_email}")
+            message = MIMEMultipart("alternative")
+            message["Subject"] = subject
+            message["From"] = f"Africa Cyber Trust <{EmailService.SENDER_EMAIL}>"
+            message["To"] = to_email
+            message.attach(MIMEText(text_content, "plain"))
+            message.attach(MIMEText(html_content, "html"))
+            with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT, timeout=10) as server:
+                server.starttls()
+                server.login(EmailService.SENDER_EMAIL, EmailService.SENDER_PASSWORD)
+                server.send_message(message)
+            print(f"[EMAIL] SMTP success! Agent credentials sent.")
+            return True
+        except Exception as e:
+            print(f"[EMAIL] Failed to send agent credentials to {to_email}: {str(e)}")
+            return False
+
+    @staticmethod
     def send_security_alert(
         to_email: str,
         asset_name: str,

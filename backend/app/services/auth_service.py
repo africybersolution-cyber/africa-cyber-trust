@@ -83,13 +83,17 @@ class AuthService:
         password: str,
         name: str,
         company_id: Optional[str] = None,
-        role: str = "normal_user"
+        role: str = "normal_user",
+        referred_by_code: Optional[str] = None
     ) -> User:
         """Create a new user."""
         # Check if user already exists
         existing_user = db.query(User).filter(User.email == email).first()
         if existing_user:
             raise ValueError("User with this email already exists")
+
+        # Normalize referral code (agent referral codes are stored uppercase)
+        normalized_ref = referred_by_code.strip().upper() if referred_by_code else None
 
         # Create user
         hashed_password = AuthService.hash_password(password)
@@ -100,6 +104,7 @@ class AuthService:
             role=role,
             email_verified=False,
             is_active=True,
+            referred_by_code=normalized_ref,  # Links customer to referring agent
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
