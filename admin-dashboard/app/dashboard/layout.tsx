@@ -33,6 +33,11 @@ export default function DashboardLayout({
       exact: true,
     },
     {
+      label: "Analytics",
+      icon: "📈",
+      path: "/dashboard/analytics",
+    },
+    {
       label: "Agent Management",
       icon: "👥",
       children: [
