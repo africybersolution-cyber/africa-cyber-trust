@@ -11,6 +11,7 @@ from app.services.pricing_service import PricingService
 from app.services.trial_service import TrialService
 from app.services.crypto_payment_service import crypto_payment_service
 from app.services.email_service import EmailService
+from app.services.agent_service import AgentService
 from app.core.config import settings
 from pydantic import BaseModel
 from datetime import datetime, timedelta
@@ -160,6 +161,13 @@ async def check_payment_status(
             current_user.trial_status = 'converted'
 
             db.commit()
+
+            # Process agent commissions (if user was referred)
+            try:
+                AgentService.process_payment_commissions(db, payment)
+            except Exception as e:
+                print(f"[WARNING] Failed to process agent commissions: {e}")
+                # Don't fail the payment if commission processing fails
 
             # Send payment receipt email
             try:
@@ -393,6 +401,13 @@ async def verify_crypto_payment(
     current_user.trial_status = 'converted'
 
     db.commit()
+
+    # Process agent commissions (if user was referred)
+    try:
+        AgentService.process_payment_commissions(db, payment)
+    except Exception as e:
+        print(f"[WARNING] Failed to process agent commissions: {e}")
+        # Don't fail the payment if commission processing fails
 
     # Send payment receipt email
     try:
