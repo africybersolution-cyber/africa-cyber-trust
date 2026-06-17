@@ -2,7 +2,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import public_check, auth, company, assets, scans, ai_verify, payments, company_verification, admin, email_verification, alerts, team, admin_fix_users, breaches, trust_badge, remediation, cve_enrichment, free_trust_score, admin_users, admin_analytics, admin_audit
+from app.api import public_check, auth, company, assets, scans, ai_verify, payments, company_verification, admin, email_verification, alerts, team, admin_fix_users, breaches, trust_badge, remediation, cve_enrichment, free_trust_score, admin_users, admin_analytics, admin_audit, admin_assets, admin_payments
 
 # Create FastAPI application
 app = FastAPI(
@@ -143,6 +143,8 @@ app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(admin_users.router, tags=["Admin - Users"])  # Super admin user management
 app.include_router(admin_analytics.router, tags=["Admin - Analytics"])  # Revenue & metrics
 app.include_router(admin_audit.router, tags=["Admin - Audit"])  # Audit log viewer
+app.include_router(admin_assets.router, tags=["Admin - Assets"])  # Asset override (bypass verification, manual scans)
+app.include_router(admin_payments.router, tags=["Admin - Payments"])  # Payment management & refunds
 app.include_router(admin_fix_users.router, prefix="/api", tags=["Admin Setup"])  # One-time user fix
 app.include_router(assets.router, prefix="/api/assets", tags=["Assets"])  # Asset management
 app.include_router(scans.router, prefix="/api/scans", tags=["Scans"])
