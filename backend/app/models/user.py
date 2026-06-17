@@ -47,6 +47,11 @@ class User(Base):
     reset_token = Column(String(255), nullable=True)
     reset_token_expires = Column(DateTime(timezone=True), nullable=True)
 
+    # Admin & affiliate fields
+    totp_secret = Column(String(64), nullable=True)  # 2FA for admins
+    referred_by_code = Column(String(20), nullable=True, index=True)  # Agent referral code
+    granted_by_admin_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)  # Manual grants
+
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
