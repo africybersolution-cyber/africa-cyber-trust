@@ -5,13 +5,14 @@ Adds role-based access control, admin audit logging, and manual user/subscriptio
 
 Migration 006
 """
+from sqlalchemy import text
 
 def upgrade(engine):
     """Add super admin capabilities."""
 
     with engine.connect() as conn:
         # 1. Extend users table with roles and admin features
-        conn.execute("""
+        conn.execute(text("""
             -- Add role column (default to customer for existing users)
             ALTER TABLE users
             ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'customer';
@@ -31,17 +32,17 @@ def upgrade(engine):
             -- Track manual grants (for negotiated deals)
             ALTER TABLE users
             ADD COLUMN IF NOT EXISTS granted_by_admin_id UUID REFERENCES users(id);
-        """)
+        """))
 
         # 2. Create indexes for performance
-        conn.execute("""
+        conn.execute(text("""
             CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
             CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
             CREATE INDEX IF NOT EXISTS idx_users_referred_by ON users(referred_by_code);
-        """)
+        """))
 
         # 3. Create admin audit log table (append-only)
-        conn.execute("""
+        conn.execute(text("""
             CREATE TABLE IF NOT EXISTS admin_audit_logs (
                 id BIGSERIAL PRIMARY KEY,
                 actor_id UUID NOT NULL REFERENCES users(id),
@@ -59,16 +60,16 @@ def upgrade(engine):
                 ON admin_audit_logs(action);
             CREATE INDEX IF NOT EXISTS idx_audit_created
                 ON admin_audit_logs(created_at DESC);
-        """)
+        """))
 
         # 4. Add comment for documentation
-        conn.execute("""
+        conn.execute(text("""
             COMMENT ON TABLE admin_audit_logs IS
             'Append-only audit trail for all admin actions. Never update or delete.';
 
             COMMENT ON COLUMN users.role IS
             'User role: customer, agent, support_admin, super_admin';
-        """)
+        """))
 
         conn.commit()
         print("[MIGRATION 006] ✅ Super admin system tables created")
@@ -79,16 +80,16 @@ def downgrade(engine):
 
     with engine.connect() as conn:
         # Drop audit log
-        conn.execute("DROP TABLE IF EXISTS admin_audit_logs CASCADE;")
+        conn.execute(text("DROP TABLE IF EXISTS admin_audit_logs CASCADE;"))
 
         # Remove user columns (keep data, just remove columns)
-        conn.execute("""
+        conn.execute(text("""
             ALTER TABLE users DROP COLUMN IF EXISTS role;
             ALTER TABLE users DROP COLUMN IF EXISTS is_active;
             ALTER TABLE users DROP COLUMN IF EXISTS totp_secret;
             ALTER TABLE users DROP COLUMN IF EXISTS referred_by_code;
             ALTER TABLE users DROP COLUMN IF EXISTS granted_by_admin_id;
-        """)
+        """))
 
         conn.commit()
         print("[MIGRATION 006] ⚠️  Super admin system removed")
