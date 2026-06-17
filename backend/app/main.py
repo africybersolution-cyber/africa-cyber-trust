@@ -108,6 +108,24 @@ async def startup_event():
                     print("[OK] phone_number column added")
                 else:
                     print("[OK] phone_number column already exists")
+
+                # Check if findings.status column exists (fix for analytics crash)
+                result = conn.execute(text("""
+                    SELECT column_name
+                    FROM information_schema.columns
+                    WHERE table_name='findings' AND column_name='status'
+                """))
+
+                if not result.fetchone():
+                    print("[DB] Adding status column to findings table...")
+                    conn.execute(text("""
+                        ALTER TABLE findings
+                        ADD COLUMN status VARCHAR(50) DEFAULT 'open'
+                    """))
+                    conn.commit()
+                    print("[OK] status column added to findings")
+                else:
+                    print("[OK] findings.status column already exists")
         except Exception as e:
             print(f"[WARNING] Could not add columns: {e}")
 
