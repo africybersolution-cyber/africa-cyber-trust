@@ -94,11 +94,20 @@ export default function ApplyAgentPage() {
         setToken(data.access_token);
         setStep("apply");
       } else {
-        const error = await response.json();
-        setError(error.detail || "Login failed");
+        const errorData = await response.json();
+        // Handle FastAPI validation errors
+        let errorMsg = "Login failed";
+        if (typeof errorData.detail === 'string') {
+          errorMsg = errorData.detail;
+        } else if (Array.isArray(errorData.detail)) {
+          errorMsg = errorData.detail[0]?.msg || "Validation error";
+        } else if (errorData.detail?.msg) {
+          errorMsg = errorData.detail.msg;
+        }
+        setError(errorMsg);
       }
-    } catch (error) {
-      setError("Network error. Please try again.");
+    } catch (error: any) {
+      setError(error?.message || "Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -143,11 +152,21 @@ export default function ApplyAgentPage() {
           setStep("apply");
         }
       } else {
-        const error = await response.json();
-        setError(error.detail || "Signup failed");
+        const errorData = await response.json();
+        // Handle FastAPI validation errors
+        let errorMsg = "Signup failed";
+        if (typeof errorData.detail === 'string') {
+          errorMsg = errorData.detail;
+        } else if (Array.isArray(errorData.detail)) {
+          // Validation errors array - extract first error message
+          errorMsg = errorData.detail[0]?.msg || "Validation error";
+        } else if (errorData.detail?.msg) {
+          errorMsg = errorData.detail.msg;
+        }
+        setError(errorMsg);
       }
-    } catch (error) {
-      setError("Network error. Please try again.");
+    } catch (error: any) {
+      setError(error?.message || "Network error. Please try again.");
     } finally {
       setLoading(false);
     }
