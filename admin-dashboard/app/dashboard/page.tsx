@@ -395,14 +395,21 @@ export default function AdminDashboard() {
             </a>
           </div>
 
-          {/* Navigation - Training */}
-          <div>
-            <a href="/dashboard/training" className="bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg p-4 transition-colors inline-block">
+          {/* Navigation - Training & WhatsApp */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <a href="/dashboard/training" className="bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg p-4 transition-colors">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="font-semibold text-gray-900">📚 Training Courses</h3>
                 <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">New</span>
               </div>
               <p className="text-sm text-gray-500 mt-1">Create and manage agent training</p>
+            </a>
+            <a href="/dashboard/whatsapp" className="bg-white hover:bg-green-50 border border-green-200 rounded-lg p-4 transition-colors">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-gray-900">📱 WhatsApp Notifications</h3>
+                <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">New</span>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">Test and manage agent notifications</p>
             </a>
           </div>
         </div>
