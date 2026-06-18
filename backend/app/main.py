@@ -31,6 +31,8 @@ app.add_middleware(
         "https://africa-cyber-trust.vercel.app",
         "https://www.africybertrust.com",  # Production website
         "https://africybertrust.com",  # Production website (no www)
+        "https://agents.africybertrust.com",  # Agent portal subdomain
+        "https://admin.africybertrust.com",  # Admin dashboard subdomain
     ] + settings.cors_origins,  # Also include any from environment
     allow_credentials=True,
     allow_methods=["*"],
@@ -54,6 +56,8 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         "https://africa-cyber-trust.vercel.app",
         "https://www.africybertrust.com",
         "https://africybertrust.com",
+        "https://agents.africybertrust.com",
+        "https://admin.africybertrust.com",
     ]
 
     headers = {}
