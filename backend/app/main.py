@@ -1,6 +1,7 @@
 """Main FastAPI application entry point."""
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.api import public_check, auth, company, assets, scans, ai_verify, payments, company_verification, admin, email_verification, alerts, team, admin_fix_users, breaches, trust_badge, remediation, cve_enrichment, free_trust_score, admin_users, admin_analytics, admin_audit, admin_assets, admin_payments, admin_setup, run_migration, agents, admin_agents, admin_fraud, admin_training, admin_whatsapp, agent_training, agent_public_apply
 
@@ -33,6 +34,35 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Exception handler to ensure CORS headers on error responses
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Add CORS headers to HTTPException responses."""
+    origin = request.headers.get("origin")
+
+    # Check if origin is in allowed list
+    allowed_origins = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
+        "http://localhost:3004",
+        "https://africa-cyber-trust.vercel.app",
+    ]
+
+    headers = {}
+    if origin in allowed_origins:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=headers
+    )
+
 
 # Middleware to handle trailing slashes without redirecting
 @app.middleware("http")
