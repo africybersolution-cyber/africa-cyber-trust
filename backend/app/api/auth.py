@@ -457,7 +457,7 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
         )
 
     # Update password
-    user.hashed_password = AuthService.get_password_hash(request.new_password)
+    user.hashed_password = AuthService.hash_password(request.new_password)
     user.reset_token = None
     user.reset_token_expires = None
     db.commit()
