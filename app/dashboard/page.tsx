@@ -92,6 +92,12 @@ export default function DashboardPage() {
             issuesFound: totalIssues,
             criticalAlerts: critical,
           });
+
+          // 🔥 AUTO-TRIGGER SCARY SCANNING ANIMATION on first load
+          if (list.length > 0 && !sessionStorage.getItem('dashboard_scanned')) {
+            sessionStorage.setItem('dashboard_scanned', 'true');
+            setTimeout(() => handleScanAllAssets(), 1000);
+          }
         }
       } catch (error: any) {
         console.error('Error fetching dashboard stats:', error);
