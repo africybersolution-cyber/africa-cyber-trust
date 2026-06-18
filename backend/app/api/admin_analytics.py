@@ -89,6 +89,7 @@ async def get_live_metrics(
         ).count()
     except Exception as e:
         print(f"[WARNING] Failed to query findings (missing columns): {e}")
+        db.rollback()  # CRITICAL: Rollback failed transaction
         total_findings = 0
         critical_findings = 0
 
