@@ -79,13 +79,18 @@ async def get_live_metrics(
     # Asset & scan metrics
     total_assets = db.query(Asset).count()
     total_scans = db.query(Scan).count()
-    total_findings = db.query(Finding).count()
 
-    # Critical findings count
-    critical_findings = db.query(Finding).filter(
-        Finding.severity == "critical",
-        Finding.resolved == False
-    ).count()
+    # Findings count - wrap in try/except for missing columns
+    try:
+        total_findings = db.query(Finding).count()
+        critical_findings = db.query(Finding).filter(
+            Finding.severity == "critical",
+            Finding.resolved == False
+        ).count()
+    except Exception as e:
+        print(f"[WARNING] Failed to query findings (missing columns): {e}")
+        total_findings = 0
+        critical_findings = 0
 
     # Recent signups (last 7 days) - Count ALL new users
     week_ago = datetime.utcnow() - timedelta(days=7)
