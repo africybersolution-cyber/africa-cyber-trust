@@ -197,8 +197,9 @@ async def shutdown_event():
 
 
 @app.get("/")
+@app.head("/")
 async def root():
-    """Root endpoint - API health check."""
+    """Root endpoint - API health check. Supports both GET and HEAD for Render health checks."""
     return {
         "app": settings.APP_NAME,
         "version": settings.VERSION,
