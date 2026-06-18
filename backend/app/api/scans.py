@@ -26,6 +26,8 @@ async def start_asset_scan(
     db: Session = Depends(get_db)
 ):
     """Start a security scan on an asset (runs synchronously)."""
+    import traceback
+
     # Verify asset exists and user has access
     asset = db.query(Asset).filter(Asset.id == asset_id).first()
 
@@ -38,13 +40,28 @@ async def start_asset_scan(
     # Run scan synchronously (takes ~10 seconds)
     scanner = get_scanner(db)
     try:
+        print(f"[SCAN] Starting scan for asset {asset_id} ({asset.name})")
         scan = await scanner.scan_asset(asset_id)
+        print(f"[SCAN] Scan completed for {asset_id} - Score: {scan.score}")
+    except ImportError as e:
+        # Missing Python package
+        error_msg = f"Missing dependency: {str(e)}"
+        print(f"[SCAN ERROR] ImportError: {error_msg}")
+        traceback.print_exc()
+        raise HTTPException(status_code=502, detail=error_msg)
+    except TimeoutError as e:
+        # Scan took too long
+        error_msg = "Scan timeout - asset may be unreachable"
+        print(f"[SCAN ERROR] TimeoutError: {error_msg}")
+        raise HTTPException(status_code=502, detail=error_msg)
     except Exception as e:
-        # scan_asset already recorded status="failed" with the error in scan_data.
-        # Surface a clear message to the user instead of a generic 500.
+        # Generic error - log full traceback
+        error_msg = str(e)
+        print(f"[SCAN ERROR] Exception during scan: {error_msg}")
+        traceback.print_exc()
         raise HTTPException(
             status_code=502,
-            detail=f"Scan failed: {str(e)}"
+            detail=f"Scan failed: {error_msg[:200]}"  # Limit error length
         )
 
     return {
