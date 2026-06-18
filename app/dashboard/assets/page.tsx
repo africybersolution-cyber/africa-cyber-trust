@@ -29,6 +29,10 @@ export default function AssetsPage() {
   const [toast, setToast] = useState<{message: string, type: 'success'|'error'|'info'} | null>(null);
   const [scanningAssetId, setScanningAssetId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
+  const [showScanModal, setShowScanModal] = useState(false);
+  const [scanningAsset, setScanningAsset] = useState<any>(null);
+  const [scanPhase, setScanPhase] = useState<string>('');
+  const [scanProgress, setScanProgress] = useState(0);
   const { token, company, loading: authLoading } = useAuth();
   const [subscription, setSubscription] = useState<any>(null);
   const [assetLimit, setAssetLimit] = useState<number | null>(null);
@@ -571,35 +575,77 @@ export default function AssetsPage() {
                         return;
                       }
 
+                      // Launch scary scanning modal
+                      setScanningAsset(asset);
+                      setShowScanModal(true);
+                      setScanProgress(0);
+                      setScanPhase('Initializing deep security scan...');
+
                       try {
-                        setScanningAssetId(asset.id);
-                        setToast({ message: 'Starting security scan...', type: 'info' });
+                        // Animate scanning phases
+                        const phases = [
+                          'Initializing deep security scan...',
+                          'Analyzing SSL/TLS encryption...',
+                          'Checking security headers...',
+                          'Scanning for vulnerabilities...',
+                          'Detecting technology stack...',
+                          'Testing DNS security...',
+                          'Probing for exposed services...',
+                          'Analyzing threat vectors...',
+                          'Generating risk assessment...',
+                          'Finalizing report...'
+                        ];
+
+                        let phaseIndex = 0;
+                        const phaseInterval = setInterval(() => {
+                          if (phaseIndex < phases.length) {
+                            setScanPhase(phases[phaseIndex]);
+                            setScanProgress(Math.min(95, (phaseIndex + 1) * 10));
+                            phaseIndex++;
+                          }
+                        }, 1000);
 
                         const res = await fetch(`${config.apiUrl}/api/scans/assets/${asset.id}/scan`, {
                           method: 'POST',
                           headers: { 'Authorization': `Bearer ${token}` }
                         });
 
+                        clearInterval(phaseInterval);
+
                         if (res.ok) {
                           const data = await res.json();
-                          setToast({ message: '⏳ Scanning... This takes ~10 seconds', type: 'info' });
+                          setScanPhase('✅ Scan complete!');
+                          setScanProgress(100);
 
                           setTimeout(async () => {
                             await loadAssets();
-                            setScanningAssetId(null);
+                            setShowScanModal(false);
+                            setScanningAsset(null);
                             setToast({ message: `✅ Scan complete! Score: ${data.score || 'N/A'}/100`, type: 'success' });
                             setTimeout(() => setToast(null), 5000);
-                          }, 10000);
+                          }, 2000);
                         } else {
-                          setScanningAssetId(null);
-                          setToast({ message: '❌ Scan failed. Please try again.', type: 'error' });
-                          setTimeout(() => setToast(null), 5000);
+                          const errorData = await res.json().catch(() => ({ detail: 'Unknown error' }));
+                          clearInterval(phaseInterval);
+                          setScanPhase(`❌ Scan failed: ${errorData.detail || 'Server error'}`);
+                          setScanProgress(100);
+                          setTimeout(() => {
+                            setShowScanModal(false);
+                            setScanningAsset(null);
+                            setToast({ message: `❌ Scan failed: ${errorData.detail || 'Please try again'}`, type: 'error' });
+                            setTimeout(() => setToast(null), 5000);
+                          }, 3000);
                         }
-                      } catch (err) {
-                        console.error(err);
-                        setScanningAssetId(null);
-                        setToast({ message: '❌ Scan failed. Please try again.', type: 'error' });
-                        setTimeout(() => setToast(null), 5000);
+                      } catch (err: any) {
+                        console.error('❌ Scan error:', err);
+                        setScanPhase(`❌ Network error: ${err.message || 'Connection failed'}`);
+                        setScanProgress(100);
+                        setTimeout(() => {
+                          setShowScanModal(false);
+                          setScanningAsset(null);
+                          setToast({ message: '❌ Scan failed. Check connection.', type: 'error' });
+                          setTimeout(() => setToast(null), 5000);
+                        }, 3000);
                       }
                     }}
                     disabled={scanningAssetId === asset.id}
@@ -1408,6 +1454,120 @@ export default function AssetsPage() {
                 >
                   Delete
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 🔥 SCARY SCANNING MODAL WITH EPIC ANIMATIONS */}
+        {showScanModal && scanningAsset && (
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div className="relative max-w-2xl w-full">
+              {/* Animated glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 via-orange-500/20 to-yellow-500/20 rounded-3xl blur-2xl animate-pulse" />
+
+              {/* Main modal */}
+              <div className="relative cyber-card-raised p-8 overflow-hidden">
+                {/* Background matrix effect */}
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute inset-0 bg-gradient-to-b from-green-500/20 to-transparent animate-pulse" />
+                </div>
+
+                <div className="relative z-10">
+                  {/* Header with skull icon */}
+                  <div className="text-center mb-8">
+                    <div className="relative inline-block">
+                      <div className="w-24 h-24 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                        <svg className="w-16 h-16 text-red-500 animate-spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                      </div>
+                      {/* Scanning rings */}
+                      <div className="absolute inset-0 border-4 border-red-500/30 rounded-full animate-ping" />
+                      <div className="absolute inset-0 border-2 border-yellow-500/40 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+                    </div>
+
+                    <h3 className="text-3xl font-bold text-white mb-2 animate-pulse">
+                      🔴 DEEP SECURITY SCAN
+                    </h3>
+                    <p className="text-lg text-red-400 font-semibold mb-1">{scanningAsset.name}</p>
+                    <p className="text-sm text-cyber-muted">{scanningAsset.value}</p>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="mb-6">
+                    <div className="relative h-4 bg-gray-800 rounded-full overflow-hidden border border-red-500/30">
+                      <div
+                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500 transition-all duration-500 ease-out"
+                        style={{ width: `${scanProgress}%` }}
+                      >
+                        <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                      </div>
+                      {/* Scanning beam */}
+                      <div
+                        className="absolute inset-y-0 w-2 bg-white/60 blur-sm"
+                        style={{
+                          left: `${scanProgress}%`,
+                          transition: 'left 0.5s ease-out'
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-2 text-sm">
+                      <span className="text-cyber-muted">Progress</span>
+                      <span className="text-white font-bold">{scanProgress}%</span>
+                    </div>
+                  </div>
+
+                  {/* Current phase with typewriter effect */}
+                  <div className="bg-black/40 rounded-xl p-4 border border-red-500/20 mb-6">
+                    <div className="flex items-start gap-3">
+                      {/* Animated icon */}
+                      <div className="flex-shrink-0 mt-1">
+                        {scanProgress < 100 ? (
+                          <svg className="animate-spin h-6 w-6 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                        ) : scanPhase.includes('✅') ? (
+                          <span className="text-2xl">✅</span>
+                        ) : (
+                          <span className="text-2xl">❌</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-white font-mono text-sm leading-relaxed animate-pulse">
+                          {scanPhase}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Warning indicators */}
+                  <div className="grid grid-cols-3 gap-3 mb-6">
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-center">
+                      <div className="text-red-500 font-bold text-xl animate-pulse">🔍</div>
+                      <div className="text-xs text-red-400 mt-1">Scanning</div>
+                    </div>
+                    <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 text-center">
+                      <div className="text-orange-500 font-bold text-xl animate-pulse" style={{ animationDelay: '0.2s' }}>⚠️</div>
+                      <div className="text-xs text-orange-400 mt-1">Analyzing</div>
+                    </div>
+                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 text-center">
+                      <div className="text-yellow-500 font-bold text-xl animate-pulse" style={{ animationDelay: '0.4s' }}>🛡️</div>
+                      <div className="text-xs text-yellow-400 mt-1">Securing</div>
+                    </div>
+                  </div>
+
+                  {/* Footer note */}
+                  <div className="text-center">
+                    <p className="text-xs text-cyber-muted">
+                      🔒 Performing comprehensive security analysis...
+                    </p>
+                    <p className="text-xs text-cyber-muted mt-1">
+                      This may take 10-15 seconds
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
