@@ -19,6 +19,13 @@ export const metadata: Metadata = {
     icon: '/favicon.ico',
     apple: '/apple-icon.png',
   },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+  },
+  themeColor: '#0047AB',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
