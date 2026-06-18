@@ -30,16 +30,35 @@ async def get_live_metrics(
 
     Shows current state of the platform at a glance.
     """
-    # User counts
-    total_users = db.query(User).filter(User.role == UserRole.NORMAL_USER).count()
-    active_users = db.query(User).filter(
-        User.role == UserRole.NORMAL_USER,
+    # User counts - Count ALL users (including admins, agents, etc)
+    # Exclude only system accounts if needed
+    total_users = db.query(User).count()
+    active_users = db.query(User).filter(User.is_active == True).count()
+
+    # Subscription counts - Use account_type field (starter, professional, enterprise)
+    # Many users have account_type instead of Subscription records during trial
+    starter_count = db.query(User).filter(
+        User.account_type == "starter",
         User.is_active == True
     ).count()
 
-    # Subscription counts
-    active_subs = db.query(Subscription).filter(Subscription.status == "active").count()
-    trial_users = db.query(User).filter(User.trial_status == "active").count()
+    professional_count = db.query(User).filter(
+        User.account_type == "professional",
+        User.is_active == True
+    ).count()
+
+    enterprise_count = db.query(User).filter(
+        User.account_type == "enterprise",
+        User.is_active == True
+    ).count()
+
+    active_subs = starter_count + professional_count + enterprise_count
+
+    # Trial users - users with trial_status = 'active'
+    trial_users = db.query(User).filter(
+        User.trial_status == "active",
+        User.is_active == True
+    ).count()
 
     # Revenue (completed payments only)
     total_revenue = db.query(func.sum(Payment.amount)).filter(
@@ -53,23 +72,7 @@ async def get_live_metrics(
         Payment.paid_at >= first_of_month
     ).scalar() or 0
 
-    # MRR calculation (active subscriptions * plan price)
-    # Simplified: count by plan type
-    starter_count = db.query(Subscription).filter(
-        Subscription.status == "active",
-        Subscription.plan_name == "starter"
-    ).count()
-
-    professional_count = db.query(Subscription).filter(
-        Subscription.status == "active",
-        Subscription.plan_name == "professional"
-    ).count()
-
-    enterprise_count = db.query(Subscription).filter(
-        Subscription.status == "active",
-        Subscription.plan_name == "enterprise"
-    ).count()
-
+    # MRR calculation based on account_type (already counted above)
     # Calculate MRR based on current pricing
     mrr = (starter_count * 15) + (professional_count * 79) + (enterprise_count * 299)
 
@@ -84,11 +87,10 @@ async def get_live_metrics(
         Finding.resolved == False
     ).count()
 
-    # Recent signups (last 7 days)
+    # Recent signups (last 7 days) - Count ALL new users
     week_ago = datetime.utcnow() - timedelta(days=7)
     recent_signups = db.query(User).filter(
-        User.created_at >= week_ago,
-        User.role == UserRole.NORMAL_USER
+        User.created_at >= week_ago
     ).count()
 
     # Payment method breakdown
