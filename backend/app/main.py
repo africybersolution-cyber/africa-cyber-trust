@@ -29,6 +29,8 @@ app.add_middleware(
         "http://localhost:3003",  # Admin dashboard (new - cache bypass)
         "http://localhost:3004",  # Agent portal
         "https://africa-cyber-trust.vercel.app",
+        "https://www.africybertrust.com",  # Production website
+        "https://africybertrust.com",  # Production website (no www)
     ] + settings.cors_origins,  # Also include any from environment
     allow_credentials=True,
     allow_methods=["*"],
@@ -50,6 +52,8 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         "http://localhost:3003",
         "http://localhost:3004",
         "https://africa-cyber-trust.vercel.app",
+        "https://www.africybertrust.com",
+        "https://africybertrust.com",
     ]
 
     headers = {}
