@@ -45,6 +45,8 @@ export default function DashboardPage() {
   const [securityScore, setSecurityScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [assets, setAssets] = useState<any[]>([]);
+  const [showMultiScanModal, setShowMultiScanModal] = useState(false);
+  const [scanningAssets, setScanningAssets] = useState<Map<string, {name: string, progress: number, status: string, phase: string}>>(new Map());
 
   useEffect(() => {
     const fetchDashboardStats = async () => {
@@ -107,6 +109,107 @@ export default function DashboardPage() {
   const handleLogout = () => {
     logout();
     router.push('/');
+  };
+
+  const handleScanAllAssets = async () => {
+    if (assets.length === 0) {
+      alert('No assets to scan');
+      return;
+    }
+
+    setShowMultiScanModal(true);
+    const newScanningAssets = new Map();
+
+    // Initialize all assets
+    assets.forEach(asset => {
+      newScanningAssets.set(asset.id, {
+        name: asset.name,
+        progress: 0,
+        status: 'pending',
+        phase: 'Queued...'
+      });
+    });
+    setScanningAssets(new Map(newScanningAssets));
+
+    // Scan each asset
+    for (const asset of assets) {
+      try {
+        // Update to starting
+        newScanningAssets.set(asset.id, {
+          ...newScanningAssets.get(asset.id)!,
+          status: 'scanning',
+          phase: 'Initializing deep security scan...'
+        });
+        setScanningAssets(new Map(newScanningAssets));
+
+        // Simulate scanning phases
+        const phases = [
+          'Initializing deep security scan...',
+          'Analyzing SSL/TLS encryption...',
+          'Checking security headers...',
+          'Scanning for vulnerabilities...',
+          'Detecting technology stack...',
+          'Testing DNS security...',
+          'Probing for exposed services...',
+          'Analyzing threat vectors...',
+          'Generating risk assessment...',
+          'Finalizing report...'
+        ];
+
+        let phaseIndex = 0;
+        const phaseInterval = setInterval(() => {
+          if (phaseIndex < phases.length) {
+            newScanningAssets.set(asset.id, {
+              ...newScanningAssets.get(asset.id)!,
+              phase: phases[phaseIndex],
+              progress: Math.min(95, (phaseIndex + 1) * 10)
+            });
+            setScanningAssets(new Map(newScanningAssets));
+            phaseIndex++;
+          }
+        }, 1000);
+
+        const res = await fetch(`${config.apiUrl}/api/scans/assets/${asset.id}/scan`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        clearInterval(phaseInterval);
+
+        if (res.ok) {
+          const data = await res.json();
+          newScanningAssets.set(asset.id, {
+            ...newScanningAssets.get(asset.id)!,
+            status: 'complete',
+            phase: `✅ Complete! Score: ${data.score || 'N/A'}/100`,
+            progress: 100
+          });
+        } else {
+          const errorData = await res.json().catch(() => ({ detail: 'Unknown error' }));
+          newScanningAssets.set(asset.id, {
+            ...newScanningAssets.get(asset.id)!,
+            status: 'failed',
+            phase: `❌ Failed: ${errorData.detail || 'Error'}`,
+            progress: 100
+          });
+        }
+      } catch (err: any) {
+        newScanningAssets.set(asset.id, {
+          ...newScanningAssets.get(asset.id)!,
+          status: 'failed',
+          phase: `❌ Network error: ${err.message || 'Connection failed'}`,
+          progress: 100
+        });
+      }
+      setScanningAssets(new Map(newScanningAssets));
+    }
+
+    // Refresh dashboard after all scans complete
+    setTimeout(() => {
+      if (token) {
+        window.location.reload();
+      }
+    }, 3000);
   };
 
   const score = securityScore ?? 0;
@@ -229,6 +332,55 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* EPIC SCAN ALL ASSETS BUTTON */}
+            {assets.length > 0 && (
+              <div className="mb-8">
+                <button
+                  onClick={handleScanAllAssets}
+                  className="w-full cyber-card-raised p-8 group hover:scale-[1.02] transition-transform duration-300 relative overflow-hidden"
+                  style={{
+                    background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 50%, #B91C1C 100%)',
+                    boxShadow: '0 0 40px rgba(239, 68, 68, 0.4), 0 0 80px rgba(239, 68, 68, 0.2)'
+                  }}
+                >
+                  {/* Animated background effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 via-orange-500/20 to-yellow-500/20 animate-pulse" />
+
+                  {/* Scanning rings */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="absolute w-32 h-32 border-4 border-red-400/30 rounded-full animate-ping" />
+                    <div className="absolute w-48 h-48 border-2 border-yellow-400/20 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+                  </div>
+
+                  <div className="relative z-10 flex items-center justify-center gap-4">
+                    {/* Icon */}
+                    <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center group-hover:rotate-180 transition-transform duration-500">
+                      <svg className="w-10 h-10 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    </div>
+
+                    {/* Text */}
+                    <div className="text-left">
+                      <div className="text-3xl font-bold text-white mb-1 flex items-center gap-3">
+                        <span>🚨 DEEP SCAN ALL ASSETS</span>
+                      </div>
+                      <div className="text-white/90 font-medium">
+                        Comprehensive security analysis of {assets.length} asset{assets.length !== 1 ? 's' : ''} • ~{assets.length * 10} seconds
+                      </div>
+                    </div>
+
+                    {/* Arrow */}
+                    <div className="ml-auto">
+                      <svg className="w-8 h-8 text-white group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            )}
+
             {/* Risk trend (illustrative) */}
             <div className="cyber-card-raised p-6 mb-8">
               <div className="flex items-center justify-between mb-6">
@@ -343,6 +495,133 @@ export default function DashboardPage() {
 
         </div>
       </div>
+
+      {/* 🔥 MULTI-ASSET SCANNING MODAL */}
+      {showMultiScanModal && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="relative max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Animated glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 via-orange-500/20 to-yellow-500/20 rounded-3xl blur-2xl animate-pulse" />
+
+            {/* Main modal */}
+            <div className="relative cyber-card-raised p-8 max-h-[90vh] overflow-y-auto">
+              {/* Background matrix effect */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute inset-0 bg-gradient-to-b from-red-500/20 to-transparent animate-pulse" />
+              </div>
+
+              <div className="relative z-10">
+                {/* Header */}
+                <div className="text-center mb-8">
+                  <div className="relative inline-block">
+                    <div className="w-24 h-24 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                      <svg className="w-16 h-16 text-red-500 animate-spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    </div>
+                    {/* Scanning rings */}
+                    <div className="absolute inset-0 border-4 border-red-500/30 rounded-full animate-ping" />
+                    <div className="absolute inset-0 border-2 border-yellow-500/40 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+                  </div>
+
+                  <h3 className="text-3xl font-bold text-white mb-2 animate-pulse">
+                    🔴 DEEP SECURITY SCAN IN PROGRESS
+                  </h3>
+                  <p className="text-lg text-red-400 font-semibold">Scanning {scanningAssets.size} Assets Simultaneously</p>
+                </div>
+
+                {/* Asset scan progress list */}
+                <div className="space-y-4 mb-6">
+                  {Array.from(scanningAssets.entries()).map(([assetId, asset]) => (
+                    <div key={assetId} className="bg-black/40 rounded-xl p-4 border border-red-500/20">
+                      <div className="flex items-start gap-3 mb-3">
+                        {/* Status icon */}
+                        <div className="flex-shrink-0 mt-1">
+                          {asset.status === 'pending' && (
+                            <div className="w-6 h-6 bg-gray-500/20 rounded-full flex items-center justify-center">
+                              <span className="text-sm">⏳</span>
+                            </div>
+                          )}
+                          {asset.status === 'scanning' && (
+                            <svg className="animate-spin h-6 w-6 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                          )}
+                          {asset.status === 'complete' && <span className="text-2xl">✅</span>}
+                          {asset.status === 'failed' && <span className="text-2xl">❌</span>}
+                        </div>
+
+                        {/* Asset info */}
+                        <div className="flex-1">
+                          <div className="text-white font-semibold mb-1">{asset.name}</div>
+                          <div className="text-sm text-cyber-muted font-mono animate-pulse">
+                            {asset.phase}
+                          </div>
+                        </div>
+
+                        {/* Progress percentage */}
+                        <div className="text-right">
+                          <div className="text-white font-bold text-lg">{asset.progress}%</div>
+                        </div>
+                      </div>
+
+                      {/* Progress bar */}
+                      <div className="relative h-2 bg-gray-800 rounded-full overflow-hidden">
+                        <div
+                          className={`absolute inset-y-0 left-0 transition-all duration-500 ease-out ${
+                            asset.status === 'complete' ? 'bg-gradient-to-r from-green-600 via-green-500 to-emerald-500' :
+                            asset.status === 'failed' ? 'bg-gradient-to-r from-red-600 via-red-500 to-orange-500' :
+                            'bg-gradient-to-r from-red-600 via-orange-500 to-yellow-500'
+                          }`}
+                          style={{ width: `${asset.progress}%` }}
+                        >
+                          <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Summary stats */}
+                <div className="grid grid-cols-3 gap-3 mb-6">
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 text-center">
+                    <div className="text-blue-500 font-bold text-xl">{Array.from(scanningAssets.values()).filter(a => a.status === 'scanning').length}</div>
+                    <div className="text-xs text-blue-400 mt-1">Scanning</div>
+                  </div>
+                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 text-center">
+                    <div className="text-green-500 font-bold text-xl">{Array.from(scanningAssets.values()).filter(a => a.status === 'complete').length}</div>
+                    <div className="text-xs text-green-400 mt-1">Complete</div>
+                  </div>
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-center">
+                    <div className="text-red-500 font-bold text-xl">{Array.from(scanningAssets.values()).filter(a => a.status === 'failed').length}</div>
+                    <div className="text-xs text-red-400 mt-1">Failed</div>
+                  </div>
+                </div>
+
+                {/* Close button (only show when all scans are done) */}
+                {Array.from(scanningAssets.values()).every(a => a.status === 'complete' || a.status === 'failed') && (
+                  <div className="text-center">
+                    <button
+                      onClick={() => setShowMultiScanModal(false)}
+                      className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold transition-all"
+                    >
+                      Close & View Results
+                    </button>
+                  </div>
+                )}
+
+                {/* Footer note */}
+                <div className="text-center mt-4">
+                  <p className="text-xs text-cyber-muted">
+                    🔒 Deep security analysis in progress...
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
