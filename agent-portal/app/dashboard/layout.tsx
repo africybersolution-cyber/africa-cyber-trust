@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 export default function DashboardLayout({
   children,
 }: {
-  children: React.Node;
+  children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const router = useRouter();
