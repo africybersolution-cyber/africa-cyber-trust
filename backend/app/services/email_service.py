@@ -418,99 +418,124 @@ https://www.africybertrust.com/dashboard/assets
         to_email: str,
         reset_link: str
     ) -> bool:
-        """Send password reset email."""
+        """Send password reset email via SendGrid (primary) or SMTP (fallback)."""
+
+        # Email HTML content
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #0047AB 0%, #DAA520 100%);
+                          color: white; padding: 30px; text-align: center; border-radius: 10px; }}
+                .content {{ background: #f9f9f9; padding: 30px; margin: 20px 0; border-radius: 10px; }}
+                .button {{ display: inline-block; background: linear-gradient(135deg, #0047AB 0%, #DAA520 100%);
+                          color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px;
+                          font-weight: bold; margin: 20px 0; }}
+                .footer {{ text-align: center; color: #666; font-size: 12px; margin-top: 20px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🔐 Password Reset Request</h1>
+                </div>
+
+                <div class="content">
+                    <h2>Reset Your Password</h2>
+                    <p>Hello,</p>
+                    <p>You requested to reset your password for Africa Cyber Trust Infrastructure.</p>
+                    <p>Click the button below to reset your password:</p>
+
+                    <center>
+                        <a href="{reset_link}" class="button">
+                            Reset Password
+                        </a>
+                    </center>
+
+                    <p><strong>This link will expire in 1 hour.</strong></p>
+
+                    <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                        If you didn't request this, please ignore this email.
+                        Your password will remain unchanged.
+                    </p>
+                </div>
+
+                <div class="footer">
+                    <p>© 2026 Africa Cyber Trust Infrastructure</p>
+                    <p>Building trusted digital infrastructure for Africa</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        # Plain text fallback
+        text_content = f"""
+        Password Reset Request - Africa Cyber Trust Infrastructure
+
+        You requested to reset your password.
+
+        Click this link to reset your password:
+        {reset_link}
+
+        This link will expire in 1 hour.
+
+        If you didn't request this, ignore this email.
+
+        © 2026 Africa Cyber Trust Infrastructure
+        """
+
+        # Try SendGrid first (works on Render)
+        if SENDGRID_AVAILABLE and EmailService.SENDGRID_API_KEY:
+            try:
+                print(f"[EMAIL] Attempting to send password reset via SendGrid to {to_email}")
+                message = Mail(
+                    from_email=Email(EmailService.SENDER_EMAIL, "Africa Cyber Trust"),
+                    to_emails=To(to_email),
+                    subject="Reset Your Password - Africa Cyber Trust",
+                    plain_text_content=Content("text/plain", text_content),
+                    html_content=Content("text/html", html_content)
+                )
+
+                sg = SendGridAPIClient(EmailService.SENDGRID_API_KEY)
+                response = sg.send(message)
+
+                print(f"[EMAIL] SendGrid success! Password reset sent. Status: {response.status_code}")
+                return True
+
+            except Exception as e:
+                print(f"[EMAIL] SendGrid failed: {str(e)}")
+                print(f"[EMAIL] Falling back to SMTP...")
+
+        # Fallback to SMTP (works locally)
         try:
-            # Create message
+            print(f"[EMAIL] Attempting to send password reset via SMTP to {to_email}")
             message = MIMEMultipart("alternative")
             message["Subject"] = "Reset Your Password - Africa Cyber Trust"
             message["From"] = f"Africa Cyber Trust <{EmailService.SENDER_EMAIL}>"
             message["To"] = to_email
 
-            # Email HTML content
-            html = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                    .header {{ background: linear-gradient(135deg, #0047AB 0%, #DAA520 100%);
-                              color: white; padding: 30px; text-align: center; border-radius: 10px; }}
-                    .content {{ background: #f9f9f9; padding: 30px; margin: 20px 0; border-radius: 10px; }}
-                    .button {{ display: inline-block; background: linear-gradient(135deg, #0047AB 0%, #DAA520 100%);
-                              color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px;
-                              font-weight: bold; margin: 20px 0; }}
-                    .footer {{ text-align: center; color: #666; font-size: 12px; margin-top: 20px; }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>🔐 Password Reset Request</h1>
-                    </div>
-
-                    <div class="content">
-                        <h2>Reset Your Password</h2>
-                        <p>Hello,</p>
-                        <p>You requested to reset your password for Africa Cyber Trust Infrastructure.</p>
-                        <p>Click the button below to reset your password:</p>
-
-                        <center>
-                            <a href="{reset_link}" class="button">
-                                Reset Password
-                            </a>
-                        </center>
-
-                        <p><strong>This link will expire in 1 hour.</strong></p>
-
-                        <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                            If you didn't request this, please ignore this email.
-                            Your password will remain unchanged.
-                        </p>
-                    </div>
-
-                    <div class="footer">
-                        <p>© 2026 Africa Cyber Trust Infrastructure</p>
-                        <p>Building trusted digital infrastructure for Africa</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
-
-            # Plain text fallback
-            text = f"""
-            Password Reset Request - Africa Cyber Trust Infrastructure
-
-            You requested to reset your password.
-
-            Click this link to reset your password:
-            {reset_link}
-
-            This link will expire in 1 hour.
-
-            If you didn't request this, ignore this email.
-
-            © 2026 Africa Cyber Trust Infrastructure
-            """
-
-            # Attach both HTML and plain text versions
-            part1 = MIMEText(text, "plain")
-            part2 = MIMEText(html, "html")
+            part1 = MIMEText(text_content, "plain")
+            part2 = MIMEText(html_content, "html")
             message.attach(part1)
             message.attach(part2)
 
-            # Send via SMTP
-            with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT) as server:
+            with smtplib.SMTP(EmailService.SMTP_SERVER, EmailService.SMTP_PORT, timeout=10) as server:
                 server.starttls()
                 server.login(EmailService.SENDER_EMAIL, EmailService.SENDER_PASSWORD)
                 server.send_message(message)
 
-            print(f"[EMAIL] Password reset email sent to {to_email}")
+            print(f"[EMAIL] SMTP success! Password reset sent.")
             return True
 
         except Exception as e:
             print(f"[EMAIL] Failed to send password reset email: {str(e)}")
+            print(f"        Error type: {type(e).__name__}")
+            import traceback
+            print(f"        Traceback: {traceback.format_exc()}")
             return False
 
     @staticmethod
