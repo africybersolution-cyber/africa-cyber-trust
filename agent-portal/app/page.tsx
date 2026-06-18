@@ -17,12 +17,17 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // Backend expects form data (OAuth2PasswordRequestForm) not JSON
+      const formData = new URLSearchParams();
+      formData.append("username", email); // OAuth2 uses "username" field
+      formData.append("password", password);
+
       const response = await fetch(
         "https://africa-cyber-trust.onrender.com/api/auth/login",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: formData.toString(),
         }
       );
 
@@ -90,9 +95,17 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <a
+                href="/forgot-password"
+                className="text-sm text-blue-600 hover:text-blue-700"
+              >
+                Forgot password?
+              </a>
+            </div>
             <input
               type="password"
               value={password}

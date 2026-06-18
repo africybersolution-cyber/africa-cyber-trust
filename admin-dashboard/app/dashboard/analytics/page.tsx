@@ -22,12 +22,9 @@ export default function AnalyticsPage() {
     }
 
     try {
-      // Load all analytics in parallel
-      const [revenueRes, growthRes, customersRes] = await Promise.all([
-        fetch("https://africa-cyber-trust.onrender.com/api/admin/analytics/revenue", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch("https://africa-cyber-trust.onrender.com/api/admin/analytics/user-growth", {
+      // Load live metrics (has all the data we need!)
+      const [metricsRes, customersRes] = await Promise.all([
+        fetch("https://africa-cyber-trust.onrender.com/api/admin/analytics/live-metrics", {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch("https://africa-cyber-trust.onrender.com/api/admin/analytics/top-customers?limit=10", {
@@ -35,19 +32,31 @@ export default function AnalyticsPage() {
         }),
       ]);
 
-      if (revenueRes.ok) {
-        const data = await revenueRes.json();
-        setRevenue(data);
-      }
+      if (metricsRes.ok) {
+        const data = await metricsRes.json();
+        // Map live-metrics data to expected structure
+        setRevenue({
+          total_all_time: data.revenue?.total_all_time || 0,
+          this_month: data.revenue?.this_month || 0,
+          last_month: 0, // Not in live-metrics, would need separate endpoint
+          mrr: data.revenue?.mrr || 0,
+          by_method: {
+            mobile_money: data.payments?.mobile_money || 0,
+            crypto: data.payments?.crypto || 0,
+          },
+        });
 
-      if (growthRes.ok) {
-        const data = await growthRes.json();
-        setGrowth(data);
+        setGrowth({
+          total_users: data.users?.total || 0,
+          last_7_days: data.users?.recent_signups_7d || 0,
+          last_30_days: 0, // Not available in live-metrics
+          last_90_days: 0, // Not available in live-metrics
+        });
       }
 
       if (customersRes.ok) {
         const data = await customersRes.json();
-        setTopCustomers(data.customers || []);
+        setTopCustomers(data.top_customers || []);
       }
     } catch (error) {
       console.error("Failed to load analytics:", error);
@@ -225,7 +234,7 @@ export default function AnalyticsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                          {customer.plan_name || "N/A"}
+                          {customer.account_type || "N/A"}
                         </span>
                       </td>
                     </tr>
