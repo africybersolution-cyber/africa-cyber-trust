@@ -367,7 +367,7 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
     """
     try:
         import secrets
-        from datetime import datetime as dt, timedelta
+        from datetime import datetime as dt, timedelta, timezone
         import traceback
 
         print(f"\n[FORGOT-PASSWORD] Starting for email: {request.email}")
@@ -385,9 +385,9 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
         reset_token = secrets.token_urlsafe(32)
         print(f"[FORGOT-PASSWORD] Token generated")
 
-        # Store token in user record (expires in 1 hour)
+        # Store token in user record (expires in 1 hour) - use timezone-aware datetime
         user.reset_token = reset_token
-        user.reset_token_expires = dt.utcnow() + timedelta(hours=1)
+        user.reset_token_expires = dt.now(timezone.utc) + timedelta(hours=1)
         print(f"[FORGOT-PASSWORD] About to commit to database...")
         db.commit()
         print(f"[FORGOT-PASSWORD] Database commit successful!")
@@ -437,7 +437,7 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
     """
     Reset password using reset token from email.
     """
-    from datetime import datetime
+    from datetime import datetime, timezone
     from app.services.auth_service import AuthService
 
     # Find user with this reset token
@@ -449,8 +449,8 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
             detail="Invalid or expired reset token"
         )
 
-    # Check if token is expired
-    if not user.reset_token_expires or user.reset_token_expires < datetime.utcnow():
+    # Check if token is expired (use timezone-aware datetime)
+    if not user.reset_token_expires or user.reset_token_expires < datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Reset token has expired. Please request a new one."
