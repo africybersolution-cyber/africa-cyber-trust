@@ -33,14 +33,19 @@ class AgentService:
         Returns:
             Created Agent object with status='pending'
         """
-        # Generate unique referral code
+        # Generate unique referral code (8 chars, random)
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             raise ValueError("User not found")
 
-        # Use first 8 chars of name + random number
-        base_code = user.name[:3].upper().replace(" ", "") + str(uuid.uuid4())[:5].upper()
-        referral_code = base_code
+        # Generate random 8-char code with uniqueness check
+        import random
+        import string
+        referral_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+
+        # Ensure uniqueness (prevents unique-constraint crash)
+        while db.query(Agent).filter(Agent.referral_code == referral_code).first():
+            referral_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
 
         # Find parent agent if code provided
         parent_agent = None
@@ -167,6 +172,11 @@ class AgentService:
         if not agent:
             return commissions
 
+        # Block self-referral (customer referring themselves)
+        if agent.user_id == payment.user_id:
+            print(f"[COMMISSION] Blocked self-referral: agent {agent.id} = customer {payment.user_id}")
+            return commissions
+
         # 1. Direct commission
         direct_commission = AgentService.calculate_commission(
             db, payment, agent, "direct"
@@ -187,19 +197,20 @@ class AgentService:
                 if override_commission:
                     commissions.append(override_commission)
 
-        # 3. Country manager bonus
-        country_manager = db.query(Agent).filter(
-            Agent.country == payment.country,
-            Agent.is_country_manager == True,
-            Agent.status == "approved"
-        ).first()
+        # 3. Country manager bonus (only if payment has country set)
+        if payment.country:
+            country_manager = db.query(Agent).filter(
+                Agent.country == payment.country,
+                Agent.is_country_manager == True,
+                Agent.status == "approved"
+            ).first()
 
-        if country_manager and country_manager.id != agent.id:
-            cm_commission = AgentService.calculate_commission(
-                db, payment, country_manager, "country_manager_bonus"
-            )
-            if cm_commission:
-                commissions.append(cm_commission)
+            if country_manager and country_manager.id != agent.id:
+                cm_commission = AgentService.calculate_commission(
+                    db, payment, country_manager, "country_manager_bonus"
+                )
+                if cm_commission:
+                    commissions.append(cm_commission)
 
         # Send WhatsApp notifications to agents who earned commissions
         for commission in commissions:

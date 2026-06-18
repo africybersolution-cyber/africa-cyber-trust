@@ -92,8 +92,21 @@ class AuthService:
         if existing_user:
             raise ValueError("User with this email already exists")
 
-        # Normalize referral code (agent referral codes are stored uppercase)
+        # Normalize and validate referral code (agent referral codes are stored uppercase)
         normalized_ref = referred_by_code.strip().upper() if referred_by_code else None
+
+        # Validate referral code if provided - only accept approved agents
+        if normalized_ref:
+            from app.models.agent import Agent
+            referring_agent = db.query(Agent).filter(
+                Agent.referral_code == normalized_ref,
+                Agent.status == "approved"
+            ).first()
+
+            # If invalid/unapproved code, clear it (don't silently lose customer's referral)
+            if not referring_agent:
+                print(f"[SIGNUP] Invalid/unapproved referral code: {normalized_ref} - clearing")
+                normalized_ref = None
 
         # Create user
         hashed_password = AuthService.hash_password(password)
