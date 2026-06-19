@@ -171,7 +171,8 @@ async def check_for_breaches(
         check.status = "failed"
         check.error_message = str(e)
         db.commit()
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Breach check error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Breach check failed. Please try again.")
 
 
 @router.get("/history")

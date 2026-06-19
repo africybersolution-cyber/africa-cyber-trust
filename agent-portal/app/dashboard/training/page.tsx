@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import DOMPurify from "isomorphic-dompurify";
 
 export default function TrainingPage() {
   const [courses, setCourses] = useState<any[]>([]);
@@ -353,7 +354,7 @@ export default function TrainingPage() {
                   <div
                     className="prose max-w-none"
                     dangerouslySetInnerHTML={{
-                      __html: selectedCourse.content_html,
+                      __html: DOMPurify.sanitize(selectedCourse.content_html),
                     }}
                   />
                 </div>

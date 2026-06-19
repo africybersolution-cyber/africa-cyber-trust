@@ -148,7 +148,9 @@ async def signup(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Signup failed: {str(e)}")
+        # Log the error but don't expose internal details to client
+        print(f"Signup error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Signup failed. Please try again later.")
 
 
 @router.get("/trial-status")
@@ -262,7 +264,9 @@ async def register_business(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
+        # Log the error but don't expose internal details to client
+        print(f"Registration error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Registration failed. Please try again later.")
 
 
 @router.post("/login")

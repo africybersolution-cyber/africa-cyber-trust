@@ -54,7 +54,8 @@ async def verify_company(
         }
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Company verification error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Company verification failed. Please try again.")
 
 
 @router.get("/reports")

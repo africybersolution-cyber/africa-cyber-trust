@@ -526,7 +526,7 @@ async def process_payout(
         payout.processed_by = admin.id
         payout.transaction_reference = request.transaction_reference
 
-        # Mark commissions as paid (accumulate until we match payout amount)
+        # Mark commissions as paid (only mark commissions that can be fully covered)
         pending_commissions = db.query(Commission).filter(
             Commission.agent_id == payout.agent_id,
             Commission.status == "pending"
@@ -534,12 +534,16 @@ async def process_payout(
 
         remaining_amount = float(payout.amount)
         for commission in pending_commissions:
-            if remaining_amount <= 0:
-                break
+            commission_amount = float(commission.commission_amount)
 
-            commission.status = "paid"
-            commission.paid_at = datetime.utcnow()
-            remaining_amount -= float(commission.commission_amount)
+            # Only mark as paid if we can fully cover this commission
+            if commission_amount <= remaining_amount:
+                commission.status = "paid"
+                commission.paid_at = datetime.utcnow()
+                remaining_amount -= commission_amount
+            else:
+                # Stop when we can't fully cover the next commission
+                break
 
         # Send WhatsApp notification for approved payout
         agent = db.query(Agent).filter(Agent.id == payout.agent_id).first()

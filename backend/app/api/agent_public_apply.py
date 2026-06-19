@@ -46,7 +46,7 @@ async def apply_as_agent_public(
         if existing_agent:
             raise HTTPException(
                 status_code=400,
-                detail=f"An agent application already exists for this email with status: {existing_agent.status}"
+                detail="An agent application already exists for this email. Please check your email for updates."
             )
 
     # Validate country code

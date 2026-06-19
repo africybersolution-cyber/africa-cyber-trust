@@ -48,7 +48,8 @@ async def verify_photo(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Photo verification failed: {str(e)}")
+        print(f"Photo verification error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Photo verification failed. Please try again.")
 
 
 @router.post("/video")
@@ -89,7 +90,8 @@ async def verify_video(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Video verification failed: {str(e)}")
+        print(f"Video verification error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Video verification failed. Please try again.")
 
 
 @router.post("/photo/upload")
@@ -141,7 +143,8 @@ async def upload_photo_for_verification(
         print(f"[ERROR] Photo verification error: {str(e)}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Photo verification failed: {str(e)}")
+        print(f"Photo verification error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Photo verification failed. Please try again.")
 
 
 @router.post("/video/upload")
@@ -178,4 +181,5 @@ async def upload_video_for_verification(
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Video verification failed: {str(e)}")
+        print(f"Video verification error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Video verification failed. Please try again.")

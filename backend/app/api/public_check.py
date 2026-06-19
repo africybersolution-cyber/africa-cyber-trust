@@ -153,7 +153,8 @@ async def check_url(
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Security scan failed: {str(e)}")
+        print(f"Security scan error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Security scan failed. Please try again.")
 
 
 @router.post("/app", response_model=PublicCheckResponse)

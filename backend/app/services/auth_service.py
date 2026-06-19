@@ -60,11 +60,19 @@ class AuthService:
     def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
         """Authenticate a user with email and password."""
         user = db.query(User).filter(User.email == email).first()
+
+        # Always perform a dummy bcrypt verify to prevent timing attacks
+        dummy_hash = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYbYtkHxnye"  # bcrypt hash of "dummy"
+
         if not user:
+            # Perform dummy verification to maintain constant time
+            AuthService.verify_password(password, dummy_hash)
             return None
 
         # Check if user has a hashed_password field
         if not hasattr(user, 'hashed_password') or not user.hashed_password:
+            # Perform dummy verification to maintain constant time
+            AuthService.verify_password(password, dummy_hash)
             return None
 
         if not AuthService.verify_password(password, user.hashed_password):

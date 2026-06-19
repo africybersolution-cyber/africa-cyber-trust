@@ -94,7 +94,7 @@ async def create_asset(
         import traceback
         traceback.print_exc()
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to create asset: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create asset. Please try again.")
 
     return {
         "id": str(asset.id),
@@ -219,7 +219,8 @@ async def scan_asset(
             raise HTTPException(status_code=501, detail="Mobile app scanning not yet implemented")
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Scan failed: {str(e)}")
+        print(f"Scan error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Scan failed. Please try again.")
 
 
 @router.post("/{asset_id}/verify/start")
@@ -465,7 +466,7 @@ async def check_verification(
         history.error_message = str(e)
         db.commit()
 
-        raise HTTPException(status_code=500, detail=f"Verification check failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Verification check failed. Please try again.")
 
 
 @router.options("/{asset_id}/verify/email/send")
