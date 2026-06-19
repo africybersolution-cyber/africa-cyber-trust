@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { setupTokenRefresh } from "../lib/auth-refresh";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -26,6 +27,7 @@ export default function LoginPage() {
         "https://africa-cyber-trust.onrender.com/api/auth/login",
         {
           method: "POST",
+          credentials: "include", // Send/receive cookies
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: formData.toString(),
         }
@@ -37,6 +39,11 @@ export default function LoginPage() {
         // Store token and user data
         localStorage.setItem("agent_token", data.access_token);
         localStorage.setItem("agent_user", JSON.stringify(data.user));
+
+        // Setup automatic token refresh
+        setupTokenRefresh((newToken) => {
+          localStorage.setItem("agent_token", newToken);
+        });
 
         // Redirect to dashboard
         router.push("/dashboard");

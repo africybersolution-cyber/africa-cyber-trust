@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { setupTokenRefresh } from "../lib/auth-refresh";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -23,6 +24,7 @@ export default function AdminLogin() {
 
       const response = await fetch("https://africa-cyber-trust.onrender.com/api/auth/login", {
         method: "POST",
+        credentials: "include", // Send/receive cookies
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: formData,
       });
@@ -39,6 +41,11 @@ export default function AdminLogin() {
         // Store token
         localStorage.setItem("admin_token", data.access_token);
         localStorage.setItem("admin_user", JSON.stringify(data.user));
+
+        // Setup automatic token refresh
+        setupTokenRefresh((newToken) => {
+          localStorage.setItem("admin_token", newToken);
+        });
 
         // Redirect to dashboard
         router.push("/dashboard");
