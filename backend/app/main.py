@@ -3,15 +3,15 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.core.config import settings
-from app.api import public_check, auth, company, assets, scans, ai_verify, payments, company_verification, admin, email_verification, alerts, team, admin_fix_users, breaches, trust_badge, remediation, cve_enrichment, free_trust_score, admin_users, admin_analytics, admin_audit, admin_assets, admin_payments, admin_setup, run_migration, agents, admin_agents, admin_fraud, admin_training, admin_whatsapp, agent_training, agent_public_apply
+from app.api import public_check, auth, company, assets, scans, ai_verify, payments, company_verification, admin, email_verification, alerts, team, breaches, trust_badge, remediation, cve_enrichment, free_trust_score, admin_users, admin_analytics, admin_audit, admin_assets, admin_payments, agents, admin_agents, admin_fraud, admin_training, admin_whatsapp, agent_training, agent_public_apply
 
 # Create FastAPI application
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.VERSION,
     description="AI-Powered Cybersecurity Trust, Background Check, and Monitoring Platform",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
     # Do NOT 307-redirect a trailing-slash mismatch. A cross-origin redirect
     # strips the CORS headers and the browser aborts with "Failed to fetch".
     # With this off + the strip_trailing_slash middleware below, "/api/assets/"
@@ -241,9 +241,6 @@ app.include_router(admin_agents.router, tags=["Admin - Agents"])  # Agent approv
 app.include_router(admin_fraud.router, tags=["Admin - Fraud Detection"])  # Fraud detection & prevention
 app.include_router(admin_training.router, tags=["Admin - Training"])  # Agent training courses
 app.include_router(admin_whatsapp.router, tags=["Admin - WhatsApp"])  # WhatsApp notifications
-app.include_router(admin_fix_users.router, prefix="/api", tags=["Admin Setup"])  # One-time user fix
-app.include_router(admin_setup.router, prefix="/api", tags=["Admin Setup"])  # One-time super admin setup
-app.include_router(run_migration.router, prefix="/api", tags=["Admin Setup"])  # One-time migration runner
 app.include_router(assets.router, prefix="/api/assets", tags=["Assets"])  # Asset management
 app.include_router(scans.router, prefix="/api/scans", tags=["Scans"])
 app.include_router(email_verification.router, prefix="/api/email-verification", tags=["Email Verification"])
