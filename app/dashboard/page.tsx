@@ -93,9 +93,8 @@ export default function DashboardPage() {
             criticalAlerts: critical,
           });
 
-          // 🔥 AUTO-TRIGGER SCARY SCANNING ANIMATION on first load
-          if (list.length > 0 && !sessionStorage.getItem('dashboard_scanned')) {
-            sessionStorage.setItem('dashboard_scanned', 'true');
+          // 🔥 AUTO-TRIGGER SCARY SCANNING ANIMATION every time dashboard loads
+          if (list.length > 0) {
             // Trigger scan with the loaded assets list
             setTimeout(() => {
               triggerAutoScan(list);
