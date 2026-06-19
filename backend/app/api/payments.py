@@ -53,13 +53,13 @@ async def initiate_payment(
     """Initiate mobile money payment with local currency pricing."""
 
     # Validate plan name
-    if request.plan_name not in ['personal', 'professional']:
-        raise HTTPException(status_code=400, detail="Invalid plan. Choose 'personal' or 'professional'")
+    if request.plan_name not in ['starter', 'professional', 'enterprise']:
+        raise HTTPException(status_code=400, detail="Invalid plan. Choose 'starter', 'professional', or 'enterprise'")
 
     # Get pricing for country with live exchange rates
     try:
         country_pricing = await PricingService.get_country_pricing(request.country)
-        amount = country_pricing[request.plan_name]  # Get personal or professional price
+        amount = country_pricing[request.plan_name]  # Get starter, professional, or enterprise price
         currency = country_pricing["currency"]
     except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=f"Pricing not available for {request.country}")
@@ -357,6 +357,18 @@ async def verify_crypto_payment(
             "verified": True,
             "message": "Payment already verified and processed"
         }
+
+    # 🚨 SECURITY: Check if transaction hash has already been used (prevent replay attacks)
+    existing_payment_with_hash = db.query(Payment).filter(
+        Payment.external_reference == request.transaction_hash,
+        Payment.status == "completed"
+    ).first()
+
+    if existing_payment_with_hash:
+        raise HTTPException(
+            status_code=400,
+            detail="Transaction hash already used for another payment. Each crypto transaction can only be used once."
+        )
 
     # Extract token symbol from provider field
     token_symbol = payment.provider.split('_')[1] if '_' in payment.provider else 'USDT'

@@ -172,7 +172,6 @@ async def get_payment_details(
         "created_at": payment.created_at.isoformat() if payment.created_at else None,
         "paid_at": payment.paid_at.isoformat() if payment.paid_at else None,
         "external_reference": payment.external_reference,
-        "callback_data": payment.callback_data,
         "subscription": {
             "id": str(subscription.id),
             "plan_name": subscription.plan_name,
