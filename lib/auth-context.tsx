@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { setupTokenRefresh, stopTokenRefresh } from './auth-refresh';
 
 interface User {
   id: string;
@@ -77,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
+      credentials: 'include', // Send/receive cookies
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
@@ -107,11 +109,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('auth_user', JSON.stringify(data.user));
 
     console.log('💾 Saved to localStorage');
+
+    // Setup automatic token refresh
+    setupTokenRefresh((newToken) => {
+      setToken(newToken);
+      localStorage.setItem('auth_token', newToken);
+    });
   };
 
   const signup = async (email: string, password: string, name: string, account_type: string = 'personal', referral_code?: string) => {
     const response = await fetch(`${API_URL}/api/auth/signup`, {
       method: 'POST',
+      credentials: 'include', // Send/receive cookies
       headers: {
         'Content-Type': 'application/json',
       },
@@ -129,11 +138,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     localStorage.setItem('auth_token', data.access_token);
     localStorage.setItem('auth_user', JSON.stringify(data.user));
+
+    // Setup automatic token refresh
+    setupTokenRefresh((newToken) => {
+      setToken(newToken);
+      localStorage.setItem('auth_token', newToken);
+    });
   };
 
   const registerBusiness = async (data: BusinessRegistrationData) => {
     const response = await fetch(`${API_URL}/api/auth/register-business`, {
       method: 'POST',
+      credentials: 'include', // Send/receive cookies
       headers: {
         'Content-Type': 'application/json',
       },
@@ -153,9 +169,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('auth_token', result.access_token);
     localStorage.setItem('auth_user', JSON.stringify(result.user));
     localStorage.setItem('auth_company', JSON.stringify(result.company));
+
+    // Setup automatic token refresh
+    setupTokenRefresh((newToken) => {
+      setToken(newToken);
+      localStorage.setItem('auth_token', newToken);
+    });
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Stop token refresh
+    stopTokenRefresh();
+
+    // Call backend logout to revoke refresh token
+    try {
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include', // Send cookies
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Continue with local logout even if backend call fails
+    }
+
+    // Clear local state
     setToken(null);
     setUser(null);
     setCompany(null);
