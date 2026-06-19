@@ -93,8 +93,9 @@ export default function DashboardPage() {
             criticalAlerts: critical,
           });
 
-          // 🔥 AUTO-TRIGGER SCARY SCANNING ANIMATION every time dashboard loads
-          if (list.length > 0) {
+          // 🔥 AUTO-TRIGGER SCARY SCANNING ANIMATION only on first visit after login
+          if (list.length > 0 && !sessionStorage.getItem('dashboard_scanned')) {
+            sessionStorage.setItem('dashboard_scanned', 'true');
             // Trigger scan with the loaded assets list
             setTimeout(() => {
               triggerAutoScan(list);
