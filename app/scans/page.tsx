@@ -465,6 +465,92 @@ export default function ScansPage() {
                 ))}
                   </div>
                 </div>
+
+                {/* TWO-BUTTON CHOICE: Fix Guide or Contact for Quote */}
+                <div className="mt-8 bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-8 border-2 border-blue-500/30">
+                  <h3 className="text-xl font-bold text-white text-center mb-2">
+                    How Would You Like to Fix These Issues?
+                  </h3>
+                  <p className="text-cyber-muted text-center text-sm mb-6">
+                    Choose the option that works best for you
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Option 1: Fix with Guide */}
+                    <div className="bg-green-500/10 border-2 border-green-500/30 rounded-xl p-6 hover:border-green-500/50 transition-all cursor-pointer">
+                      <div className="text-center">
+                        <div className="text-5xl mb-4">📖</div>
+                        <h4 className="text-lg font-bold text-white mb-2">
+                          Fix with Our Guide
+                        </h4>
+                        <p className="text-cyber-muted text-sm mb-4">
+                          Get detailed step-by-step instructions
+                        </p>
+                        <ul className="text-left space-y-2 mb-4 text-sm">
+                          <li className="flex items-center gap-2 text-green-400">
+                            <span>✓</span>
+                            <span>Specific to YOUR scan results</span>
+                          </li>
+                          <li className="flex items-center gap-2 text-green-400">
+                            <span>✓</span>
+                            <span>Code examples (copy-paste ready)</span>
+                          </li>
+                          <li className="flex items-center gap-2 text-green-400">
+                            <span>✓</span>
+                            <span>Fix at your own pace</span>
+                          </li>
+                        </ul>
+                        <div className="text-2xl font-bold text-green-400 mb-4">
+                          FREE
+                        </div>
+                        <div className="text-xs text-cyber-muted mb-4">
+                          Recommendations shown above ↑
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Option 2: Professional Service */}
+                    <div className="bg-blue-500/10 border-2 border-blue-500/30 rounded-xl p-6 hover:border-blue-500/50 transition-all cursor-pointer"
+                         onClick={() => window.location.href = `mailto:services@africacybertrust.com?subject=Service Request - ${selectedScan.asset_name}&body=I need help fixing ${findings.length} vulnerabilities in my ${selectedScan.asset_name}. Security Score: ${selectedScan.score}/100`}>
+                      <div className="text-center">
+                        <div className="text-5xl mb-4">🛠️</div>
+                        <h4 className="text-lg font-bold text-white mb-2">
+                          We Fix It For You
+                        </h4>
+                        <p className="text-cyber-muted text-sm mb-4">
+                          Our security experts handle everything
+                        </p>
+                        <ul className="text-left space-y-2 mb-4 text-sm">
+                          <li className="flex items-center gap-2" style={{ color: BLUE }}>
+                            <span>✓</span>
+                            <span>We do all the work</span>
+                          </li>
+                          <li className="flex items-center gap-2" style={{ color: BLUE }}>
+                            <span>✓</span>
+                            <span>Fixed in 2-4 weeks</span>
+                          </li>
+                          <li className="flex items-center gap-2" style={{ color: BLUE }}>
+                            <span>✓</span>
+                            <span>Compliance certificate included</span>
+                          </li>
+                        </ul>
+                        <div className="text-lg font-semibold mb-4" style={{ color: BLUE }}>
+                          Custom Quote
+                        </div>
+                        <button
+                          className="w-full py-3 px-6 rounded-lg font-semibold text-white transition-opacity hover:opacity-90"
+                          style={{ background: `linear-gradient(135deg, ${BLUE} 0%, #1E90FF 100%)` }}
+                        >
+                          Contact for Quote
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 text-center text-xs text-cyber-muted">
+                    💡 Try fixing yourself first. If you get stuck, we're here to help!
+                  </div>
+                </div>
               </div>
             )}
           </div>
