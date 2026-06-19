@@ -16,7 +16,8 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # JWT settings
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+ACCESS_TOKEN_EXPIRE_MINUTES = 15  # 15 minutes for security
+REFRESH_TOKEN_EXPIRE_DAYS = 7  # 7 days
 
 
 class AuthService:
@@ -55,6 +56,66 @@ class AuthService:
             print(f"JWT Verification Error: {type(e).__name__}: {str(e)}")
             print(f"Token (first 50 chars): {token[:50]}...")
             return None
+
+    @staticmethod
+    def create_refresh_token(db: Session, user_id: str, ip_address: str = None, user_agent: str = None) -> str:
+        """Create a new refresh token for a user."""
+        from app.models.refresh_token import RefreshToken
+
+        token_string = RefreshToken.create_token_string()
+        expires_at = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+
+        refresh_token = RefreshToken(
+            user_id=user_id,
+            token=token_string,
+            expires_at=expires_at,
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
+
+        db.add(refresh_token)
+        db.commit()
+
+        return token_string
+
+    @staticmethod
+    def verify_refresh_token(db: Session, token: str) -> Optional[User]:
+        """Verify a refresh token and return the associated user if valid."""
+        from app.models.refresh_token import RefreshToken
+
+        refresh_token = db.query(RefreshToken).filter(RefreshToken.token == token).first()
+
+        if not refresh_token or not refresh_token.is_valid():
+            return None
+
+        user = db.query(User).filter(User.id == refresh_token.user_id).first()
+        return user
+
+    @staticmethod
+    def revoke_refresh_token(db: Session, token: str):
+        """Revoke a refresh token (for logout)."""
+        from app.models.refresh_token import RefreshToken
+
+        refresh_token = db.query(RefreshToken).filter(RefreshToken.token == token).first()
+
+        if refresh_token:
+            refresh_token.revoke()
+            db.commit()
+
+    @staticmethod
+    def revoke_all_user_tokens(db: Session, user_id: str):
+        """Revoke all refresh tokens for a user (for logout all devices)."""
+        from app.models.refresh_token import RefreshToken
+
+        tokens = db.query(RefreshToken).filter(
+            RefreshToken.user_id == user_id,
+            RefreshToken.is_revoked == False
+        ).all()
+
+        for token in tokens:
+            token.revoke()
+
+        db.commit()
 
     @staticmethod
     def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:

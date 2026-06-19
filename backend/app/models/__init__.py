@@ -7,6 +7,7 @@ from app.models.scan_job import ScanJob
 from app.models.alert import AlertSettings, Alert
 from app.models.breach import BreachCheck, BreachResult, PasteExposure
 from app.models.admin_audit import AdminAuditLog
+from app.models.refresh_token import RefreshToken
 
 __all__ = [
     "User",
@@ -20,4 +21,5 @@ __all__ = [
     "BreachResult",
     "PasteExposure",
     "AdminAuditLog",
+    "RefreshToken",
 ]

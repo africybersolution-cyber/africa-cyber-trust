@@ -1,10 +1,10 @@
 """Authentication endpoints for login, signup, and user management."""
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.db.database import get_db
 from app.services.auth_service import AuthService
@@ -93,13 +93,15 @@ async def get_current_user(
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
 async def signup(
-    request: UserSignupRequest,
+    signup_request: UserSignupRequest,
+    response: Response,
+    http_request: Request,
     db: Session = Depends(get_db)
 ):
     """Sign up a new user with trial period."""
     # Validate account type
     valid_plans = ['starter', 'professional', 'enterprise']
-    if request.account_type not in valid_plans:
+    if signup_request.account_type not in valid_plans:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid account_type. Must be one of: {', '.join(valid_plans)}"
@@ -108,18 +110,18 @@ async def signup(
     try:
         user = AuthService.create_user(
             db=db,
-            email=request.email,
-            password=request.password,
-            name=request.name,
-            referred_by_code=request.referral_code
+            email=signup_request.email,
+            password=signup_request.password,
+            name=signup_request.name,
+            referred_by_code=signup_request.referral_code
         )
 
         # Set account type and start plan-specific trial
-        user.account_type = request.account_type
+        user.account_type = signup_request.account_type
         db.commit()
 
         # Start trial (14 days for all paid tiers)
-        TrialService.start_trial(user, db, plan_name=request.account_type)
+        TrialService.start_trial(user, db, plan_name=signup_request.account_type)
 
         # Include company_id in JWT token
         token_data = {
@@ -131,6 +133,27 @@ async def signup(
         }
 
         access_token = AuthService.create_access_token(data=token_data)
+
+        # Create refresh token and set as httpOnly cookie
+        ip_address = http_request.client.host if http_request.client else None
+        user_agent = http_request.headers.get("user-agent")
+        refresh_token = AuthService.create_refresh_token(
+            db=db,
+            user_id=str(user.id),
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
+
+        # Set refresh token as httpOnly cookie (7 days)
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            max_age=7 * 24 * 60 * 60,
+            path="/"
+        )
 
         return {
             "access_token": access_token,
@@ -217,22 +240,24 @@ async def get_permissions(
 
 @router.post("/register-business", status_code=status.HTTP_201_CREATED)
 async def register_business(
-    request: BusinessRegisterRequest,
+    business_request: BusinessRegisterRequest,
+    response: Response,
+    http_request: Request,
     db: Session = Depends(get_db)
 ):
     """Register a new business."""
     try:
         result = AuthService.register_business(
             db=db,
-            company_name=request.company_name,
-            email=request.email,
-            password=request.password,
-            name=request.name,
-            country=request.country,
-            domain=request.domain,
-            phone=request.phone,
-            size=request.size,
-            industry=request.industry
+            company_name=business_request.company_name,
+            email=business_request.email,
+            password=business_request.password,
+            name=business_request.name,
+            country=business_request.country,
+            domain=business_request.domain,
+            phone=business_request.phone,
+            size=business_request.size,
+            industry=business_request.industry
         )
 
         # Start 14-day trial for business (professional plan)
@@ -240,6 +265,27 @@ async def register_business(
         user.account_type = 'professional'
         db.commit()
         TrialService.start_trial(user, db, plan_name='professional')
+
+        # Create refresh token and set as httpOnly cookie
+        ip_address = http_request.client.host if http_request.client else None
+        user_agent = http_request.headers.get("user-agent")
+        refresh_token = AuthService.create_refresh_token(
+            db=db,
+            user_id=str(user.id),
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
+
+        # Set refresh token as httpOnly cookie (7 days)
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            max_age=7 * 24 * 60 * 60,
+            path="/"
+        )
 
         return {
             "access_token": result["access_token"],
@@ -271,6 +317,8 @@ async def register_business(
 
 @router.post("/login")
 async def login(
+    response: Response,
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
@@ -297,6 +345,27 @@ async def login(
     print(f"[LOGIN] Token data: {token_data}")
 
     access_token = AuthService.create_access_token(data=token_data)
+
+    # Create refresh token and set as httpOnly cookie
+    ip_address = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
+    refresh_token = AuthService.create_refresh_token(
+        db=db,
+        user_id=str(user.id),
+        ip_address=ip_address,
+        user_agent=user_agent
+    )
+
+    # Set refresh token as httpOnly cookie (7 days)
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,  # HTTPS only
+        samesite="lax",  # CSRF protection
+        max_age=7 * 24 * 60 * 60,  # 7 days in seconds
+        path="/"
+    )
 
     response_data = {
         "access_token": access_token,
@@ -357,9 +426,71 @@ async def get_me(
     return response
 
 
+@router.post("/refresh")
+async def refresh_access_token(
+    response: Response,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    Refresh access token using refresh token from httpOnly cookie.
+    Returns a new access token.
+    """
+    # Get refresh token from cookie
+    refresh_token = request.cookies.get("refresh_token")
+
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token not found",
+        )
+
+    # Verify refresh token and get user
+    user = AuthService.verify_refresh_token(db, refresh_token)
+
+    if not user:
+        # Clear invalid cookie
+        response.delete_cookie(key="refresh_token", path="/")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+        )
+
+    # Create new access token
+    token_data = {
+        "sub": user.email,
+        "user_id": str(user.id),
+        "role": user.role,
+        "company_id": str(user.company_id) if user.company_id else None,
+        "account_type": user.account_type
+    }
+
+    access_token = AuthService.create_access_token(data=token_data)
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
+
+
 @router.post("/logout")
-async def logout(current_user: User = Depends(get_current_user)):
-    """Logout user."""
+async def logout(
+    response: Response,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Logout user and revoke refresh token."""
+    # Get refresh token from cookie
+    refresh_token = request.cookies.get("refresh_token")
+
+    if refresh_token:
+        # Revoke the refresh token
+        AuthService.revoke_refresh_token(db, refresh_token)
+
+    # Clear the refresh token cookie
+    response.delete_cookie(key="refresh_token", path="/")
+
     return {"message": "Successfully logged out"}
 
 
