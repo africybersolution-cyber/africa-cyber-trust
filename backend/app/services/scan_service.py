@@ -21,6 +21,7 @@ from app.services.web_vuln_scanner import WebVulnScanner
 from app.services.port_scanner import PortScanner
 from app.services.tech_stack_detector import TechStackDetector
 from app.services.ai_risk_scorer import AIRiskScorer
+from app.services.mobile_app_scanner import MobileAppScanner
 
 
 class RecommendationGenerator:
@@ -322,6 +323,11 @@ class SecurityScanner:
             elif asset.type in [AssetType.SSL_CERTIFICATE]:
                 # SSL certificate scanner
                 findings.extend(SSLCertificateScanner.scan(asset.value, asset_id, scan.id))
+
+            elif asset.type in [AssetType.MOBILE_APP]:
+                # 🔥 NEW: Mobile app scanner (APK/IPA analysis)
+                file_path = getattr(asset, 'app_file_path', None)
+                findings.extend(MobileAppScanner.scan(asset.value, asset_id, scan.id, file_path=file_path))
 
             else:
                 # Domain-based assets (domain, subdomain, api_endpoint, ip_address, ip_range)

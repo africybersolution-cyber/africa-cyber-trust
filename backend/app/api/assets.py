@@ -752,14 +752,15 @@ async def upload_mobile_app(
         db.commit()
         db.refresh(asset)
 
-        # Trigger scan for APK (async)
+        # Trigger automatic scan for uploaded file
         if platform == "android":
-            from app.services.mobile_scan_service import get_mobile_scanner
+            # Android APK - trigger scan immediately
+            from app.services.scan_service import get_scanner
             import asyncio
 
             async def run_scan():
-                scanner = get_mobile_scanner(db)
-                await scanner.scan_apk(str(asset.id))
+                scanner = get_scanner(db)
+                await scanner.scan_asset(str(asset.id))
 
             # Run scan in background
             asyncio.create_task(run_scan())
