@@ -172,10 +172,21 @@ class AgentService:
         if not agent:
             return commissions
 
-        # Block self-referral (customer referring themselves)
+        # 🚨 SECURITY: Block self-referral (customer referring themselves)
         if agent.user_id == payment.user_id:
-            print(f"[COMMISSION] Blocked self-referral: agent {agent.id} = customer {payment.user_id}")
+            print(f"[COMMISSION BLOCKED] Direct self-referral: agent {agent.id} = customer {payment.user_id}")
             return commissions
+
+        # 🚨 SECURITY: Block sock-puppet self-referral (same phone number)
+        # Agent creates second account with different email but uses same phone for payments
+        agent_user = db.query(User).filter(User.id == agent.user_id).first()
+        if agent_user and customer:
+            # Check if both users have same phone number (requires phone_number field on User model)
+            if hasattr(customer, 'phone_number') and hasattr(agent_user, 'phone_number'):
+                if customer.phone_number and agent_user.phone_number:
+                    if customer.phone_number == agent_user.phone_number:
+                        print(f"[COMMISSION BLOCKED] Sock-puppet self-referral: same phone {customer.phone_number}")
+                        return commissions
 
         # 1. Direct commission
         direct_commission = AgentService.calculate_commission(

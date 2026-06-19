@@ -173,6 +173,110 @@ class SchedulerService:
             import traceback
             traceback.print_exc()
 
+    def reset_monthly_agent_tiers(self):
+        """
+        Job: Reset agent commission tiers for new month.
+
+        Runs on the 1st of every month at 00:00 UTC.
+
+        Resets each agent's:
+        - monthly_sales = 0
+        - current_tier = recalculated based on lifetime/historical performance
+        """
+        try:
+            logger.info("Starting monthly agent tier reset job...")
+
+            # Create database session
+            db = SessionLocal()
+
+            try:
+                from app.models.agent import Agent
+                from sqlalchemy import func
+
+                # Get all active agents
+                agents = db.query(Agent).filter(
+                    Agent.status == "approved"
+                ).all()
+
+                logger.info(f"Resetting tiers for {len(agents)} active agents")
+
+                reset_count = 0
+                for agent in agents:
+                    try:
+                        old_sales = agent.monthly_sales
+                        old_tier = agent.current_tier
+
+                        # Reset monthly sales to 0
+                        agent.monthly_sales = 0.0
+
+                        # Recalculate tier based on historical performance
+                        # Option 1: Reset all to Bronze (fresh start each month)
+                        agent.current_tier = 'bronze'
+
+                        # Option 2: Base tier on last 3 months average (uncomment to use)
+                        # from datetime import datetime, timedelta
+                        # from app.models.commission import Commission
+                        # three_months_ago = datetime.utcnow() - timedelta(days=90)
+                        # recent_commissions = db.query(func.sum(Commission.payment_amount)).filter(
+                        #     Commission.agent_id == agent.id,
+                        #     Commission.created_at >= three_months_ago
+                        # ).scalar() or 0
+                        #
+                        # avg_monthly = recent_commissions / 3
+                        # if avg_monthly > 2000:
+                        #     agent.current_tier = 'gold'
+                        # elif avg_monthly > 500:
+                        #     agent.current_tier = 'silver'
+                        # else:
+                        #     agent.current_tier = 'bronze'
+
+                        db.commit()
+                        reset_count += 1
+
+                        logger.info(
+                            f"Reset agent {agent.id}: "
+                            f"Sales ${old_sales} → $0, "
+                            f"Tier {old_tier} → {agent.current_tier}"
+                        )
+
+                    except Exception as agent_error:
+                        logger.error(f"Failed to reset agent {agent.id}: {str(agent_error)}")
+                        db.rollback()
+                        continue
+
+                logger.info(f"Monthly tier reset completed: {reset_count} agents reset")
+
+                # Log to file for monitoring
+                self._log_tier_reset(reset_count)
+
+            finally:
+                db.close()
+
+        except Exception as e:
+            logger.error(f"Monthly tier reset job failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
+    def _log_tier_reset(self, reset_count: int):
+        """Log tier reset statistics to file for monitoring."""
+        try:
+            log_file = "logs/agent_tier_reset.log"
+
+            # Create logs directory if it doesn't exist
+            import os
+            os.makedirs("logs", exist_ok=True)
+
+            timestamp = datetime.now(timezone.utc).isoformat()
+
+            with open(log_file, "a") as f:
+                f.write(
+                    f"{timestamp} - "
+                    f"Monthly tier reset: {reset_count} agents reset to Bronze\n"
+                )
+
+        except Exception as e:
+            logger.warning(f"Failed to write tier reset log: {str(e)}")
+
     def schedule_jobs(self):
         """Schedule all background jobs."""
 
@@ -199,6 +303,19 @@ class SchedulerService:
         )
 
         logger.info("Scheduled job: Security scans (every 15 minutes)")
+
+        # Job 3: Monthly agent tier reset (1st of every month at 00:00 UTC)
+        from apscheduler.triggers.cron import CronTrigger
+        self.scheduler.add_job(
+            func=self.reset_monthly_agent_tiers,
+            trigger=CronTrigger(day=1, hour=0, minute=0),
+            id='monthly_tier_reset',
+            name='Reset agent commission tiers monthly',
+            replace_existing=True,
+            max_instances=1
+        )
+
+        logger.info("Scheduled job: Agent tier reset (1st of every month)")
 
         # Future jobs can be added here:
         # - Re-verification reminders (daily)

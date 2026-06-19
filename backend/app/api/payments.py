@@ -494,3 +494,144 @@ async def check_crypto_payment_status(
         result["chain_status"] = chain_status
 
     return result
+
+
+# ===== PAWAPAY WEBHOOK =====
+# PawaPay calls this endpoint when payment status changes (COMPLETED, FAILED, etc.)
+# This prevents lost payments if user closes browser before polling
+
+class PawaPayWebhookPayload(BaseModel):
+    """PawaPay webhook callback payload."""
+    depositId: str
+    status: str
+    amount: str
+    currency: str
+    correspondent: str = None
+    created: str = None
+    receivedByRecipient: str = None
+
+
+@router.post("/webhooks/pawapay")
+async def pawapay_webhook(
+    payload: PawaPayWebhookPayload,
+    db: Session = Depends(get_db)
+):
+    """
+    PawaPay webhook endpoint - called by PawaPay when payment status changes.
+
+    Prevents lost subscriptions/commissions if user closes browser before polling.
+
+    Configure in PawaPay dashboard:
+    URL: https://africa-cyber-trust.onrender.com/api/payments/webhooks/pawapay
+    Method: POST
+    """
+    try:
+        print(f"[WEBHOOK] PawaPay callback - depositId: {payload.depositId}, status: {payload.status}")
+
+        # Find payment by external_reference (deposit_id)
+        payment = db.query(Payment).filter(
+            Payment.external_reference == payload.depositId
+        ).first()
+
+        if not payment:
+            print(f"[WEBHOOK] Payment not found for depositId: {payload.depositId}")
+            return {"success": False, "error": "Payment not found"}
+
+        # Only process if payment is still pending
+        if payment.status != "pending":
+            print(f"[WEBHOOK] Payment already processed - current status: {payment.status}")
+            return {"success": True, "message": "Already processed"}
+
+        # Process COMPLETED payments
+        if payload.status == "COMPLETED":
+            print(f"[WEBHOOK] Processing completed payment: {payment.id}")
+
+            payment.status = "completed"
+            payment.paid_at = datetime.utcnow()
+
+            # Get user
+            user = db.query(User).filter(User.id == payment.user_id).first()
+            if not user:
+                print(f"[WEBHOOK] User not found: {payment.user_id}")
+                return {"success": False, "error": "User not found"}
+
+            # Create/extend subscription (30 days)
+            from app.models.subscription import Subscription as SubscriptionModel
+            existing = db.query(SubscriptionModel).filter(
+                SubscriptionModel.user_id == user.id,
+                SubscriptionModel.status == "active"
+            ).first()
+
+            if existing:
+                # Extend existing subscription by 30 days
+                existing.expires_at = existing.expires_at + timedelta(days=30)
+                print(f"[WEBHOOK] Extended subscription to {existing.expires_at}")
+            else:
+                # Create new subscription
+                plan_name = user.account_type if user.account_type else 'starter'
+                SubscriptionService.create_subscription(
+                    db, user.id, plan_name, duration_days=30
+                )
+                print(f"[WEBHOOK] Created new {plan_name} subscription")
+
+            # Convert trial status
+            user.trial_status = 'converted'
+
+            db.commit()
+
+            # Process agent commissions (if user was referred)
+            try:
+                AgentService.process_payment_commissions(db, payment)
+                print(f"[WEBHOOK] Commissions processed")
+            except Exception as e:
+                print(f"[WEBHOOK WARNING] Failed to process agent commissions: {e}")
+                # Don't fail the payment if commission processing fails
+
+            # Send payment receipt email
+            try:
+                subscription = db.query(SubscriptionModel).filter(
+                    SubscriptionModel.user_id == user.id,
+                    SubscriptionModel.status == "active"
+                ).first()
+
+                plan_name = subscription.plan_name if subscription else (user.account_type or 'starter')
+                subscription_expires = subscription.expires_at.strftime("%B %d, %Y") if subscription else "N/A"
+
+                EmailService.send_payment_receipt(
+                    to_email=user.email,
+                    payment_id=str(payment.id),
+                    plan_name=plan_name,
+                    amount=str(int(payment.amount)),
+                    currency=payment.currency,
+                    payment_method=f"Mobile Money ({payment.provider})",
+                    payment_date=payment.paid_at.strftime("%B %d, %Y at %I:%M %p"),
+                    subscription_expires=subscription_expires
+                )
+                print(f"[WEBHOOK] Receipt email sent to {user.email}")
+            except Exception as email_error:
+                print(f"[WEBHOOK] Failed to send receipt email: {email_error}")
+                # Don't fail the payment if email fails
+
+            return {
+                "success": True,
+                "message": "Payment processed successfully",
+                "payment_id": str(payment.id)
+            }
+
+        # Process FAILED payments
+        elif payload.status == "FAILED":
+            print(f"[WEBHOOK] Payment failed: {payment.id}")
+            payment.status = "failed"
+            db.commit()
+            return {"success": True, "message": "Payment marked as failed"}
+
+        else:
+            # Other statuses (SUBMITTED, ACCEPTED, etc.) - just acknowledge
+            print(f"[WEBHOOK] Status update: {payload.status}")
+            return {"success": True, "message": f"Status {payload.status} acknowledged"}
+
+    except Exception as e:
+        print(f"[WEBHOOK ERROR] {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "error": str(e)}

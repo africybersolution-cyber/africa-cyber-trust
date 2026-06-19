@@ -107,6 +107,24 @@ class AuthService:
             if not referring_agent:
                 print(f"[SIGNUP] Invalid/unapproved referral code: {normalized_ref} - clearing")
                 normalized_ref = None
+            else:
+                # 🚨 SECURITY: Block self-referral (agent can't refer themselves)
+                agent_user = db.query(User).filter(User.id == referring_agent.user_id).first()
+                if agent_user:
+                    # Direct self-referral: same email
+                    if agent_user.email.lower() == email.lower():
+                        print(f"[SIGNUP BLOCKED] Self-referral attempt: {email}")
+                        raise ValueError("You cannot use your own referral code")
+
+                    # Sock-puppet detection: same email domain (for obvious cases like agent@company.com → agent2@company.com)
+                    signup_domain = email.split('@')[1].lower() if '@' in email else ''
+                    agent_domain = agent_user.email.split('@')[1].lower() if '@' in agent_user.email else ''
+
+                    # Only block non-common domains (allow gmail.com, yahoo.com, etc. which are legitimate)
+                    common_domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com', 'protonmail.com']
+                    if signup_domain == agent_domain and signup_domain not in common_domains:
+                        print(f"[SIGNUP BLOCKED] Suspicious self-referral: same domain {signup_domain}")
+                        raise ValueError("Suspicious referral pattern detected. Please contact support if this is an error.")
 
         # Create user
         hashed_password = AuthService.hash_password(password)
