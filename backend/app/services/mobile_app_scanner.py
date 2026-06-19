@@ -14,6 +14,7 @@ import subprocess
 import json
 
 from app.models.scan import Finding
+from app.services.mobile_recommendations import get_recommendation
 
 
 class MobileAppScanner:
@@ -315,14 +316,15 @@ class MobileAppScanner:
 
             if secrets_found:
                 secret_list = '\n'.join([f"- {s['type']} in {s['file']}: {s['preview']}" for s in secrets_found[:10]])
+                rec = get_recommendation("hardcoded_secrets")
 
                 findings.append(Finding(
                     asset_id=asset_id,
                     scan_id=scan_id,
                     severity="critical",
-                    title=f"Hardcoded Secrets Detected ({len(secrets_found)} found)",
-                    description=f"Found {len(secrets_found)} potential hardcoded secrets:\n{secret_list}",
-                    recommendation="Remove all hardcoded secrets. Use environment variables, encrypted storage, or a secrets management service (AWS Secrets Manager, HashiCorp Vault).",
+                    title=f"Hardcoded Secrets Detected ({len(secrets_found)} found) - OWASP MASVS: MSTG-STORAGE-14",
+                    description=f"Found {len(secrets_found)} potential hardcoded secrets:\n{secret_list}\n\n" + rec['description'],
+                    recommendation=rec['fix'],
                     category="secrets",
                     found_at=datetime.now(timezone.utc)
                 ))
@@ -406,13 +408,14 @@ class MobileAppScanner:
                 break
 
         if not pinning_found:
+            rec = get_recommendation("ssl_pinning")
             findings.append(Finding(
                 asset_id=asset_id,
                 scan_id=scan_id,
                 severity="high",
-                title="SSL Pinning Not Detected",
-                description="App does not appear to implement SSL certificate pinning, making it vulnerable to MITM attacks.",
-                recommendation="Implement SSL pinning using OkHttp CertificatePinner, TrustKit, or Android's Network Security Config.",
+                title="SSL Pinning Not Detected (OWASP MASVS: MSTG-NETWORK-3)",
+                description=rec['description'],
+                recommendation=rec['fix'],
                 category="network",
                 found_at=datetime.now(timezone.utc)
             ))
@@ -441,13 +444,14 @@ class MobileAppScanner:
                     break
 
         if not obfuscated and not os.path.exists(mapping_file):
+            rec = get_recommendation("obfuscation")
             findings.append(Finding(
                 asset_id=asset_id,
                 scan_id=scan_id,
                 severity="medium",
-                title="Code Obfuscation Not Detected",
-                description="App does not appear to be obfuscated with ProGuard or R8, making reverse engineering easier.",
-                recommendation="Enable code obfuscation in build.gradle:\nandroid {\n  buildTypes {\n    release {\n      minifyEnabled true\n      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'\n    }\n  }\n}",
+                title="Code Obfuscation Not Detected (OWASP MASVS: MSTG-RESILIENCE-9)",
+                description=rec['description'],
+                recommendation=rec['fix'],
                 category="code_protection",
                 found_at=datetime.now(timezone.utc)
             ))
@@ -465,39 +469,42 @@ class MobileAppScanner:
 
                 # Check for debuggable flag
                 if 'android:debuggable="true"' in content:
+                    rec = get_recommendation("debuggable")
                     findings.append(Finding(
                         asset_id=asset_id,
                         scan_id=scan_id,
                         severity="critical",
-                        title="App is Debuggable",
-                        description="android:debuggable=\"true\" is set in production app. Attackers can attach debuggers and extract sensitive data.",
-                        recommendation="Remove android:debuggable or set to false in production builds.",
+                        title="App is Debuggable (OWASP MASVS: MSTG-CODE-2)",
+                        description=rec['description'],
+                        recommendation=rec['fix'],
                         category="configuration",
                         found_at=datetime.now(timezone.utc)
                     ))
 
                 # Check for allowBackup flag
                 if 'android:allowBackup="true"' in content or 'android:allowBackup' not in content:
+                    rec = get_recommendation("backup_flag")
                     findings.append(Finding(
                         asset_id=asset_id,
                         scan_id=scan_id,
                         severity="high",
-                        title="Backup Allowed",
-                        description="android:allowBackup is true or unset. App data can be backed up and restored via ADB, potentially exposing sensitive data.",
-                        recommendation="Set android:allowBackup=\"false\" unless backup is required. If needed, exclude sensitive files using android:fullBackupContent.",
+                        title="Backup Allowed (OWASP MASVS: MSTG-STORAGE-8)",
+                        description=rec['description'],
+                        recommendation=rec['fix'],
                         category="data_protection",
                         found_at=datetime.now(timezone.utc)
                     ))
 
                 # Check for cleartext traffic
                 if 'android:usesCleartextTraffic="true"' in content:
+                    rec = get_recommendation("cleartext_traffic")
                     findings.append(Finding(
                         asset_id=asset_id,
                         scan_id=scan_id,
                         severity="critical",
-                        title="Cleartext Traffic Allowed",
-                        description="android:usesCleartextTraffic=\"true\" allows unencrypted HTTP connections.",
-                        recommendation="Set android:usesCleartextTraffic=\"false\" and use HTTPS for all network communication.",
+                        title="Cleartext Traffic Allowed (OWASP MASVS: MSTG-NETWORK-1)",
+                        description=rec['description'],
+                        recommendation=rec['fix'],
                         category="network",
                         found_at=datetime.now(timezone.utc)
                     ))
