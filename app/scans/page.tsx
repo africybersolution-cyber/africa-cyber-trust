@@ -511,7 +511,7 @@ export default function ScansPage() {
 
                     {/* Option 2: Professional Service */}
                     <div className="bg-blue-500/10 border-2 border-blue-500/30 rounded-xl p-6 hover:border-blue-500/50 transition-all cursor-pointer"
-                         onClick={() => window.location.href = `mailto:services@africacybertrust.com?subject=Service Request - ${selectedScan.asset_name}&body=I need help fixing ${findings.length} vulnerabilities in my ${selectedScan.asset_name}. Security Score: ${selectedScan.score}/100`}>
+                         onClick={() => window.location.href = `mailto:africybersolution@gmail.com?subject=Service Request - ${selectedScan.asset_name}&body=I need help fixing ${findings.length} vulnerabilities in my ${selectedScan.asset_name}. Security Score: ${selectedScan.score}/100`}>
                       <div className="text-center">
                         <div className="text-5xl mb-4">🛠️</div>
                         <h4 className="text-lg font-bold text-white mb-2">
