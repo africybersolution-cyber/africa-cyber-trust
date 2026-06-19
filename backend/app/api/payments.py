@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from datetime import datetime, timedelta
 from decimal import Decimal
 import uuid
+import requests  # For webhook forwarding
 
 router = APIRouter()
 
@@ -496,9 +497,78 @@ async def check_crypto_payment_status(
     return result
 
 
-# ===== PAWAPAY WEBHOOK =====
-# PawaPay calls this endpoint when payment status changes (COMPLETED, FAILED, etc.)
-# This prevents lost payments if user closes browser before polling
+# ===== PAWAPAY WEBHOOK ROUTER =====
+# Shared webhook for Africa Cyber Trust + EscoPay + DDA
+# Routes callbacks to correct app based on depositId
+
+async def _forward_to_escopay(payload: "PawaPayWebhookPayload") -> dict:
+    """
+    Forward PawaPay callback to EscoPay backend.
+
+    EscoPay uses Firebase Cloud Functions for PawaPay callbacks.
+    Endpoint: https://us-central1-escopay-7b5b7.cloudfunctions.net/pawapayDepositCallback
+    """
+    try:
+        import requests
+
+        # EscoPay Cloud Function endpoint
+        escopay_webhook_url = "https://us-central1-escopay-7b5b7.cloudfunctions.net/pawapayDepositCallback"
+
+        # Forward the exact payload
+        response = requests.post(
+            escopay_webhook_url,
+            json=payload.dict(),
+            headers={"Content-Type": "application/json"},
+            timeout=10
+        )
+
+        print(f"[WEBHOOK ROUTER] EscoPay response: {response.status_code}")
+
+        # If EscoPay returns 200, it handled the payment
+        if response.status_code == 200:
+            return {"handled": True, "response": response.json()}
+
+        # Otherwise, payment not found in EscoPay
+        return {"handled": False, "response": None}
+
+    except Exception as e:
+        print(f"[WEBHOOK ROUTER] EscoPay forward failed: {e}")
+        return {"handled": False, "response": None}
+
+
+async def _forward_to_dda(payload: "PawaPayWebhookPayload") -> dict:
+    """
+    Forward PawaPay callback to DDA backend.
+
+    TODO: Add DDA webhook URL when available.
+    """
+    try:
+        import requests
+
+        # DDA webhook endpoint (replace with actual URL)
+        dda_webhook_url = "https://dda-backend.onrender.com/api/webhooks/pawapay"  # TODO: Update this
+
+        # Forward the exact payload
+        response = requests.post(
+            dda_webhook_url,
+            json=payload.dict(),
+            headers={"Content-Type": "application/json"},
+            timeout=10
+        )
+
+        print(f"[WEBHOOK ROUTER] DDA response: {response.status_code}")
+
+        # If DDA returns 200, it handled the payment
+        if response.status_code == 200:
+            return {"handled": True, "response": response.json()}
+
+        # Otherwise, payment not found in DDA
+        return {"handled": False, "response": None}
+
+    except Exception as e:
+        print(f"[WEBHOOK ROUTER] DDA forward failed: {e}")
+        return {"handled": False, "response": None}
+
 
 class PawaPayWebhookPayload(BaseModel):
     """PawaPay webhook callback payload."""
@@ -517,25 +587,53 @@ async def pawapay_webhook(
     db: Session = Depends(get_db)
 ):
     """
-    PawaPay webhook endpoint - called by PawaPay when payment status changes.
+    🔀 SHARED WEBHOOK ROUTER for PawaPay callbacks.
 
-    Prevents lost subscriptions/commissions if user closes browser before polling.
+    Handles payments for:
+    - Africa Cyber Trust (this app)
+    - EscoPay (mobile money crypto wallet)
+    - DDA (other app)
+
+    Routes callback to correct app based on depositId lookup.
 
     Configure in PawaPay dashboard:
     URL: https://africa-cyber-trust.onrender.com/api/payments/webhooks/pawapay
     Method: POST
     """
     try:
-        print(f"[WEBHOOK] PawaPay callback - depositId: {payload.depositId}, status: {payload.status}")
+        print(f"[WEBHOOK ROUTER] PawaPay callback - depositId: {payload.depositId}, status: {payload.status}")
 
-        # Find payment by external_reference (deposit_id)
+        # Step 1: Check if payment belongs to Africa Cyber Trust
         payment = db.query(Payment).filter(
             Payment.external_reference == payload.depositId
         ).first()
 
         if not payment:
-            print(f"[WEBHOOK] Payment not found for depositId: {payload.depositId}")
-            return {"success": False, "error": "Payment not found"}
+            print(f"[WEBHOOK ROUTER] Not found in Africa Cyber Trust DB - checking other apps...")
+
+            # Step 2: Forward to EscoPay webhook
+            import requests
+            escopay_result = await _forward_to_escopay(payload)
+            if escopay_result["handled"]:
+                print(f"[WEBHOOK ROUTER] ✅ Handled by EscoPay")
+                return escopay_result["response"]
+
+            # Step 3: Forward to DDA webhook
+            dda_result = await _forward_to_dda(payload)
+            if dda_result["handled"]:
+                print(f"[WEBHOOK ROUTER] ✅ Handled by DDA")
+                return dda_result["response"]
+
+            # Step 4: Not found in any app
+            print(f"[WEBHOOK ROUTER] ❌ Payment not found in any app: {payload.depositId}")
+            return {
+                "success": False,
+                "error": "Payment not found in any connected app",
+                "depositId": payload.depositId
+            }
+
+        # ===== PROCESS AFRICA CYBER TRUST PAYMENT =====
+        print(f"[WEBHOOK ROUTER] ✅ Found in Africa Cyber Trust - processing...")
 
         # Only process if payment is still pending
         if payment.status != "pending":
