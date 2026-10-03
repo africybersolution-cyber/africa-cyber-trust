@@ -501,6 +501,47 @@ async def check_crypto_payment_status(
 # Shared webhook for Africa Cyber Trust + EscoPay + DDA
 # Routes callbacks to correct app based on depositId
 
+async def _forward_to_haraka(payload: "PawaPayWebhookPayload") -> dict:
+    """
+    Forward PawaPay callback to Haraka backend.
+
+    Haraka uses: https://harakabackend.onrender.com/api/v1/payments/webhooks/pawapay
+    """
+    try:
+        import requests
+
+        haraka_webhook_url = "https://harakabackend.onrender.com/api/v1/payments/webhooks/pawapay"
+
+        response = requests.post(
+            haraka_webhook_url,
+            json=payload.dict(),
+            headers={"Content-Type": "application/json"},
+            timeout=15
+        )
+
+        print(f"[WEBHOOK ROUTER] Haraka: {response.status_code}")
+
+        # If returns 200/201, it handled the payment
+        if response.status_code in [200, 201]:
+            print(f"[WEBHOOK ROUTER] ✅ Haraka handled the payment")
+            try:
+                return {"handled": True, "response": response.json()}
+            except:
+                return {"handled": True, "response": {"success": True}}
+
+        return {"handled": False, "response": None}
+
+    except requests.exceptions.Timeout:
+        print(f"[WEBHOOK ROUTER] Haraka timeout")
+        return {"handled": False, "response": None}
+    except requests.exceptions.RequestException as e:
+        print(f"[WEBHOOK ROUTER] Haraka connection failed: {e}")
+        return {"handled": False, "response": None}
+    except Exception as e:
+        print(f"[WEBHOOK ROUTER] Haraka forward failed: {e}")
+        return {"handled": False, "response": None}
+
+
 async def _forward_to_escopay_dda(payload: "PawaPayWebhookPayload") -> dict:
     """
     Forward PawaPay callback to EscoPay/DDA shared backend.
@@ -575,19 +616,23 @@ async def pawapay_webhook(
     db: Session = Depends(get_db)
 ):
     """
-    🔀 SHARED WEBHOOK ROUTER for PawaPay callbacks (3 apps).
+    🔀 SHARED WEBHOOK ROUTER for PawaPay callbacks (4 apps).
 
     Routing logic:
     1. Check Africa Cyber Trust database
        → If found: Process payment + activate subscription + commissions ✅
 
-    2. Forward to EscoPay/DDA shared callbacks:
+    2. Forward to Haraka backend:
+       - https://harakabackend.onrender.com/api/v1/payments/webhooks/pawapay
+       → If returns 200: Payment handled by Haraka ✅
+
+    3. Forward to EscoPay/DDA shared callbacks:
        - https://pawapaydepositcallback-rwjfghh2ka-uc.a.run.app (deposit)
        - https://us-central1-escopay-7b5b7.cloudfunctions.net/pawapayPayoutCallback (payout)
        - https://us-central1-escopay-7b5b7.cloudfunctions.net/pawapayRefundCallback (refund)
        → If any returns 200: Payment handled by EscoPay/DDA ✅
 
-    3. If not found in any app: Return error ❌
+    4. If not found in any app: Return error ❌
 
     Configure in PawaPay dashboard:
     Webhook URL: https://africa-cyber-trust.onrender.com/api/payments/webhooks/pawapay
@@ -603,20 +648,25 @@ async def pawapay_webhook(
         ).first()
 
         if not payment:
-            print(f"[WEBHOOK ROUTER] Not found in Africa Cyber Trust DB - forwarding to EscoPay/DDA...")
+            print(f"[WEBHOOK ROUTER] Not found in Africa Cyber Trust DB - forwarding to other apps...")
 
-            # Step 2: Forward to EscoPay/DDA shared callbacks
-            import requests
-            result = await _forward_to_escopay_dda(payload)
-            if result["handled"]:
+            # Step 2: Try Haraka first (most recent app)
+            haraka_result = await _forward_to_haraka(payload)
+            if haraka_result["handled"]:
+                print(f"[WEBHOOK ROUTER] ✅ Handled by Haraka")
+                return haraka_result["response"]
+
+            # Step 3: Forward to EscoPay/DDA shared callbacks
+            escopay_result = await _forward_to_escopay_dda(payload)
+            if escopay_result["handled"]:
                 print(f"[WEBHOOK ROUTER] ✅ Handled by EscoPay/DDA")
-                return result["response"]
+                return escopay_result["response"]
 
-            # Step 3: Not found in any app
+            # Step 4: Not found in any app
             print(f"[WEBHOOK ROUTER] ❌ Payment not found in any app: {payload.depositId}")
             return {
                 "success": False,
-                "error": "Payment not found in Africa Cyber Trust, EscoPay, or DDA",
+                "error": "Payment not found in Africa Cyber Trust, Haraka, EscoPay, or DDA",
                 "depositId": payload.depositId
             }
 
